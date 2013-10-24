@@ -1,0 +1,1170 @@
+#INCLUDE "MATR150.CH"
+#INCLUDE "PROTHEUS.CH"
+                                      
+Static nSegundaUnid      
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ MATR150  ³ Autor ³ Ricardo Berti		    ³ Data ³31/07/2007³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Emissao das Cotacoes                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ MATR150(void)                                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+user Function Matr150(cNumCota)
+
+Local oReport
+
+If FindFunction("TRepInUse") .And. TRepInUse()
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Interface de impressao                                                  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	oReport:= ReportDef(cNumCota)
+	oReport:PrintDialog()
+Else
+	MATR150R3( cNumCota )
+EndIf
+                                               
+Return
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³ ReportDef³ Autor ³ Ricardo Berti		    ³ Data ³31/07/2007³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Emissao das Cotacoes                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ nExp01: cNumCota = Cotacao a ser impressa                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ oExpO1: Objeto do relatorio                                ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function ReportDef(cNumCota)
+
+Local oReport 
+Local oSection1 
+Local oSection2 
+Local cTitle := STR0001	//"Emissao das cotacoes de compras"
+Local cEmail,cEndEnt,cTel
+Local cPerg, wNrel
+// Verifica conteudo p/ Grupo Fornec. (001) e Loja (002)
+Local aTamSXG  := TamSXG("001")
+Local aTamSXG2 := TamSXG("002")
+Local cDescPro := ""
+Local nItem    := 0
+
+PRIVATE nomeprog:="MATR150"
+wNrel  := "MATR150"
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionadas                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para parametros                         ³
+//³ mv_par01	     	  Do Numero                              ³
+//³ mv_par02	     	  Ate o Numero 		                     ³
+//³ mv_par03	     	  Do Fornecedor                          ³
+//³ mv_par04              Ate o Fornecedor            	     	 ³
+//³ mv_par05              Ate a data de validade      	   	     ³
+//³ mv_par06              Campo Descricao do Produto             ³
+//³ mv_par07              Endrre‡o Fiscal                        ³
+//³ mv_par08              Cidade - Estado                        ³
+//³ mv_par09              Fax                                    ³
+//³ mv_par10              Qual Unidade de Medida ?               ³
+//³ mv_par11              Telefone                               ³
+//³ mv_par12              Endereco de Entrega ?                  ³
+//³ mv_par13              Endereco de e-mail  ?                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+If cNumCota == Nil
+	cPerg := "MTR150"
+Else
+	cPerg := "MR150A"
+EndIf
+pergunte(cPerg,.F.)
+
+If !Empty(cNumCota)
+    cEmail       := mv_par09
+    cEndEnt      := mv_par08
+	cTel         := mv_par07
+	nSegundaUnid := mv_par06		// Grupo MR150A
+	mv_par09     := mv_par05
+	mv_par08     := mv_par04
+	mv_par07     := mv_par03
+	mv_par06     := mv_par02
+	mv_par05     := mv_par01
+	nomeprog     := "MATA130"
+	mv_par01     := cNumCota
+	mv_par02     := cNumCota
+	mv_par03     := "      "
+	mv_par04     := "ZZZZZZ"
+Else
+	nSegundaUnid := mv_par10
+	cTel         := mv_par11		// Grupo MTR150
+    cEndEnt      := mv_par12
+    cEmail       := mv_par13
+EndIf
+
+oReport := TReport():New(wNrel,cTitle,cPerg,{|oReport| ReportPrint(oReport,@cDescPro,cEmail,cEndEnt,cTel,@nItem,cNumCota)},STR0001+" "+STR0002) //"Relacao de Cotacoes"
+oReport:SetPortrait()
+oReport:HideHeader()			// Nao imprime cabecalho padrao do Protheus
+oReport:HideFooter()			// Nao imprime rodape padrao do Protheus
+oReport:HideParamPage()			// inibe impressao da pagina de parametros
+oReport:SetTotalInLine(.F.)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Criacao da secao utilizada pelo relatorio                               ³
+//³                                                                        ³
+//³TRSection():New                                                         ³
+//³ExpO1 : Objeto TReport que a secao pertence                             ³
+//³ExpC2 : Descricao da seçao                                              ³
+//³ExpA3 : Array com as tabelas utilizadas pela secao. A primeira tabela   ³
+//³        sera considerada como principal para a seção.                   ³
+//³ExpA4 : Array com as Ordens do relatório                                ³
+//³ExpL5 : Carrega campos do SX3 como celulas                              ³
+//³        Default : False                                                 ³
+//³ExpL6 : Carrega ordens do Sindex                                        ³
+//³        Default : False                                                 ³
+//³                                                                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Criacao da celulas da secao do relatorio                                ³
+//³                                                                        ³
+//³TRCell():New                                                            ³
+//³ExpO1 : Objeto TSection que a secao pertence                            ³
+//³ExpC2 : Nome da celula do relatório. O SX3 será consultado              ³
+//³ExpC3 : Nome da tabela de referencia da celula                          ³
+//³ExpC4 : Titulo da celula                                                ³
+//³        Default : X3Titulo()                                            ³
+//³ExpC5 : Picture                                                         ³
+//³        Default : X3_PICTURE                                            ³
+//³ExpC6 : Tamanho                                                         ³
+//³        Default : X3_TAMANHO                                            ³
+//³ExpL7 : Informe se o tamanho esta em pixel                              ³
+//³        Default : False                                                 ³
+//³ExpB8 : Bloco de código para impressao.                                 ³
+//³        Default : ExpC2                                                 ³
+//³                                                                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+oSection1 := TRSection():New(oReport,STR0001,{"SC8","SM0","SA2"}) //"Emissao das cotacoes de compras"
+
+oSection1:SetLineStyle()
+oSection1:SetReadOnly()
+oSection1:SetHeaderSection(.F.)	// Desabilita Impressao Cabecalho no Topo da Pagina
+oSection1:SetNoFilter("SM0")
+oSection1:SetNoFilter("SA2")
+oSection1:SetCharSeparator("")
+
+oSection2 := TRSection():New(oSection1,STR0002,{"SC8","SB1"})  //"Relacao de Cotacoes"
+oSection2:SetNoFilter("SB1")
+
+TRCell():New(oSection2,"ITEM"		,"SC8",STR0037,/*Picture*/,/*Tamanho*/,/*lPixel*/,{|| StrZero(++nItem,4) })
+TRCell():New(oSection2,"C8_PRODUTO","SC8",STR0036,,,,) //"N/Vosso Codigo"
+TRCell():New(oSection2,"DESCPROD"  ,"SB1",RetTitle("B1_DESC"),,40,, {|| cDescPro })
+TRCell():New(oSection2,"C8_QUANT",  "SC8",,,,, {|| If(nSegundaUnid==2 .And. !Empty(SC8->C8_QTSEGUM),SC8->C8_QTSEGUM,SC8->C8_QUANT) })
+TRCell():New(oSection2,"C8_UM",     "SC8",,,,, {|| If(nSegundaUnid==2 .And. !Empty(SC8->C8_QTSEGUM),SC8->C8_SEGUM,SC8->C8_UM) })
+TRCell():New(oSection2,"CDADOS"    ,"   ",Iif(cPaisLoc<>"PER",STR0034,STR0040),,,,) //   {|| Replicate("_",Len(STR0034)) })  //"Val.Unitario    Valor Total    IPI   Valor do IPI  Prz(dias)"
+TRCell():New(oSection2,"C8_DATPRF", "SC8",,,,,)
+
+oSection2:Cell("DESCPROD"):SetLineBreak()
+oSection2:Cell("CDADOS"):SetLineBreak() 
+	
+Return(oReport)
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³ReportPrin³ Autor ³ Ricardo Berti		    ³ Data ³31/07/2007³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³A funcao estatica ReportDef devera ser criada para todos os ³±±
+±±³          ³relatorios que poderao ser agendados pelo usuario.          ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpO1: Objeto Report do Relatório                           ³±±
+±±³          ³ExpC1: Var. para montagem da descr. do produto			  ³±±
+±±³          ³ExpC2: e-mail digitado na pergunte						  ³±±
+±±³          ³ExpC3: end.entrega digitada na pergunte					  ³±±
+±±³          ³ExpC4: telefonte digitado na pergunte						  ³±±
+±±³          ³ExpN1: var.p/calculo do No.do item na impressao			  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function ReportPrint(oReport,cDescPro,cEmail,cEndEnt,cTel,nItem,cNumCota)
+
+LOCAL oSection1 := oReport:Section(1)
+LOCAL oSection2 := oReport:Section(1):Section(1)
+LOCAL cCondicao:= ""
+LOCAL cCotacao := ""
+LOCAL cNumero  := ""
+LOCAL cDtValid := ""
+LOCAL cFornece := ""
+LOCAL cLoja    := ""
+LOCAL cDescri  := ""
+LOCAL cContato := ""
+LOCAL cVar     := ""
+LOCAL cbCont   := 0
+LOCAL cObs01   := ""
+LOCAL cObs02   := ""
+LOCAL cObs03   := ""
+LOCAL cObs04   := ""
+LOCAL nLinObs  := 0
+LOCAL nX       := 0
+LOCAL cEndere
+LOCAL cCidEst
+LOCAL cEnd
+Local dEmissao := CtoD("")
+Local nPrinted := 0
+Local nPagina  := 0
+Local nRegistro:= 0
+Local cFilEnt  := ""
+
+If cNumCota == Nil
+	cPerg := "MTR150"
+Else
+	cPerg := "MR150A"
+EndIf
+pergunte(cPerg,.F.)
+
+If !Empty(cNumCota)
+    cEmail       := mv_par09
+    cEndEnt      := mv_par08
+	cTel         := mv_par07
+	nSegundaUnid := mv_par06		// Grupo MR150A
+	mv_par09     := mv_par05
+	mv_par08     := mv_par04
+	mv_par07     := mv_par03
+	mv_par06     := mv_par02
+	mv_par05     := mv_par01
+	nomeprog     := "MATA130"
+	mv_par01     := cNumCota
+	mv_par02     := cNumCota
+	mv_par03     := "      "
+	mv_par04     := "ZZZZZZ"
+Else
+	nSegundaUnid := mv_par10
+	cTel         := mv_par11		// Grupo MTR150
+    cEndEnt      := mv_par12
+    cEmail       := mv_par13
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Filtragem do relatório                                                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SC8")
+dbSetOrder(1)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Transforma parametros Range em expressao Advpl                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+MakeAdvplExpr(oReport:uParam)
+
+cCondicao := 'C8_FILIAL == "'+xFilial("SC8")+'".And.' 
+cCondicao += 'C8_NUM >= "'+mv_par01+'".And. C8_NUM <="'+mv_par02+'".And.'
+cCondicao += 'C8_FORNECE >= "'+mv_par03+'" .And. C8_FORNECE <="'+mv_par04+'".And.'	
+cCondicao += 'DtoS(C8_VALIDA) <= "'+DtoS(mv_par05)+'".And.'
+cCondicao += 'Empty(C8_NUMPED)'
+
+oReport:Section(1):SetFilter(cCondicao,IndexKey())
+	
+TRPosition():New(oSection1,"SA2",1,{|| xFilial("SA2") + SC8->C8_FORNECE + SC8->C8_LOJA})
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Executa o CodeBlock com o PrintLine da Sessao 1 toda vez que rodar o oSection1:Init()   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oReport:onPageBreak( { || nPagina++ , nPrinted := 0 , CabecCT(oReport,oSection1,nPagina,cNumCota,cEmail,cTel) })
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Inicio da impressao do fluxo do relatório                               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oReport:SetMeter(SC8->(LastRec()))
+
+oSection2:Init()
+dbSelectArea("SC8")
+
+While !oReport:Cancel() .And. !SC8->(Eof())
+
+	If oReport:Cancel()
+		Exit
+	EndIf
+	
+	cCotacao := SC8->C8_NUM  
+	cFornece := SC8->C8_FORNECE
+	cLoja    := SC8->C8_LOJA   
+
+	cObs01   := " "
+	cObs02   := " "
+	cObs03   := " "
+	cObs04   := " "
+	nLinObs  := 0
+	nItem    := 0
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Dispara a cabec especifica do relatorio.                     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	oReport:EndPage()
+
+	nPagina  := 0
+	nPrinted := 0
+		
+	While !oReport:Cancel() .And. !SC8->(Eof()) .And. SC8->C8_FILIAL+SC8->C8_NUM+SC8->C8_FORNECE+SC8->C8_LOJA == xFilial("SC8")+cCotacao+cFornece+cLoja
+		
+		If oReport:Cancel()
+			Exit
+		EndIf
+
+		cContato := SC8->C8_CONTATO
+		dEmissao := SC8->C8_EMISSAO
+
+		oReport:IncMeter() 
+		If oReport:Row() > oReport:LineHeight() * 100
+			oReport:Box( oReport:Row(),010,oReport:Row() + oReport:LineHeight() * 3, 2290 )
+			oReport:SkipLine()
+			oReport:PrintText(STR0015,, 050 ) // Continua ....
+			oReport:EndPage()
+		EndIf
+
+		cDescPro := ""
+		dbSelectArea("SA5")
+		dbSetOrder(1)
+		If dbSeek(xFilial("SA5") + SC8->C8_FORNECE + SC8->C8_LOJA + SC8->C8_PRODUTO ) ;
+			.And. AllTrim(mv_par06) == "A5_NOMPROD"
+			cDescPro := Alltrim(A5_NOMPROD)
+		EndIf
+		dbSelectArea("SC8")
+		If Empty(cDescPro)
+			ImpDescr(@cDescPro,.T.)
+		EndIf
+		cFilEnt := SC8->C8_FILENT
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Inicializacao da Observacao da Cotacao                       ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If !EMPTY(SC8->C8_OBS) .And. nLinObs < 5
+			nLinObs++
+			cVar:="cObs"+StrZero(nLinObs,2)
+			Eval(MemVarBlock(cVar),SC8->C8_OBS)
+		Endif
+
+		oSection2:PrintLine()
+		nPrinted ++
+		If !Empty(SA5->A5_CODPRF)
+			oReport:PrintText( Replicate("_",Iif(cPaisLoc<>"PER",Len(STR0034),Len(STR0040))), oReport:Row(), oSection2:Cell("CDADOS"):ColPos() )  //"Val.Unitario    Valor Total    IPI   Valor do IPI  Prz(dias)"
+			oReport:PrintText( SA5->A5_CODPRF,oReport:Row(),oSection2:Cell("C8_PRODUTO"):ColPos() )
+			oReport:SkipLine()
+  		Else
+			oReport:PrintText( Replicate("_",Iif(cPaisLoc<>"PER",Len(STR0034),Len(STR0040))),, oSection2:Cell("CDADOS"):ColPos() )  //"Val.Unitario    Valor Total    IPI   Valor do IPI  Prz(dias)"
+		EndIf
+		nPrinted ++
+
+		dbSelectArea("SC8")
+		dbSkip()
+	EndDo
+
+	oReport:SkipLine()
+	
+	If nLinObs > 0
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Inicializar campos de Observacoes.                           ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If Empty(cObs02)
+			If Len(cObs01) > 50
+				cObs 	:= cObs01
+				cObs01:= Substr(cObs,1,50)
+				For nX := 2 To 4
+					cVar  := "cObs"+StrZero(nX,2)
+					&cVar := Substr(cObs,(50*(nX-1))+1,50)
+				Next
+			EndIf
+		Else
+			cObs01:= Substr(cObs01,1,IIf(Len(cObs01)<50,Len(cObs01),50))
+			cObs02:= Substr(cObs02,1,IIf(Len(cObs02)<50,Len(cObs01),50))
+			cObs03:= Substr(cObs03,1,IIf(Len(cObs03)<50,Len(cObs01),50))
+			cObs04:= Substr(cObs04,1,IIf(Len(cObs04)<50,Len(cObs01),50))
+		EndIf
+	EndIf
+
+	If oReport:Row() > oReport:LineHeight() * 70
+
+		dbSelectArea("SC8")
+		dbSkip(-1)  // condicao onde ja imprimiu tudo mas o rodape sera' impresso em nova pagina
+			
+		oReport:Box( oReport:Row(),010,oReport:Row() + oReport:LineHeight() * 3, 2290 )
+		oReport:SkipLine()
+		oReport:PrintText(STR0015,, 050 ) // Continua ....
+			
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Dispara a cabec especifica do relatorio.                     ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		oReport:EndPage()
+			
+		oSection2:Cell("ITEM"):Hide()
+		oSection2:Cell("C8_PRODUTO"):Hide()
+		oSection2:Cell("DESCPROD"):Hide()
+		oSection2:Cell("C8_QUANT"):Hide()
+		oSection2:Cell("C8_UM"):Hide()
+		oSection2:Cell("CDADOS"):Hide()
+		oSection2:Cell("C8_DATPRF"):Hide()
+		oSection2:PrintLine()
+		oSection2:Cell("ITEM"):Show()
+		oSection2:Cell("C8_PRODUTO"):Show()
+		oSection2:Cell("DESCPROD"):Show()
+		oSection2:Cell("C8_QUANT"):Show()
+		oSection2:Cell("C8_UM"):Show()
+		oSection2:Cell("CDADOS"):Show()
+		oSection2:Cell("C8_DATPRF"):Show()
+		
+		dbSelectArea("SC8")
+		dbSkip()
+			
+	EndIf
+
+	oReport:Box( 2480 ,  010 , 3012 , 2290 ) // Box do rodape'
+	
+	oReport:Line( 2660,  010 , 2660 , 2290 ) // Completa o Box Observacoes
+	oReport:Line( 2660,  840 , 3012 ,  840 ) // Completa o Box do Local de Entrega
+	oReport:Line( 2660, 1600 , 3012 , 1600 ) // Completa o Box do Sub Total
+
+	oReport:Line( 2870 , 010 , 2870 , 2290 ) // Completa o Box da Alcada
+
+    oReport:PrintText(" ",2490,020)	// Necessario para posicionar Row() para a impressao do Rodape
+    
+    oReport:PrintText(STR0032,,020)  //Observacoes :
+	oReport:PrintText(cObs01,,020 )
+	oReport:PrintText(cObs02,,020 )
+	oReport:PrintText(cObs03,,020 )
+	oReport:PrintText(cObs04,,020 )
+ 
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Acessar o Endereco para Entrega do Arquivo de Empresa SM0.   ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea("SM0")
+	dbSetOrder(1)   && forca o indice na ordem certa
+	nRegistro := Recno()
+	MsSeek(SUBS(cNumEmp,1,2)+CFilEnt)
+
+	oReport:SkipLine()
+	oReport:PrintText( + STR0018,oReport:Row(),  020 ) //"Local de Entrega:"
+	oReport:PrintText( + STR0019,oReport:Row(),  850 ) //"Sub Total"
+	oReport:PrintText( + STR0020,oReport:Row(), 1610 ) //"Condicao de Pagamento"
+    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+    //³ Imprime o End de Entrega do SM0 somente quando cEndEnt  == " "     ³
+    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If Empty(cEndEnt)
+		cEnd := If( Empty(SM0->M0_ENDENT), " O mesmo ", SM0->M0_ENDENT)
+	Else
+		cEnd := cEndEnt // imprime o endereco digitado na pergunte
+	Endif
+	Go nRegistro
+
+	oReport:SkipLine()
+	oReport:PrintText( + cEnd	,oReport:Row(), 020 )
+	oReport:PrintText( + STR0021,oReport:Row(), 850 ) //"Descontos "
+
+	oReport:SkipLine()
+	oReport:PrintText( + STR0022,oReport:Row(), 020 ) //"Local de Cobranca:"
+	oReport:PrintText( + Iif(cPaisLoc<>"PER",STR0023,STR0039),oReport:Row(), 850 ) //"Total do IPI"
+
+	cEnd := If(Empty(SM0->M0_ENDCOB),Iif(Empty(SM0->M0_ENDENT),"O mesmo",SM0->M0_ENDENT),SM0->M0_ENDCOB)
+	oReport:SkipLine()
+	oReport:PrintText( + cEnd	,oReport:Row(),  020 )
+	oReport:PrintText( + STR0024,oReport:Row(),  850 )	 //"Frete"
+	oReport:PrintText( + STR0025,oReport:Row(), 1610 )	 //"Condicao de Reajuste"
+
+	oReport:SkipLine()
+	oReport:PrintText( + STR0026,oReport:Row(),  020 )	 //"Contato no Fornecedor"
+
+	oReport:SkipLine()
+	oReport:PrintText( + cContato ,oReport:Row(),  020 )
+	oReport:PrintText( + STR0027+Replicate(".",11)  ,oReport:Row(),  850 )	 //"TOTAL DO PEDIDO"
+	oReport:Line( oReport:Row(), 840 , oReport:Row(), 1600 ) // Linha do Total do Pedido
+
+	oReport:SkipLine()
+	oReport:SkipLine()
+	oReport:PrintText( + STR0028,oReport:Row(),  020 )	 //"Alcada 1"
+	oReport:PrintText( + STR0029,oReport:Row(),  850 )	 //"Alcada 2"
+	oReport:PrintText( + STR0030 +" "+Dtoc(dEmissao) ,oReport:Row(), 1610)	 //"Emitido em :"
+
+	dbSelectArea("SC8")
+
+Enddo
+oSection2:Finish()
+
+dbSelectArea("SC8")
+Set Filter To
+dbSetOrder(1)
+
+Return NIL           
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ MATR150R3³ Autor ³ Claudinei M. Benzi    ³ Data ³ 05/06/92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Emissao das Cotacoes                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ ATUALIZACOES SOFRIDAS DESDE A CONSTRUCAO INICIAL.                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ PROGRAMADOR  ³ DATA   ³ BOPS ³  MOTIVO DA ALTERACAO                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Edson  M.    ³04/11/98³xxxxxx³ Acerto no lay-out p/ o ano 2000.       ³±±
+±±³ Bruno        ³14/12/98³melhor³ Acerto na impressao do STR0031.        ³±±
+±±³ Edson   M.   ³30/03/99³XXXXXX³Passar o tamanho na SetPrint.           ³±±
+±±³ Patricia Sal.³21/12/99³XXXXXX³Acerto Lay-Out, Fornec. com 20 pos.e Lj.³±±
+±±³              ³        ³      ³com 4 pos.                              ³±±
+±±³ Patricia Sal.³08/05/00³003907³Aumentar a Pict. do campo Quantidade.   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+static Function Matr150R3(cNumCota)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis                                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+LOCAL wnrel
+LOCAL cDesc1:=STR0001	//"Emissao das cotacoes de compras"
+LOCAL cDesc2:=""
+LOCAL cDesc3:=" "
+LOCAL Tamanho:="M"
+LOCAL cTel   :=""
+LOCAL cEndEnt:=""
+LOCAL cEmail :=""
+
+PRIVATE titulo:=STR0002	//"Relacao de Cotacoes"
+PRIVATE aReturn := { STR0003, 1,STR0004, 2, 2, 1, "",0 }		//"Zebrado"###"Administracao"
+PRIVATE nomeprog:="MATR150",nLastKey := 0
+PRIVATE cString :="SC8"
+
+cPerg  :="MTR150"
+wnrel  := "MATR150"
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionadas                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para parametros                         ³
+//³ mv_par01	     	  Do Numero                              ³
+//³ mv_par02	     	  Ate o Numero 		                     ³
+//³ mv_par03	     	  Do Fornecedor                          ³
+//³ mv_par04              Ate o Fornecedor            	     	 ³
+//³ mv_par05              Ate a data de validade      	   	     ³
+//³ mv_par06              Campo Descricao do Produto             ³
+//³ mv_par07              Endere‡o Fiscal                        ³
+//³ mv_par08              Cidade - Estado                        ³
+//³ mv_par09              Fax                                    ³
+//³ mv_par10              Qual Unidade de Medida ?               ³
+//³ mv_par11              Telefone                               ³
+//³ mv_par12              Endereco de Entrega ?                  ³
+//³ mv_par13              Endereco de e-mail  ?                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+If cNumCota == Nil
+	pergunte("MTR150",.F.)
+Else
+	cPerg := "MR150A"
+	Pergunte("MR150A",.F.)
+EndIf
+
+wnrel:=SetPrint(cString,wnrel,cPerg,@Titulo,cDesc1,cDesc2,cDesc3,.F.,,,Tamanho)
+
+If nLastKey = 27
+	Set Filter To
+	Return
+Endif
+
+SetDefault(aReturn,cString)
+
+If nLastKey = 27
+	Set Filter To
+	Return
+Endif
+If !Empty(cNumCota)
+    cEmail       := mv_par09
+    cEndEnt      := mv_par08
+	cTel         := mv_par07
+	nSegundaUnid := mv_par06		// Grupo MR150A
+	mv_par09     := mv_par05
+	mv_par08     := mv_par04
+	mv_par07     := mv_par03
+	mv_par06     := mv_par02
+	mv_par05     := mv_par01
+	nomeprog     := "MATA130"
+	mv_par01     := cNumCota
+	mv_par02     := cNumCota
+	mv_par03     := "      "
+	mv_par04     := "ZZZZZZ"
+Else
+	nSegundaUnid := mv_par10
+	cTel         := mv_par11		// Grupo MTR150
+    cEndEnt      := mv_par12
+    cEmail       := mv_par13
+EndIf
+
+RptStatus({|lEnd| R150Imp(@lEnd,wnrel,cString,@cTel,cEndEnt,cEmail)},Titulo)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ R150IMP  ³ Autor ³ Cristina M. Ogura     ³ Data ³ 10.11.95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Chamada do Relatorio                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATR150                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function R150Imp(lEnd,wnrel,cString,cTel,cEndEnt,cEmail)
+
+// Verifica conteudo p/ Grupo Fornec. (001) e Loja (002)
+LOCAL aTamSXG  := TamSXG("001")
+LOCAL aTamSXG2 := TamSXG("002")
+LOCAL cNumero  := ""
+LOCAL cDtValid := ""
+LOCAL cFornece := ""
+LOCAL cLoja    := ""
+LOCAL cDescri  := ""
+LOCAL cabec1   := ""
+LOCAL cabec2   := ""
+LOCAL cabec3   := ""
+LOCAL cContato := ""
+LOCAL cObs01   := ""
+LOCAL cObs02   := ""
+LOCAL cObs03   := ""
+LOCAL cObs04   := ""
+LOCAL cVar     := ""
+LOCAL cbCont   := 0
+LOCAL nItem    := 0
+LOCAL nLinObs  := 0
+LOCAL dEmissao
+Local nX       := 0
+Local nRegistro:= 0
+Local lC8FilEn := .F.
+Local cFilEnt  := ""
+LOCAL cFax
+
+limite   := 132
+li       := 80
+m_pag    := 1
+nPag     := 0
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Inicializa os codigos de caracter Comprimido/Normal da impressora ³
+//³ Faz manualmente porque nao chama a funcao Cabec()                 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+@ 0,0 PSAY AvalImp(Limite)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Pesquisa Numero da Cotacao                                   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SC8")
+dbSetOrder(1)
+Set SoftSeek On
+dbSeek(xFilial()+mv_par01)
+Set SoftSeek Off
+
+SetRegua(RecCount())
+
+While xFilial() = C8_FILIAL .And. C8_NUM >= mv_par01 .And. C8_NUM <= mv_par02 .And. !Eof()
+	
+	IncRegua()
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica Fornecedor                                          ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	IF C8_FORNECE < mv_par03 .OR. C8_FORNECE > mv_par04
+		dbSkip()
+		Loop
+	Endif
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica Data de Validade ou se ja tem pedido feito          ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	IF C8_VALIDA > mv_par05 .OR. !Empty(C8_NUMPED)
+		dbSkip()
+		Loop
+	Endif
+	
+	cContato := SC8->C8_CONTATO
+	dEmissao := SC8->C8_EMISSAO
+	
+	IF li > 58
+		nPag ++
+		@0 ,  0 PSAY STR0005	//"PREZADOS SENHORES."
+		@ 00,70 PSAY STR0006 + SC8->C8_NUM + Space(5) + STR0007 + DTOC(SC8->C8_VALIDA) + Space(6) + STR0035 + STRZERO(nPag,4) 		//"COTACAO N. "###" Vencimento "###"Pagina  "
+		dbSelectArea("SA2")
+		dbSeek(xFilial()+SC8->C8_FORNECE+SC8->C8_LOJA)
+		If aTamSXG[1] != aTamSXG[3]
+			@1 ,  0 PSAY SubStr(A2_NOME,1,25)+" ("+A2_COD+" - "+A2_LOJA+")"
+		Else
+			@1 ,  0 PSAY SubStr(A2_NOME,1,40)+" ("+A2_COD+" - "+A2_LOJA+")"
+		Endif
+		@1 , 58 PSAY "|"
+		@2 ,  0 PSAY A2_END
+		@2 , 58 PSAY "| " + STR0008	//"Por favor queira referenciar este numero para quaisquer troca de"
+		@3 ,  0 PSAY A2_BAIRRO
+		@3 , 58 PSAY "| " + STR0009	//"informacoes referentes a esta cotacao."
+		@4 ,  0 PSAY STR0010	+A2_DDD+" "+Substr(SA2->A2_TEL,1,15)		//"Fone: "
+		@4 , 58 PSAY "|"+Space(28)+STR0011		//"Atenciosamente."
+		@5 ,  0 PSAY STR0012+A2_DDD+" "+SA2->A2_FAX			//"Fax : "
+		@5 , 58 PSAY "| "+ SM0->M0_NOMECOM
+		
+		cEndere	:= Iif(Empty(MV_PAR07), Iif(Empty(SM0->M0_ENDENT),SM0->M0_ENDCOB,SM0->M0_ENDENT), MV_PAR07)
+		cCidEst	:= Iif(Empty(MV_PAR08), Iif(Empty(SM0->M0_CIDENT+SM0->M0_ESTENT), SM0->M0_CIDCOB + " " + SM0->M0_ESTCOB,  SM0->M0_CIDENT + " " + SM0->M0_ESTENT),MV_PAR08)
+		cFax	:= Iif(Empty(MV_PAR09), SM0->M0_FAX, MV_PAR09)
+		cTel    := Iif(Empty(cTel), SM0->M0_TEL, cTel)
+		@6 , 58 PSAY "| "+ cEndere
+		@7 ,  0 PSAY STR0013	//"Solicitamos de V Sas. cotacao de precos para os produtos"
+		@7 , 58 PSAY "| "+ cCidEst
+		@8 ,  0 PSAY STR0014	//"discriminados conforme os padroes abaixo estabelecidos:"
+		@8 , 58 PSAY "| "+ STR0010 + cTel +	 "  "+STR0012	 + cFax		//"Fone : " "Fax : "
+		@9 , 58 PSAY "| "+ STR0033 + " " + cEmail // "E-mail :"
+		@10,  0 PSAY __PrtThinLine()
+		@11,  0 PSAY Iif(cPaisLoc<>"PER",STR0016,STR0038)	//"ITM   N/Vosso Codigo Descricao da Mercadoria        Quantidade UN Valor Unitario      Valor Total IPI  Valor do IPI Pz e Dt Prev Entrg"
+		@12,  0 PSAY Replicate("-", 4)
+		@12,  5 PSAY Replicate("-",15)
+		@12, 21 PSAY Replicate("-",30)
+		@12, 52 PSAY Replicate("-",11)
+		@12, 64 PSAY Replicate("-", 2)
+		@12, 67 PSAY Replicate("-",13)
+		@12, 81 PSAY Replicate("-",14)
+		@12, 96 PSAY Replicate("-", 3)
+		@12,100 PSAY Replicate("-",13)
+		@12,114 PSAY Replicate("-",18)
+		li:=12
+		dbSelectArea("SC8")
+		cNumero  := C8_NUM
+		cFornece := C8_FORNECE
+		cLoja    := C8_LOJA
+		cDtValid := DTOC(SC8->C8_VALIDA) 
+	Endif
+	
+	cObs01   := " "
+	cObs02   := " "
+	cObs03   := " "
+	cObs04   := " "
+	nLinObs  := 0
+	nItem    := 0
+	
+	While !Eof() .And. C8_NUM == cNumero .And. cFornece == C8_FORNECE .And. C8_LOJA == cLoja
+		IF li > 58
+			li ++
+			li ++
+			nPag ++
+			@ li,00 PSAY Replicate("-",limite-Len(STR0015))+STR0015 //" Continua ..."
+			@ 00,00 PSAY STR0017+Replicate("-",53)		//"Continuacao ..."
+			@ 00,70 PSAY STR0006 + cNumero + STR0007 + cDtValid + Space(13) + STR0035 + STRZERO(nPag,4) 		//"COTACAO N. "###" Vencimento "###"Pagina  "
+			li := 1
+		Endif
+		
+		IncRegua()
+		
+		li++
+		nItem++
+		@li,  0 PSAY StrZero(nItem,4)
+		@li,  5 PSAY C8_PRODUTO
+		ImpDescr()
+		cFilEnt := SC8->C8_FILENT
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Inicializacao da Observacao da Cotacao                       ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If !EMPTY(SC8->C8_OBS) .And. nLinObs < 5
+			nLinObs++
+			cVar:="cObs"+StrZero(nLinObs,2)
+			Eval(MemVarBlock(cVar),SC8->C8_OBS)
+		Endif
+		
+		dbSelectArea("SC8")
+		dbSkip()
+	EndDo
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Acessar o Endereco para Entrega do Arquivo de Empresa SM0.   ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	lC8FilEnt := .F.
+	If SC8->(Eof()) .Or. cFilEnt != SC8->C8_FILENT
+		dbSkip(-1)        // Para ter Certeza que nao e Eof() ou trocou a filial
+		lC8FilEnt := .T.  // de Entrega
+	Endif
+	
+	dbSelectArea("SM0")
+	dbSetOrder(1)   && forca o indice na ordem certa
+	nRegistro := Recno()
+	dbSeek(SUBS(cNumEmp,1,2)+SC8->C8_FILENT)
+	
+	If li > Iif(nLinObs > 0,45,50)
+		li ++
+		li ++
+		nPag ++
+		@ li,00 PSAY Replicate("-",limite-Len(STR0015))+STR0015	//" Continua ..."
+		@ 00,00 PSAY STR0017+Replicate("-",53)		//"Continuacao ..."
+		@ 00,70 PSAY STR0006 + cNumero + STR0007 + cDtValid + Space(13) + STR0035 + STRZERO(nPag,4) 		//"COTACAO N. "###" Vencimento "###"Pagina  "
+		li := 1
+	Endif
+	If lC8FilEnt .and. !SC8->(Eof())
+		SC8->(dbSkip())
+	Endif
+	
+	If nLinObs > 0
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Inicializar campos de Observacoes.                           ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If Empty(cObs02)
+			If Len(cObs01) > 50
+				cObs 	:= cObs01
+				cObs01:= Substr(cObs,1,50)
+				For nX := 2 To 4
+					cVar  := "cObs"+StrZero(nX,2)
+					&cVar := Substr(cObs,(50*(nX-1))+1,50)
+				Next
+			EndIf
+		Else
+			cObs01:= Substr(cObs01,1,IIf(Len(cObs01)<50,Len(cObs01),50))
+			cObs02:= Substr(cObs02,1,IIf(Len(cObs02)<50,Len(cObs01),50))
+			cObs03:= Substr(cObs03,1,IIf(Len(cObs03)<50,Len(cObs01),50))
+			cObs04:= Substr(cObs04,1,IIf(Len(cObs04)<50,Len(cObs01),50))
+		EndIf
+		
+		li:=45
+		
+		//** BRENO **//
+/*		@ li,000 PSAY __PrtThinLine()
+		li++
+		@ li,000 PSAY STR0032	 //Observacoes :
+		@ li,054 PSAY "|"
+		li++
+		@ li,000 PSAY cObs01
+		@ li,054 PSAY "|"
+		li++
+		@ li,000 PSAY cObs02
+		@ li,054 PSAY "|"
+		li++
+		@ li,000 PSAY cObs03
+		@ li,054 PSAY "|"
+		li++
+		@ li,000 PSAY cObs04
+		@ li,054 PSAY "|"*/
+		//**********//		
+	Else
+		li:=50
+	Endif
+	
+	li++
+	@li,  0 PSAY __PrtThinLine()
+	li++
+	@li,  0 PSAY STR0018			//"Local de Entrega:"
+	@li, 47 PSAY "|  "+STR0019		//"Sub Total"
+	@li, 97 PSAY "| "+STR0020		//"Condicao de Pagamento"
+	li++
+    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+    //³ Imprime o End de Entrega do SM0 somente quando cEndEnt  == " "     ³
+    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    If Empty(cEndEnt)
+	   @li,  0 PSAY IIf( Empty(SM0->M0_ENDENT), " O mesmo ", SM0->M0_ENDENT )
+    Else
+       @li,  0 PSAY cEndEnt        
+    EndIf
+	@li, 47 PSAY "|  "+STR0021		//"Descontos "
+	@li, 97 PSAY "|"
+	Go nRegistro
+	dbSelectArea("SC8")
+	
+	li++
+	@li,  0 PSAY STR0022			//"Local de Pagamento:"
+	@li, 47 PSAY "|  "+Iif(cPaisLoc<>"PER",STR0023,STR0039)		//"Total do IPI"
+	@li, 97 PSAY "|"
+	
+	li++
+	@li,  0 PSAY Iif(Empty(SM0->M0_ENDCOB),Iif(Empty(SM0->M0_ENDENT),"O mesmo",SM0->M0_ENDENT),SM0->M0_ENDCOB)
+	@li, 47 PSAY "|  "+STR0024		//"Frete"
+	@li, 97 PSAY "| "+STR0025		//"Condicao de Reajuste"
+	
+	li++
+	@li,  0 PSAY STR0026	 		//"Contato no Fornecedor"
+	@li, 47 PSAY "|"+Replicate("-",23)
+	@li, 97 PSAY "|"
+	
+	li++
+	@li,  0 PSAY cContato
+	@li, 47 PSAY "|  "+STR0027 + Replicate(".",11)   //"TOTAL DO PEDIDO"
+	@li, 97 PSAY "|"
+	
+	li++
+	@li,  0 PSAY __PrtThinLine()
+	
+	li++
+	@li,  0 PSAY STR0028		//"Alcada 1"
+	@li, 28 PSAY "| "+STR0029	//"Alcada 2"
+	@li,108 PSAY STR0030		//"Emitido em :"
+	@li,121 PSAY dEmissao
+	
+	li++
+	@li, 0  PSAY __PrtThinLine()
+	
+	dbSelectArea("SC8")
+	li := 80
+	nPag := 0
+EndDo
+
+dbSelectArea("SC8")
+Set Filter To
+dbSetOrder(1)
+
+dbSelectArea("SA5")
+dbSetOrder(1)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Se em disco, desvia para Spool                               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If aReturn[5] = 1    // Se Saida para disco, ativa SPOOL
+	Set Printer To
+	Commit
+	OurSpool(wnrel)
+Endif
+
+MS_FLUSH()
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ImpValores³ Autor ³ Jose Lucas            ³ Data ³ 19.07.93 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprimir Valores da Cotacao.	  							  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ ImpValores(Void) 		                        		  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ 					                    					  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MatR150                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpValores()
+
+dbSelectArea("SC8")
+
+If nSegundaUnid == 2 .And. !Empty(SC8->C8_QTSEGUM)
+	@li, 52 PSAY  SC8->C8_QTSEGUM Picture "99999999.99"
+	@li, 64 PSAY  SC8->C8_SEGUM
+Else
+	@li, 52 PSAY  SC8->C8_QUANT Picture "99999999.99"
+	@li, 64 PSAY  SC8->C8_UM
+Endif
+
+@li,119 PSAY  STR0031	//"dias"
+@li,124 PSAY  SC8->C8_DATPRF
+li++
+
+dbSelectArea("SC8")
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ ImpDescr ³ Autor ³ Jose Lucas            ³ Data ³ 19.07.93 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Montagem e Impressao(R3) da descricao do Produto.	 	  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ ImpDescr(ExpC1,ExpL1)	                     			  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1 = var. para ser atualizada com a descricao do produto³±±
+±±³          ³ ExpL1 = Se .T. = chamado do relatorio Release 4			  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MatR150                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpDescr(cDescri,lTReport)
+
+Local nBegin  := 0
+Local nLinha  := 0
+
+DEFAULT cDescri   := ""
+DEFAULT lTReport  := .F.
+
+If Empty(mv_par06)
+	mv_par06 := "B1_DESC"
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Impressao da descricao cientifica do Produto.                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If AllTrim(mv_par06) == "B5_CEME"
+	dbSelectArea("SB5")
+	dbSetOrder(1)
+	If dbSeek(xFilial()+SC8->C8_PRODUTO)
+//		cDescri := Alltrim(B5_CEME)
+
+		//** BRENO **//
+		cDescri := Alltrim(B5_CEME)+Chr(13)+Chr(10)+AllTrim(SC8->C8_OBS)
+		//**********//
+	EndIf
+ElseIf AllTrim(mv_par06) == "A5_NOMPROD" .And. !lTReport
+	dbSelectArea("SA5")
+	dbSetOrder(1)
+	If dbSeek(xFilial()+SC8->C8_FORNECE+SC8->C8_LOJA+SC8->C8_PRODUTO)
+//		cDescri := Alltrim(A5_NOMPROD)
+		
+		//** BRENO **//
+		cDescri := Alltrim(A5_NOMPROD)+Chr(13)+Chr(10)+AllTrim(SC8->C8_OBS)
+		//**********//
+	EndIf
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Impressao da descricao do produto do arquivo de Cotacoes.    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If AllTrim(mv_par06) == "C1_DESCRI"
+	dbSelectArea("SC1")
+	dbSetOrder(1)
+	If dbSeek(xFilial()+SC8->C8_NUMSC+SC8->C8_ITEMSC)
+//		cDescri := Alltrim(C1_DESCRI)
+		
+		//** BRENO **//
+		cDescri := Alltrim(C1_DESCRI)+Chr(13)+Chr(10)+AllTrim(SC8->C8_OBS)
+		//**********//
+	Endif
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Impressao da descricao do Produto SB1.		         		 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SB1")
+dbSeek(xFilial()+SC8->C8_PRODUTO)
+If Empty(cDescri)
+//	cDescri := Alltrim(B1_DESC)
+	
+	//** BRENO **//
+	cDescri := Alltrim(B1_DESC)+Chr(13)+Chr(10)+AllTrim(SC8->C8_OBS)
+	//**********//
+EndIf
+
+dbSelectArea("SC8")
+
+If !lTReport
+	nLinha:= MLCount(cDescri,30)
+	@ li,021 PSAY MemoLine(cDescri,30,1)
+	ImpValores()
+	For nBegin := 2 To nLinha
+		@ li,021 PSAY Memoline(cDescri,30,nBegin)
+	    If nBegin == 2
+	    	@ li,067 PSAY Replicate("-",51)
+	    EndIf
+	    li++
+	Next nBegin
+
+	dbSelectArea("SA5")
+	dbSetOrder(2)
+	If dbSeek(xFilial()+SC8->C8_PRODUTO+SC8->C8_FORNECE+SC8->C8_LOJA)
+		If !Empty(SA5->A5_CODPRF)
+			@li,3 PSAY Alltrim(SA5->A5_CODPRF)
+		EndIf
+	Endif
+	
+	If nLinha < 2
+	   	@ li,067 PSAY Replicate("-",51)
+	EndIf
+EndIf
+	
+Return Nil
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³CabecCT   ³ Autor ³ Ricardo Berti		    ³ Data ³31/07/2007³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Emissao do Cotacao                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ CabecCT(ExpO1,ExpO2,ExpN1,ExpC1)	                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpO1 = Objeto oReport                      	              ³±±
+±±³          ³ ExpO2 = Objeto da secao1 com o cabec                       ³±±
+±±³          ³ ExpN2 = Numero de Pagina                                   ³±±
+±±³          ³ ExpC1 = Numero da Cotacao                                  ³±±
+±±³          ³ ExpC2 = email                                              ³±±
+±±³          ³ ExpC3 = telefone                                           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function CabecCT(oReport,oSection1,nPagina,cNumCota,cEmail,cTel)
+Local aTamSXG  := TamSXG("001")
+
+Default cNumCota := ""
+
+oSection1:Init()
+
+oReport:Box(  010 , 010 , 380 , 2290 )  // Boxes do cabecalho
+oReport:Line( 010 , 840 , 380 , 0840 )
+
+oReport:PrintText( If(nPagina > 1,("- "+STR0017)," "),,020 )	  	//"Continuacao"
+oReport:PrintText( + STR0006 + SC8->C8_NUM + Space(20) + ; 	// "COTACAO N. "
+	STR0007 + DTOC(SC8->C8_VALIDA) + Space(20) + STR0035 + StrZero(nPagina,4),,940)  //" Vencimento "###"Pagina  "
+
+oSection1:PrintLine()
+
+oReport:PrintText(STR0005,120,020) // "PREZADOS SENHORES."
+
+oReport:PrintText(SubStr(SA2->A2_NOME,1,If(aTamSXG[1] != aTamSXG[3],25,40))+" ("+SA2->A2_COD+" - "+SA2->A2_LOJA+")",120,020)
+oReport:PrintText(STR0008,120,890) //"Por favor queira referenciar este numero para quaisquer troca de"
+
+oReport:PrintText(SA2->A2_END,150,020)
+oReport:PrintText(STR0009,150,890) //"informacoes referentes a esta cotacao."
+
+oReport:PrintText(AllTrim(SA2->A2_BAIRRO + "  " + SA2->A2_MUN + " - " + SA2->A2_EST),180,020)
+oReport:PrintText(Space(30) + STR0011,180,890) //"Atenciosamente."
+
+oReport:PrintText(STR0010 + SA2->A2_DDD+" " + SA2->A2_TEL,210,020) //"Fone: "
+oReport:PrintText(SM0->M0_NOMECOM,210,890)
+
+oReport:PrintText(STR0012 + SA2->A2_DDD+" " + SA2->A2_FAX,240,020) //"Fax : "
+oReport:PrintText(If(Empty(MV_PAR07), If(Empty(SM0->M0_ENDENT),SM0->M0_ENDCOB,SM0->M0_ENDENT),MV_PAR07),240,890)
+
+oReport:PrintText(Space(57),270,020)
+oReport:PrintText(If(Empty(MV_PAR08), If(Empty(SM0->M0_CIDENT+SM0->M0_ESTENT), SM0->M0_CIDCOB + " " + SM0->M0_ESTCOB,  SM0->M0_CIDENT + " " + SM0->M0_ESTENT),MV_PAR08),270,890)
+
+oReport:PrintText(STR0013,300,020) //"Solicitamos de V Sas. cotacao de precos para os produtos"
+oReport:PrintText(STR0010 + If(Empty(cTel), SM0->M0_TEL, cTel)+ "   " + STR0012 + If(Empty(MV_PAR09), SM0->M0_FAX, MV_PAR09),300,890) //"Fone: "### //"Fax : "
+
+oReport:PrintText(STR0014,330,020) //"discriminados conforme os padroes abaixo estabelecidos:"
+oReport:PrintText(STR0033 + " " + cEmail,330,890) //"E-mail :" 
+
+oReport:PrintText(Space(10),360,020)
+
+oSection1:PrintLine()
+oReport:SkipLine()
+
+oSection1:Finish()
+
+Return NIL
