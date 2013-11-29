@@ -165,6 +165,7 @@ static function Impr()
 	cQry := "select E5_DTDISPO, E5_DATA, E5_HISTOR, E5_DOCUMEN, E5_NUMCHEQ, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_VALOR, E5_RECPAG, E5_RECONC, E5_TIPODOC, E5_DTDIGIT, E5_TIPO, E5_BENEF, E5_CLIFOR, E5_LOJA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_MOTBX, R_E_C_N_O_ as RECNO "
 	cQry += "from "+RetSqlName("SE5")+" "
 	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and ((E5_TIPODOC not in ('MT','BA','CH','EC','PA','ES','DC','JR')) or (E5_TIPODOC in ('CH','EC') and E5_RECONC = 'x')) and D_E_L_E_T_ <> '*' "
+//	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and E5_RECONC = 'x' and (E5_TIPODOC not in ('MT','BA','CH','EC','PA','ES','DC','JR') or E5_TIPODOC in ('CH','EC')) and D_E_L_E_T_ <> '*' "
 	cQry += "order by E5_DTDISPO, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_NUMCHEQ, R_E_C_N_O_"
 //	cQry += "order by E5_DTDISPO, E5_BANCO, E5_AGENCIA, E5_CONTA, R_E_C_N_O_"
 //	cQry += "order by SE5.R_E_C_N_O_"
@@ -1059,6 +1060,7 @@ static function AReceber()
 	local nTotal := 0
 	local nValor := 0
 	local nTotDia := 0
+	local nTotReg := 0
 	
 	if Select("TEMP") <> 0
 		TEMP->(DbCloseArea())
@@ -1067,7 +1069,8 @@ static function AReceber()
 	cQry := "select E1_VENCREA, E1_NUM, E1_PREFIXO, E1_PARCELA, E1_NOMCLI, E1_VALOR, E1_SALDO, E1_BAIXA "
 	cQry += "from "+RetSqlName("SE1")+" "
 //	cQry += "where E1_VENCREA <= '"+DToS(dDataAte + 5)+"' and ((E1_BAIXA = '') or (E1_BAIXA <> '' and E1_SALDO > 0)) and D_E_L_E_T_ <> '*' "
-	cQry += "where (E1_VENCREA between '"+cDataDe+"' and '"+DToS(dDataAte + 5)+"') and ((E1_BAIXA = '') or (E1_BAIXA <> '' and E1_SALDO > 0)) and D_E_L_E_T_ <> '*' "
+//	cQry += "where (E1_VENCREA between '"+cDataDe+"' and '"+DToS(dDataAte + 5)+"') and ((E1_BAIXA = '') or (E1_BAIXA <> '' and E1_SALDO > 0)) and D_E_L_E_T_ <> '*' "
+	cQry += "where (E1_VENCREA between '20130101' and '"+DToS(dDataAte + 5)+"') and ((E1_BAIXA = '') or (E1_BAIXA <> '' and E1_SALDO > 0)) and E1_PREFIXO <> 'RA' and D_E_L_E_T_ <> '*' "
 	cQry += "order by E1_VENCREA, E1_NOMCLI"
 	
 	tcquery cQry new alias "TEMP"
@@ -1075,7 +1078,8 @@ static function AReceber()
 	DbSelectArea("TEMP")
 	TEMP->(DbGoTop())
 	
-	@nLin,000 psay PadC("Periodo: "+U_ConvData(cDataDe)+" ate "+U_ConvData(DToS(dDataAte + 5)),132)
+//	@nLin,000 psay PadC("Periodo: "+U_ConvData(cDataDe)+" ate "+U_ConvData(DToS(dDataAte + 5)),132)
+	@nLin,000 psay PadC("Periodo: 01/01/2013 ate "+U_ConvData(DToS(dDataAte + 5)),132)
 //	@nLin,000 psay PadC("Todos os titulos a receber em aberto ate "+U_ConvData(DToS(dDataAte + 5)),132)
 	
 	nLin += 2
@@ -1086,10 +1090,10 @@ static function AReceber()
 		CabecLocal(cDef)
 	endif
 	
-	@nLin,000 psay "PREVISAO  CLIENTE               DOCUMENTO      PROJETO  ORDEM COMPRA                 VALOR          TOTAL DIA"
+	@nLin,000 psay "PREVISAO  CLIENTE               DOCUMENTO      PROJETO  ORDEM COMPRA                 VALOR          TOTAL DIA  ATRASO"
 	
 	nLin++
-	cDef := "PREVISAO  CLIENTE               DOCUMENTO      PROJETO  ORDEM COMPRA                 VALOR          TOTAL DIA"
+	cDef := "PREVISAO  CLIENTE               DOCUMENTO      PROJETO  ORDEM COMPRA                 VALOR          TOTAL DIA  ATRASO"
 	
 	U_SaltaFolha()
 	
@@ -1098,13 +1102,14 @@ static function AReceber()
 	endif
 	
 	while !TEMP->(Eof())
-//		PREVISAO  CLIENTE               DOCUMENTO      PROJETO  ORDEM COMPRA                 VALOR          TOTAL DIA
-//		99/99/99  AAAAAAAAAAAAAAAAAAAA  999999999-999  999999   999999999999999   9,999,999,999.99   9,999,999,999.99
+//		PREVISAO  CLIENTE               DOCUMENTO      PROJETO  ORDEM COMPRA                 VALOR          TOTAL DIA  ATRASO
+//		99/99/99  AAAAAAAAAAAAAAAAAAAA  999999999-999  999999   999999999999999   9,999,999,999.99   9,999,999,999.99    9999
 //		01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
 //		          1         2         3         4         5         6         7         8         9        10        11        12        13
-		
+		nTotReg := 0
 		nValor := IIf(Empty(TEMP->E1_BAIXA),TEMP->E1_VALOR,TEMP->E1_SALDO)
 		cDia := TEMP->E1_VENCREA
+		nDiasAtraso := SToD(TEMP->E1_VENCREA) - dDataBase
 		
 		@nLin,000 psay U_ConvData(TEMP->E1_VENCREA,"yy")
 		@nLin,010 psay TEMP->E1_NOMCLI
@@ -1121,7 +1126,9 @@ static function AReceber()
 		DbSelectArea("CON1")
 		CON1->(DbGoTop())
 		
-		if !CON1->(Eof())
+		count to nTotReg
+		
+		if !CON1->(Eof()) .and. nTotReg > 1
 			while !CON1->(Eof())
 				@nLin,047 psay Left(CON1->C6_CLVL,6)
 				@nLin,056 psay CON1->CTH_AF
@@ -1147,8 +1154,10 @@ static function AReceber()
 			nLin--
 			
 			@nLin,093 psay Transf(nTotDia,"@E 9,999,999,999.99")
+			@nLin,113 psay Transf(nDiasAtraso,"@R 9999")
 			
 			nTotDia := 0
+			nDiasAtraso := 0
 			nLin++
 			cDia := TEMP->E1_VENCREA
 		endif

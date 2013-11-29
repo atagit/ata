@@ -148,7 +148,7 @@ static function Impr()
 		else
 			cQry := "select E2_NUM, E2_PREFIXO, E2_PARCELA, E2_EMISSAO, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_BALGER, E2_NOMFOR, E2_VALLIQ "
 			cQry += "from "+RetSqlName("SE2")+" "
-			cQry += "where E2_NUM = '"+TEMP->E5_NUMERO+"' and E2_PREFIXO = '"+TEMP->E5_PREFIXO+"' and D_E_L_E_T_ <> '*' "
+			cQry += "where E2_NUM = '"+TEMP->E5_NUMERO+"' and E2_PREFIXO = '"+TEMP->E5_PREFIXO+"' and E2_PARCELA = '"+TEMP->E5_PARCELA+"' and E2_FORNECE = '"+TEMP->E5_CLIFOR+"' and D_E_L_E_T_ <> '*' "
 		endif
 		
 		tcquery cQry new alias "CON1"

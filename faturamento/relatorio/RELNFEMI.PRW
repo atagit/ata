@@ -64,9 +64,9 @@ user function RELNFEMI()
 	cDtIni := DToS(mv_par01)
 	cDtFin := DToS(mv_par02)
 	cTpPrjIni := mv_par03
-	cTpPrjFin := If(Empty(mv_par04),"ZZZZ",mv_par04)
-	cCliIni := If(SA1->(DbSeek(xFilial("SA1")+mv_par05,.F.)),Left(SA1->A1_CGC,8),"")
-//	cCliFin := If(SA1->(DbSeek(xFilial("SA1")+mv_par06,.F.)),Left(SA1->A1_CGC,8),"ZZZZZZZZZZZZZZ")
+	cTpPrjFin := IIf(Empty(mv_par04),"ZZZZ",mv_par04)
+	cCliIni := IIf(SA1->(DbSeek(xFilial("SA1")+mv_par05,.F.)),Left(SA1->A1_CGC,8),"")
+//	cCliFin := IIf(SA1->(DbSeek(xFilial("SA1")+mv_par06,.F.)),Left(SA1->A1_CGC,8),"ZZZZZZZZZZZZZZ")
 	
 	Processa({|| Impr()},"","Aguarde processando...",lAborta)
 	
@@ -141,16 +141,13 @@ static function Impr()
 //	01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
 //	          1         2         3         4         5         6         7         8         9        10        11        12        13
 	
-	DbSelectArea("SD1")
-	SD1->(DbSetOrder(15))
-	
 	while !TEMP->(Eof())
 		@nLin,000 psay Right(TEMP->D2_DOC,6)+"-"+Left(TEMP->D2_SERIE,1)
 		@nLin,011 psay U_ConvData(TEMP->D2_EMISSAO,"yy")
 		@nLin,022 psay Left(TEMP->F4_TEXTO,8)
 		@nLin,033 psay Left(TEMP->NREDUZ,7)
 		@nLin,043 psay Left(TEMP->C6_CLVL,6)
-		@nLin,050 psay IIf(CTH->(DbSeek(xFilial("CTH")+TEMP->C6_CLVL,.F.)),Left(AllTrim(CTH->CTH_DESC01),25),"")
+		@nLin,050 psay IIf(CTH->(DbSeek(xFilial("CTH")+TEMP->C6_CLVL,.F.)),Left(AllTrim(CTH->CTH_DESC01),25)," ")
 		@nLin,078 psay U_ConvData(TEMP->CTH_DTENTR,"yy")
 //		@nLin,089 psay Transf(If(TEMP->CTH_TPPRJ $ _TPPROJ,0,TEMP->PESOL),"@E 999999999.99")
 		
@@ -167,27 +164,49 @@ static function Impr()
 		
 		@nLin,089 psay Transf(nPesol,"@E 999999999.99")
 		
-		SD1->(DbGoTop())
-		
 		nValTot := TEMP->D2_TOTAL
 		
-		if SD1->(DbSeek(xFilial("SD1")+TEMP->(D2_DOC+D2_SERIE),.F.))
+//		DbSelectArea("SD1")
+//		SD1->(DbOrderNickname("NFORI"))
+//		SD1->(DbSetOrder(16))
+//		SD1->(DbGoTop())
+		
+//		if SD1->(DbSeek(xFilial("SD1")+TEMP->(D2_DOC+D2_SERIE),.F.))
 //			nValTot := TEMP->D2_TOTAL
 			
-			while !SD1->(Eof()) .and. SD1->D1_NFORI >= TEMP->D2_DOC .and. SD1->D1_NFORI <= TEMP->D2_DOC .and. SD1->D1_SERIORI >= TEMP->D2_SERIE .and. SD1->D1_SERIORI <= TEMP->D2_SERIE .and. SD1->D1_TIPO <> "C"
+/*			while !SD1->(Eof()) .and. SD1->D1_NFORI >= TEMP->D2_DOC .and. SD1->D1_NFORI <= TEMP->D2_DOC .and. SD1->D1_SERIORI >= TEMP->D2_SERIE .and. SD1->D1_SERIORI <= TEMP->D2_SERIE .and. SD1->D1_TIPO <> "C"
 				nValTot -= SD1->D1_TOTAL
 				
 				SD1->(DbSkip())
-			enddo
-		endif
+			enddo*/
 			
+			cAliasTMP := GetArea()
+			cQry := "select * "
+			cQry += "from "+RetSqlName("SD1")+" "
+			cQry += "where D1_NFORI = '"+TEMP->D2_DOC+"' and D1_SERIORI = '"+TEMP->D2_SERIE+"' and D1_TIPO <> 'C' and D_E_L_E_T_ <> '*'"
+			
+			tcquery cQry new alias "CON"
+			DbSelectArea("CON")
+			
+			while !CON->(Eof())
+				if CON->D1_TOTAL == TEMP->D2_TOTAL
+					nValTot := IIf(Empty(CON->D1_VALDEV),CON->D1_VALDEV,CON->D1_TOTAL - CON->D1_VALDEV)
+				endif
+				
+				CON->(DbSkip())
+			enddo
+			
+			CON->(DbCloseArea())
+			RestArea(cAliasTMP)
+//		endif
 			@nLin,104 psay Transf(nValTot,"@E 99999999999.99")
 //		else
 //			@nLin,104 psay Transf(TEMP->D2_TOTAL,"@E 99999999999.99")
 //		endif
 		
-		@nLin,121 psay If(!Empty(TEMP->CTH_DTENTR),Transf(SToD(TEMP->D2_EMISSAO) - SToD(TEMP->CTH_DTENTR),"@E 9999"),"   -")
-		@nLin,128 psay If(SX5->(DbSeek(xFilial("SX5")+"Z1"+TEMP->CTH_TPPRJ,.F.)),AllTrim(SX5->X5_DESCSPA),"-")
+//		@nLin,121 psay IIf(!Empty(TEMP->CTH_DTENTR),Transf(SToD(TEMP->D2_EMISSAO) - SToD(TEMP->CTH_DTENTR),"@E 9999"),"   -")
+		@nLin,121 psay IIf(!Empty(TEMP->CTH_DTENTR),Transf(SToD(TEMP->D2_EMISSAO) - SToD(TEMP->CTH_DTENTR),"@E 9999"),"    ")
+		@nLin,128 psay IIf(SX5->(DbSeek(xFilial("SX5")+"Z1"+TEMP->CTH_TPPRJ,.F.)),AllTrim(SX5->X5_DESCSPA),"-")
 		
 		IncProc()
 		

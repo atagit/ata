@@ -17,7 +17,7 @@ user function SLDBCO(lJob)
 		SA6->(DbGoTop())
 		
 		while !SA6->(Eof())
-			if SA6->A6_EXIBREL == "S"
+			if SA6->A6_EXIBREL == "S" .and. SA6->A6_BLOCKED <> "1"
 				Gravar(SA6->A6_COD,SA6->A6_AGENCIA,SA6->A6_NUMCON,DToS(dDataBase),DToS(dDataBase))
 			endif
 			
@@ -34,7 +34,6 @@ return
 static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	local cArqTrab1
 	local aTempStru := {}
-	local nSaldoAtual := 0
 	local cTipoDoc := ""
 	local cTipo := ""
 	local cBenef := ""
@@ -43,6 +42,9 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	local cDtDispo := ""
 	local cMotBx := ""
 	local nValorNF := 0
+	
+	private nSaldoAtual := 0
+	private nSaldoPendente := 0
 	
 	if Select("TEMP") <> 0
 		TEMP->(DbCloseArea())
@@ -209,15 +211,15 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 			TEMP->(DbSkip())
 		enddo
 		
-//		Alert(Transf(nSaldoAtual,"@E 999,999,999.99"))
-		
+		Pendentes()
 		DbSelectArea("SZP")
 		SZP->(DbGoTop())
 		
 		if SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataDispo,.F.))
-			if SZP->ZP_SALATUA <> nSaldoAtual .and. !Empty(nSaldoAtual)
+			if (SZP->ZP_SALATUA <> nSaldoAtual .and. !Empty(nSaldoAtual)) .or. (SZP->ZP_PENDENT <> nSaldoPendente .and. !Empty(nSaldoPendente))
 				RecLock("SZP",.F.)
 					SZP->ZP_SALATUA := nSaldoAtual
+					SZP->ZP_PENDENT := nSaldoPendente
 				MsUnLock()
 			endif
 		else
@@ -228,13 +230,118 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 				SZP->ZP_CONTA := cContaDe
 				SZP->ZP_DTSALDO := SToD(cDataDispo)
 				SZP->ZP_SALATUA := nSaldoAtual
+				SZP->ZP_PENDENT := nSaldoPendente
 				
 				MsUnLock()
 			endif
 		endif
 	enddo
 	
+	cDataIni := cDataDe
+	
+	while cDataIni <= cDataAte
+		SZP->(DbGoTop())
+		
+		if !SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataIni,.T.))
+			SZP->(DbSkip(-1))
+			
+			nSaldoA := SZP->ZP_SALATUA
+			nSaldoP := SZP->ZP_PENDENT
+			
+			if RecLock("SZP",.T.)
+				SZP->ZP_FILIAL := xFilial("SZP")
+				SZP->ZP_BANCO := cBancoDe
+				SZP->ZP_AGENCIA := cAgenciaDe
+				SZP->ZP_CONTA := cContaDe
+				SZP->ZP_DTSALDO := SToD(cDataIni)
+				SZP->ZP_SALATUA := nSaldoA
+				SZP->ZP_PENDENT := nSaldoP
+				
+				MsUnLock()
+			endif
+		endif
+		
+		cDataIni := DToS(SToD(cDataIni) + 1)
+	enddo
+	
+	QTRB->(DbCloseArea())
 	TEMP->(DbCloseArea())
 	FErase(cArqTrab1+".dbf")
 	FErase(cArqTrab1+".cdx")
+return
+
+
+static function Pendentes()
+	local nValor := 0
+	
+	if Select("QTRB") <> 0
+		QTRB->(DbCloseArea())
+	endif
+	
+	aTempStru := {}
+	
+	AAdd(aTempStru,{"PREVISAO","C",08,0})
+	AAdd(aTempStru,{"CHEQUE","C",06,0})
+	AAdd(aTempStru,{"EMISSAO","C",08,0})
+	AAdd(aTempStru,{"NATUREZ","C",02,0})
+	AAdd(aTempStru,{"OPERACAO","C",40,0})
+	AAdd(aTempStru,{"VALOR","N",17,2})
+	
+	cArqTrab2 := CriaTrab(aTempStru,.T.)
+	
+	DbUseArea(.T.,,cArqTrab2,"PEND",.F.,.F.)
+	index on PREVISAO+CHEQUE to IPEND
+	
+	cQry := "select E5_DTDISPO, E5_NUMCHEQ, E5_DTDIGIT, E5_HISTOR, E5_VALOR, EF_DTPREDA, EF_PREDATA, E5_TIPODOC "
+	cQry += "from "+RetSqlName("SE5")+" SE5 inner join "+RetSqlName("SEF")+" SEF on (E5_NUMCHEQ = EF_NUM and '' = EF_TIPO and E5_BANCO = EF_BANCO and E5_AGENCIA = EF_AGENCIA and E5_CONTA = EF_CONTA) "
+	cQry += "where E5_DTDISPO <= '"+DToS(mv_par05)+"' and E5_BANCO = '"+mv_par01+"' and E5_AGENCIA = '"+mv_par02+"' and E5_CONTA = '"+mv_par03+"' and E5_TIPODOC in ('CH','EC') and E5_RECONC <> 'x' and SE5.D_E_L_E_T_ <> '*' and SEF.D_E_L_E_T_ <> '*' "
+	cQry += "order by E5_DTDISPO, E5_NUMCHEQ"
+	
+	tcquery cQry new alias "QTRB"
+	
+	DbSelectArea("QTRB")
+	ProcRegua(QTRB->(RecCount()))
+	QTRB->(DbGoTop())
+	
+	while !QTRB->(Eof())
+		if QTRB->E5_TIPODOC == "EC"
+			PEND->(DbGoTop())
+			
+			while !PEND->(Eof())
+				if AllTrim(PEND->CHEQUE) == AllTrim(QTRB->E5_NUMCHEQ) .and. PEND->VALOR == QTRB->E5_VALOR
+					PEND->(DbDelete())
+				endif
+				
+				PEND->(DbSkip())
+			enddo
+		else
+			PEND->(DbAppend())
+			
+			replace PEND->PREVISAO with QTRB->E5_DTDISPO,;
+					PEND->CHEQUE with AllTrim(QTRB->E5_NUMCHEQ),;
+					PEND->EMISSAO with QTRB->E5_DTDIGIT,;
+					PEND->NATUREZ with IIf(QTRB->EF_PREDATA == "F","AV","PR"),;
+					PEND->OPERACAO with QTRB->E5_HISTOR,;
+					PEND->VALOR with QTRB->E5_VALOR
+			
+			PEND->(DbCommit())
+		endif
+		
+		IncProc()
+		QTRB->(DbSkip())
+	enddo
+	
+	PEND->(DbGoTop())
+	
+	while !PEND->(Eof())
+		nValor += PEND->VALOR
+		
+		PEND->(DbSkip())
+	enddo
+	
+	nSaldoPendente := nSaldoAtual - nValor
+	
+	PEND->(DbCloseArea())
+	FErase(cArqTrab2+".dbf")
+	FErase(cArqTrab2+".cdx")
 return

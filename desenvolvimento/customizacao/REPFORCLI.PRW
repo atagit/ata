@@ -148,7 +148,7 @@ static function Inc(cTabela)
 			
 			MsgHtml()
 			
-			cTo := "tvcontabilidade@gmail.com"
+			cTo := "fiscal@ata.ind.br"
 			
 			U_EnvEmail(.T.,.T.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
 		else

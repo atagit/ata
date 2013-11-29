@@ -89,7 +89,7 @@ return
 static function Impr()
 	local nContLin := 0
 	
-	cQry := "select convert(varchar(8000),convert(binary(8000),ZM_OBSREGI)) AS ZM_OBSREGI, * "
+	cQry := "select convert(varchar(8000),convert(binary(8000),ZM_OBSREGI)) AS ZM_OBSREGI, convert(varchar(8000),convert(binary(8000),ZM_DDADIC)) AS ZM_DDADIC, * "
 	cQry += "from "+RetSqlName("SZM")+" "
 	cQry += "where (ZM_CODIGO between '"+cCodIni+"' and '"+cCodFin+"') and (ZM_OC between '"+cOCIni+"' and '"+cOCFin+"') and D_E_L_E_T_ <> '*'"
 	
@@ -157,16 +157,30 @@ static function Impr()
 			
 			nLin++
 			
-//			QUANT....: 999,999,999.99 AA                     PR.UNIT.: 999,999,999.99                     VL.TOTAL: 9,999,999,999,999.99
-//			COND.PAG.: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 //			QUANT....: 999,999,999.99 AA   PR.UNIT.: 999,999,999.99  VL.TOTAL: 9,999,999,999,999.99   COND.PAG.: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+//			QUANT.: 9,999,999.99 AA  PR.UNIT.: 999,999.99 VL.TOTAL: 9,999,999,999.99 COND.PAG.: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA PESAGEM: BALANCA
 //			012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //			          1         2         3         4         5         6         7         8         9        10        11        12        13
 			
-			@nLin,000 psay "QUANT....: "+AllTrim(Transf(TEMP->ZM_QUANT,"@E 999,999,999.99"))+" "+TEMP->ZM_UM
+/*			@nLin,000 psay "QUANT....: "+AllTrim(Transf(TEMP->ZM_QUANT,"@E 999,999,999.99"))+" "+TEMP->ZM_UM
 			@nLin,031 psay "PR.UNIT.: "+AllTrim(Transf(TEMP->ZM_PRCUNIT,"@E 999,999,999.99"))
 			@nLin,057 psay "VL.TOTAL: "+AllTrim(Transf(TEMP->ZM_TOTAL,"@E 9,999,999,999,999.99"))
-			@nLin,90 psay "COND.PAG.: "+TEMP->ZM_CONDPAG
+			@nLin,90 psay "COND.PAG.: "+TEMP->ZM_CONDPAG*/
+			
+			@nLin,000 psay "QUANT.: "+AllTrim(Transf(TEMP->ZM_QUANT,"@E 9,999,999.99"))+" "+TEMP->ZM_UM
+			@nLin,025 psay "PR.UNIT.: "+AllTrim(Transf(TEMP->ZM_PRCUNIT,"@E 999,999.99"))
+			@nLin,046 psay "VL.TOTAL: "+AllTrim(Transf(TEMP->ZM_TOTAL,"@E 9,999,999,999.99"))
+			@nLin,073 psay "COND.PAG.: "+TEMP->ZM_CONDPAG
+			
+			do case
+				case TEMP->ZM_TPPESAG == "B"
+					@nLin,115 psay "PESAGEM: BALANCA"
+				case TEMP->ZM_TPPESAG == "D"
+					@nLin,115 psay "PESAGEM: DESENHO"
+				otherwise
+					@nLin,115 psay "PESAGEM: "
+			endcase
 			
 			nLin++
 			
@@ -177,6 +191,9 @@ static function Impr()
 			
 //			ALIQ.: 999.99%                                    BASE: 999,999,999,999.99         VALOR: 999,999,999.99          VENC.: 99/99/9999
 //			GARANTIA: AAAAAAAAAAAAAAAAAAAA  DOC.: AAAAAAAAAAAAAAA  EMIT.: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  VALOR: 999,999,999.99  APLIC.: 999.99%
+
+//			GARANTIA              DOCUMENTO        EMITENTE                                 VALOR   VENCTO                     VALOR
+//			AAAAAAAAAAAAAAAAAAAA  AAAAAAAAAAAAAAA  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  999,999,999.99   99/99/99          999,999,999.99
 //			012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //			          1         2         3         4         5         6         7         8         9        10        11        12        13
 			
@@ -185,63 +202,90 @@ static function Impr()
 			@nLin,083 psay "VALOR: "+AllTrim(Transf(TEMP->ZM_VLADIAN,"@E 999,999,999.99"))
 			@nLin,114 psay "VENC.: "+U_ConvData(TEMP->ZM_VENADIA)
 			
+			nLin += 2
+			
+			@nLin,000 psay "GARANTIA              DOCUMENTO        EMITENTE                                 VALOR   VENCTO                     VALOR"
+			
+			nLin++
 			nTotGarantia := 0
+			nTotAplicacao := 0
 			
 			if !Empty(TEMP->ZM_GARANTI)
-				@++nLin,000 psay "GARANTIA: "+IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_GARANTI,.F.)),Left(SX5->X5_DESCRI,20)," ")
-				@nLin,032 psay "DOC.: "+TEMP->ZM_GARDOC
-				@nLin,055 psay "EMIT.: "+IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_BCOEMIT,.F.)),Left(SX5->X5_DESCRI,30)," ")
-				@nLin,094 psay "VALOR: "+AllTrim(Transf(TEMP->ZM_VLGARAN,"@E 999,999,999.99"))
-				@nLin,117 psay "APLIC.: "+AllTrim(Transf(TEMP->ZM_GARAPLI,"@E 999.99")+"%")
+				@nLin,000 psay IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_GARANTI,.F.)),Left(SX5->X5_DESCRI,20)," ")
+				@nLin,022 psay TEMP->ZM_GARDOC
+				@nLin,039 psay IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_BCOEMIT,.F.)),Left(SX5->X5_DESCRI,30)," ")
+				@nLin,071 psay Transf(TEMP->ZM_VLGARAN,"@E 999,999,999.99")
+				@nLin,088 psay U_ConvData(TEMP->ZM_VENGARA,"yy")
+//				@nLin,098 psay Transf(TEMP->ZM_GARAPLI,"@E 999.99")
+				@nLin,106 psay Transf(TEMP->ZM_VLAPLIC,"@E 999,999,999.99")
 				
 				nTotGarantia += TEMP->ZM_VLGARAN
+				nTotAplicacao += TEMP->ZM_VLAPLIC
+				nLin++
 			endif
 			
 			if !Empty(TEMP->ZM_GARANT2)
-				@++nLin,000 psay "GARANTIA: "+IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_GARANT2,.F.)),Left(SX5->X5_DESCRI,20)," ")
-				@nLin,032 psay "DOC.: "+TEMP->ZM_GARDOC2
-				@nLin,055 psay "EMIT.: "+IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_BCOEMI2,.F.)),Left(SX5->X5_DESCRI,30)," ")
-				@nLin,094 psay "VALOR: "+AllTrim(Transf(TEMP->ZM_VLGARA2,"@E 999,999,999.99"))
-				@nLin,117 psay "APLIC.: "+AllTrim(Transf(TEMP->ZM_GARAPL2,"@E 999.99")+"%")
+				@nLin,000 psay IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_GARANT2,.F.)),Left(SX5->X5_DESCRI,20)," ")
+				@nLin,022 psay TEMP->ZM_GARDOC2
+				@nLin,039 psay IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_BCOEMI2,.F.)),Left(SX5->X5_DESCRI,30)," ")
+				@nLin,071 psay Transf(TEMP->ZM_VLGARA2,"@E 999,999,999.99")
+				@nLin,088 psay U_ConvData(TEMP->ZM_VENGAR2,"yy")
+//				@nLin,098 psay Transf(TEMP->ZM_GARAPL2,"@E 999.99")
+				@nLin,106 psay Transf(TEMP->ZM_VLAPLI2,"@E 999,999,999.99")
 				
 				nTotGarantia += TEMP->ZM_VLGARA2
+				nTotAplicacao += TEMP->ZM_VLAPLI2
+				nLin++
 			endif
 			
 			if !Empty(TEMP->ZM_GARANT3)
-				@++nLin,000 psay "GARANTIA: "+IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_GARANT3,.F.)),Left(SX5->X5_DESCRI,20)," ")
-				@nLin,032 psay "DOC.: "+TEMP->ZM_GARDOC3
-				@nLin,055 psay "EMIT.: "+IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_BCOEMI3,.F.)),Left(SX5->X5_DESCRI,30)," ")
-				@nLin,094 psay "VALOR: "+AllTrim(Transf(TEMP->ZM_VLGARA3,"@E 999,999,999.99"))
-				@nLin,117 psay "APLIC.: "+AllTrim(Transf(TEMP->ZM_GARAPL3,"@E 999.99")+"%")
+				@nLin,000 psay IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_GARANT3,.F.)),Left(SX5->X5_DESCRI,20)," ")
+				@nLin,022 psay TEMP->ZM_GARDOC3
+				@nLin,039 psay IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_BCOEMI3,.F.)),Left(SX5->X5_DESCRI,30)," ")
+				@nLin,071 psay Transf(TEMP->ZM_VLGARA3,"@E 999,999,999.99")
+				@nLin,088 psay U_ConvData(TEMP->ZM_VENGAR3,"yy")
+//				@nLin,098 psay Transf(TEMP->ZM_GARAPL3,"@E 999.99")
+				@nLin,106 psay Transf(TEMP->ZM_VLAPLI3,"@E 999,999,999.99")
 				
 				nTotGarantia += TEMP->ZM_VLGARA3
+				nTotAplicacao += TEMP->ZM_VLAPLI3
+				nLin++
 			endif
 			
 			if !Empty(TEMP->ZM_GARANT4)
-				@++nLin,000 psay "GARANTIA: "+IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_GARANT4,.F.)),Left(SX5->X5_DESCRI,20)," ")
-				@nLin,032 psay "DOC.: "+TEMP->ZM_GARDOC4
-				@nLin,055 psay "EMIT.: "+IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_BCOEMI4,.F.)),Left(SX5->X5_DESCRI,30)," ")
-				@nLin,094 psay "VALOR: "+AllTrim(Transf(TEMP->ZM_VLGARA4,"@E 999,999,999.99"))
-				@nLin,117 psay "APLIC.: "+AllTrim(Transf(TEMP->ZM_GARAPL4,"@E 999.99")+"%")
+				@nLin,000 psay IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_GARANT4,.F.)),Left(SX5->X5_DESCRI,20)," ")
+				@nLin,022 psay TEMP->ZM_GARDOC4
+				@nLin,039 psay IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_BCOEMI4,.F.)),Left(SX5->X5_DESCRI,30)," ")
+				@nLin,071 psay Transf(TEMP->ZM_VLGARA4,"@E 999,999,999.99")
+				@nLin,088 psay U_ConvData(TEMP->ZM_VENGAR4,"yy")
+//				@nLin,098 psay Transf(TEMP->ZM_GARAPL4,"@E 999.99")
+				@nLin,106 psay Transf(TEMP->ZM_VLAPLI4,"@E 999,999,999.99")
 				
 				nTotGarantia += TEMP->ZM_VLGARA4
+				nTotAplicacao += TEMP->ZM_VLAPLI4
+				nLin++
 			endif
 			
 			if !Empty(TEMP->ZM_GARANT5)
-				@++nLin,000 psay "GARANTIA: "+IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_GARANT5,.F.)),Left(SX5->X5_DESCRI,20)," ")
-				@nLin,032 psay "DOC.: "+TEMP->ZM_GARDOC5
-				@nLin,055 psay "EMIT.: "+IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_BCOEMI5,.F.)),Left(SX5->X5_DESCRI,30)," ")
-				@nLin,094 psay "VALOR: "+AllTrim(Transf(TEMP->ZM_VLGARA5,"@E 999,999,999.99"))
-				@nLin,117 psay "APLIC.: "+AllTrim(Transf(TEMP->ZM_GARAPL5,"@E 999.99")+"%")
+				@nLin,000 psay IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_GARANT5,.F.)),Left(SX5->X5_DESCRI,20)," ")
+				@nLin,022 psay TEMP->ZM_GARDOC5
+				@nLin,039 psay IIf(SX5->(DbSeek(xFilial("SX5")+"OC"+TEMP->ZM_BCOEMI5,.F.)),Left(SX5->X5_DESCRI,30)," ")
+				@nLin,071 psay Transf(TEMP->ZM_VLGARA5,"@E 999,999,999.99")
+				@nLin,088 psay U_ConvData(TEMP->ZM_VENGAR5,"yy")
+//				@nLin,098 psay Transf(TEMP->ZM_GARAPL5,"@E 999.99")
+				@nLin,106 psay Transf(TEMP->ZM_VLAPLI5,"@E 999,999,999.99")
 				
 				nTotGarantia += TEMP->ZM_VLGARA5
+				nTotAplicacao += TEMP->ZM_VLAPLI5
+				nLin++
 			endif
 			
 			if !Empty(nTotGarantia)
-				@++nLin,094 psay "TOTAL  "+AllTrim(Transf(nTotGarantia,"@E 999,999,999.99"))
+				@nLin,071 psay Transf(nTotGarantia,"@E 999,999,999.99")
+				@nLin,106 psay Transf(nTotAplicacao,"@E 999,999,999.99")
+				
+				nLin++
 			endif
-			
-			nLin++
 			
 			@nLin,000 psay Replicate("-",_TAMCOL)
 			@++nLin,000 psay PadC("* * *  M U L T A  * * *",_TAMCOL)
@@ -362,10 +406,10 @@ static function Impr()
 			
 			@nLin,000 psay "                     ALIQUOTA                       BASE                    VALOR             VENCIMENTO"
 			@++nLin,000 psay "ADIANTAMENTO"
-			@nLin,022 psay Transf(TEMP->ZM_ADIANTA,"@E 999.99")+"%"
-			@nLin,038 psay Transf(TEMP->ZM_BSADIAN,"@E 999,999,999,999.99")
-			@nLin,067 psay Transf(TEMP->ZM_VLADIAN,"@E 999,999,999.99")
-			@nLin,094 psay U_ConvData(TEMP->ZM_VENADIA)
+			@nLin,022 psay Transf(TEMP->ZM_PERRETE,"@E 999.99")+"%"
+			@nLin,038 psay Transf(TEMP->ZM_BSRETEN,"@E 999,999,999,999.99")
+			@nLin,067 psay Transf(TEMP->ZM_VLRETEN,"@E 999,999,999.99")
+			@nLin,094 psay U_ConvData(TEMP->ZM_VENRETE)
 			@++nLin,000 psay "DATABOOK"
 			@nLin,022 psay Transf(TEMP->ZM_PERCDB,"@E 999.99")+"%"
 			@nLin,038 psay Transf(TEMP->ZM_BSDATAB,"@E 999,999,999,999.99")
@@ -377,7 +421,8 @@ static function Impr()
 			@nLin,067 psay Transf(TEMP->ZM_VLGARAN,"@E 999,999,999.99")
 			@nLin,094 psay U_ConvData(TEMP->ZM_VENGARA)*/
 			@++nLin,000 psay "T O T A L"
-			@nLin,067 psay Transf(TEMP->(ZM_VLADIAN + ZM_VLDB + ZM_VLGARAN),"@E 999,999,999.99")
+			@nLin,067 psay Transf(TEMP->(ZM_VLRETEN + ZM_VLDB),"@E 999,999,999.99")
+//			@nLin,067 psay Transf(TEMP->(ZM_VLADIAN + ZM_VLDB + ZM_VLGARAN),"@E 999,999,999.99")
 			
 			nLin++
 			
@@ -497,6 +542,29 @@ static function Impr()
 				@nLin,057 psay "T O T A L"
 				@nLin,073 psay Transf(nQuant,"@E 999,999,999.99")
 				@nLin,104 psay Transf(nTotal,"@E 999,999,999,999.99")
+			endif
+			
+			cDadosAdicionais := AllTrim(TEMP->ZM_DDADIC)
+			
+			if !Empty(cDadosAdicionais)
+				nLin++
+				
+				U_SaltaFolha()
+				
+				@nLin,000 psay Replicate("-",_TAMCOL)
+				@++nLin,000 psay PadC("* * *  D A D O S   A D I C I O N A I S  * * *",_TAMCOL)
+				
+				nLin++
+				
+				U_SaltaFolha()
+				
+				for K := 1 to MLCount(cDadosAdicionais,130)
+					@nLin,000 psay MemoLine(cDadosAdicionais,130,K)
+					
+					nLin++
+					
+					U_SaltaFolha()
+				next
 			endif
 			
 			TEMP->(DbSkip())

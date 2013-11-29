@@ -1,19 +1,19 @@
 /*______________________________________________________________________
-   ¦Autor     ¦ Breno Ferreira                      ¦ Data ¦ 03/12/10 ¦
+   ¦Autor     ¦ Breno Ferreira                      ¦ Data ¦ 13/11/13 ¦
    +----------+-------------------------------------------------------¦
-   ¦Descrição ¦ Saldo por ordem de compra                             ¦
+   ¦Descrição ¦ Relatório de faturas por ordem de compra              ¦
   ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*/
 #include "rwmake.ch"
 #include "topconn.ch"
 
-user function SALDOOC()
+user function FATOC()
 	private aOrd    := {}
 	private aReturn := {"Especial",1,"Administracao",1,2,1,"",1}
-	private cPerg   := "SALDOC"
+	private cPerg   := "FATOC"
 	private Cabec1  := ""
-	private Cabec2  := "EMISSAO    | NOTA FISCAL   | CLIENTE                                  |           QUANT |              TOTAL"
-	private cDesc1  := "SALDO POR ORDEM DE COMPRA"
-	private cString := "SE2"
+	private Cabec2  := "EMISSAO    | PROJETO | NOTA FISCAL   | NATUREZA                  |           QUANT |              TOTAL"
+	private cDesc1  := "FATURA POR O.C."
+	private cString := "SE1"
 	private m_pag   := 1
 	private nOrdem  := 0
 	private nTipo   := 0
@@ -39,7 +39,7 @@ user function SALDOOC()
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Parametros utilizados pelo programa                          ³
-	//³ mv_par01 - Por                                               ³
+	//³ mv_par01 - Por (1-Projeto/2-O.C.)                            ³
 	//³ mv_par02 - Projeto de                                        ³
 	//³ mv_par03 - Projeto ate                                       ³
 	//³ mv_par04 - O.C. de                                           ³
@@ -79,6 +79,7 @@ user function SALDOOC()
 return
 
 static function Impr()
+	local nTotReg := 0
 	local nTotal := 0
 	local nQuant := 0
 	local nTgQuant := 0
@@ -86,6 +87,10 @@ static function Impr()
 	
 	private nQuantOC := 0
 	private nValorOC := 0
+	private nQuantPJ := 0
+	private nValorPJ := 0
+	private cCliente := ""
+	private cDtVenc := ""
 	
 	cQry := "select CTH_AF, C6_CLVL, D2_TIPO, D2_EMISSAO, D2_DOC, D2_SERIE, D2_CLIENTE, D2_LOJA, C5_PESOL, sum(D2_QUANT) as D2_QUANT, sum(D2_TOTAL) as D2_TOTAL "
 	cQry += "from "+RetSqlName("SD2")+" SD2 inner join "+RetSqlName("SC6")+" SC6 on (SD2.D2_PEDIDO = SC6.C6_NUM) inner join "+RetSqlName("SC5")+" SC5 on (SC6.C6_NUM = SC5.C5_NUM) inner join "+RetSqlName("CTH")+" CTH on (SC6.C6_CLVL = CTH.CTH_CLVL) inner join "+RetSqlName("SF4")+" SF4 on (SD2.D2_TES = SF4.F4_CODIGO) "
@@ -100,115 +105,107 @@ static function Impr()
 	cQry += "order by CTH_AF, C6_CLVL, D2_EMISSAO, D2_DOC, D2_SERIE"
 	
 	tcquery cQry new alias "TEMP"
-	DbSelectArea("TEMP")
+	count to nTotReg
 	
+	DbSelectArea("TEMP")
+	ProcRegua(nTotReg)
 	TEMP->(DbGoTop())
-	ProcRegua(TEMP->(RecCount()))
 	
 	while !TEMP->(Eof())
-		cAF := TEMP->CTH_AF
+		if TEMP->D2_TIPO $ "B/D"
+			cCliente := IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(D2_CLIENTE+D2_LOJA),.F.)),Left(SA2->A2_NREDUZ,30),"")
+		else
+			cCliente := IIf(SA1->(DbSeek(xFilial("SA1")+TEMP->(D2_CLIENTE+D2_LOJA),.F.)),Left(SA1->A1_NREDUZ,30),"")
+		endif
 		
-		while cAF == TEMP->CTH_AF
+		cAF := TEMP->CTH_AF
+		Cabec1 := PadC("O.C.: "+cAF+"          CLIENTE: "+AllTrim(cCliente)+"          VENC.: "+U_ConvData(cDtVenc,"yy"),132)
+		
+		U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
+		
+		nLin++
+		
+		while !TEMP->(Eof()) .and. TEMP->CTH_AF == cAF
 			if CTH->(DbSeek(xFilial("CTH")+TEMP->C6_CLVL,.F.))
-				cProj := CTH->CTH_CLVL
-				cOC := CTH->CTH_AF
-				cDescProj := CTH->CTH_DESC01
 				nQuantPJ := CTH->CTH_PESAF
 				nValorPJ := CTH->CTH_PESAF * CTH->CTH_VLAF
+				cDtVenc := CTH->CTH_DTREAL
 			endif
 			
-			Cabec1 := PadC("PROJETO: "+Left(cProj,6)+" - "+AllTrim(cDescProj)+"             O.C.: "+cOC,132)
+//			EMISSAO    | PROJETO | NOTA FISCAL   | NATUREZA                  |           QUANT |              TOTAL | VENCTO
+//			99/99/9999   999999    999999999-999   AAAAAAAAAAAAAAAAAAAAAAAAA   999,999,999.999   999,999,999,999.99   99/99/99
+//			0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+//			          1         2         3         4         5         6         7         8         9        10        11        12
 			
-			U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
+			@nLin,000 psay U_ConvData(TEMP->D2_EMISSAO)
+			@nLin,013 psay Left(TEMP->C6_CLVL,6)
+			@nLin,023 psay TEMP->D2_DOC+"-"+TEMP->D2_SERIE
+			@nLin,039 psay "NOTA FISCAL"
+			@nLin,067 psay Transf(TEMP->C5_PESOL,"@E 999,999,999.999")
+			@nLin,085 psay Transf(TEMP->D2_TOTAL,"@E 999,999,999,999.99")
 			
-			nLin++
+			cQry := "select E1_CLVLCR, E1_VALOR, E1_EMISSAO, E1_VENCREA, E1_NATUREZ, ED_DESCRIC "
+			cQry += "from "+RetSqlName("SE1")+" SE1 inner join "+RetSqlName("SED")+" SED on (SE1.E1_NATUREZ = SED.ED_CODIGO) "
+			cQry += "where E1_NUM = '"+TEMP->D2_DOC+"' and E1_FATURA = 'NOTFAT' and E1_CLIENTE = '"+TEMP->D2_CLIENTE+"' and E1_LOJA = '"+TEMP->D2_LOJA+"' and SE1.D_E_L_E_T_ <> '*' and SED.D_E_L_E_T_ <> '*' "
+			cQry += "order by E1_PARCELA"
 			
-			@nLin,000 psay Left(cProj,6)+" - "+AllTrim(cDescProj)
+			tcquery cQry new alias "CON"
 			
-			nLin += 2
+			DbSelectArea("CON")
+			CON->(DbGoTop())
 			
-			while cProj == TEMP->C6_CLVL
-//			EMISSAO    | NOTA FISCAL   | CLIENTE                                  |           QUANT |              TOTAL
-//			99/99/9999   999999999-999   999999-99 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   999,999,999.999   999,999,999,999.99
-//			012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
-//			          1         2         3         4         5         6         7         8         9        10        11
-				
-				@nLin,000 psay U_ConvData(TEMP->D2_EMISSAO)
-				@nLin,013 psay TEMP->D2_DOC+"-"+TEMP->D2_SERIE
-				
-				if TEMP->D2_TIPO $ "B/D"
-					@nLin,029 psay TEMP->D2_CLIENTE+"-"+TEMP->D2_LOJA+" "+If(SA2->(DbSeek(xFilial("SA2")+TEMP->(D2_CLIENTE+D2_LOJA),.F.)),Left(SA2->A2_NREDUZ,30),"")
-				else
-					@nLin,029 psay TEMP->D2_CLIENTE+"-"+TEMP->D2_LOJA+" "+If(SA1->(DbSeek(xFilial("SA1")+TEMP->(D2_CLIENTE+D2_LOJA),.F.)),Left(SA1->A1_NREDUZ,30),"")
-				endif
-				
-				@nLin,072 psay Transf(TEMP->C5_PESOL,"@E 999,999,999.999")
-				@nLin,090 psay Transf(TEMP->D2_TOTAL,"@E 999,999,999,999.99")
-				
-				nQuant += TEMP->C5_PESOL
-				nTotal += TEMP->D2_TOTAL
-				
-				nLin++
-				
-				U_SaltaFolha()
-				
-				IncProc()
-				TEMP->(DbSkip())
-			enddo
+			if !CON->(Eof())
+				while !CON->(Eof())
+					nLin++
+					
+					@nLin,023 psay TEMP->D2_DOC+"-"+TEMP->D2_SERIE
+					@nLin,039 psay CON->ED_DESCRIC
+					@nLin,085 psay Transf(CON->E1_VALOR,"@E 999,999,999,999.99")
+					@nLin,106 psay U_ConvData(CON->E1_VENCREA,"yy")
+					
+					CON->(DbSkip())
+				enddo
+			endif
 			
-			nLin += 2
+			CON->(DbCloseArea())
 			
-			@nLin,014 psay "REALIZADO..:"
-			@nLin,072 psay Transf(nQuant,"@E 999,999,999.999")
-			@nLin,090 psay Transf(nTotal,"@E 999,999,999,999.99")
-			
-			nTgQuant += nQuant
-			nTgTotal += nTotal
+			nQuant += TEMP->C5_PESOL
+			nTotal += TEMP->D2_TOTAL
 			
 			nLin++
-			
-			@nLin,014 psay "ORCADO.....:"
-			@nLin,072 psay Transf(nQuantPJ,"@E 999,999,999.999")
-			@nLin,090 psay Transf(nValorPJ,"@E 999,999,999,999.99")
-			
-			nLin++
-			
-			@nLin,014 psay "PENDENTE...:"
-			@nLin,072 psay Transf(nQuantPJ - nQuant,"@E 999,999,999.999")
-			@nLin,090 psay Transf(nValorPJ - nTotal,"@E 999,999,999,999.99")
-			
-			nQuant := 0 ; nTotal := 0 ; nQuantPJ := 0 ; nTotalPJ := 0
 			
 			U_SaltaFolha()
+			
+			IncProc()
+			TEMP->(DbSkip())
 		enddo
 		
-		TotalOC(cOC)
+		TotalOC(cAF)
 		
 		nLin += 2
 		
-		U_SaltaFolha()
+		@nLin,014 psay "REALIZADO..:"
+		@nLin,067 psay Transf(nQuant,"@E 999,999,999.999")
+		@nLin,085 psay Transf(nTotal,"@E 999,999,999,999.99")
 		
-		@nLin,014 psay "TOTAL  O.C.:"
-		@nLin,072 psay Transf(nQuantOC,"@E 999,999,999.999")
-		@nLin,090 psay Transf(nValorOC,"@E 999,999,999,999.99")
+		nTgQuant += nQuant
+		nTgTotal += nTotal
 		
 		nLin++
-		
-		U_SaltaFolha()
 		
 		@nLin,014 psay "ORCADO.....:"
-		@nLin,072 psay Transf(nTgQuant,"@E 999,999,999.999")
-		@nLin,090 psay Transf(ntgTotal,"@E 999,999,999,999.99")
+		@nLin,067 psay Transf(nQuantPJ,"@E 999,999,999.999")
+		@nLin,085 psay Transf(nValorPJ,"@E 999,999,999,999.99")
 		
 		nLin++
 		
-		U_SaltaFolha()
-		
 		@nLin,014 psay "PENDENTE...:"
-		@nLin,072 psay Transf(nQuantOC - nTgQuant,"@E 999,999,999.999")
-		@nLin,090 psay Transf(nValorOC - nTgQuant,"@E 999,999,999,999.99")
+		@nLin,067 psay Transf(nQuantPJ - nQuant,"@E 999,999,999.999")
+		@nLin,085 psay Transf(nValorPJ - nTotal,"@E 999,999,999,999.99")
 		
-		nTgQuant := 0 ; nTgTotal := 0
+		nQuant := 0 ; nTotal := 0 ; nQuantPJ := 0 ; nTotalPJ := 0 ; nTgQuant := 0 ; nTgTotal := 0
+		
+		U_SaltaFolha()
 	enddo
 	
 	U_Rdp(nRdpPag,cRdpLeg,Tamanho)
