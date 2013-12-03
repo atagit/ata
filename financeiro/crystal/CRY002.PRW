@@ -7,11 +7,12 @@
 #include "protheus.ch"
 #include "topconn.ch"
 
-#define _DIASEM {"DOMINGO","SEGUNDA","TERCA","QUARTA","QUINTA","SEXTA","SABADO"}
+#define _DIASEM {"DOM","SEG","TER","QUA","QUI","SEX","SAB"}
 #define _MES {"JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"}
-#define _MAXBCO 4
+#define _MAXBCO 7
 
-user function CRY002(cOpc,cConta,cCelula)
+user function CRY002()
+/*user function CRY002(cOpc,cConta,cCelula)
 	local cRetorno := ""
 	local nPos := Val(Right(cCelula,1))
 	local aLimite := {"CHEQUE EMPRESA","CONTA GARANTIDA"}
@@ -167,9 +168,9 @@ user function CRY002(cOpc,cConta,cCelula)
 		TMP->(DbCloseArea())
 		
 		return AllTrim(cRetorno)
-	endif
+	endif*/
 	
-/*	local oButton1, oButton2
+	local oButton1, oButton2
 	local oSay1, oSay2, oSay3
 	local oGroup1, oGroup2
 	local oComboBox1
@@ -197,13 +198,16 @@ user function CRY002(cOpc,cConta,cCelula)
 		
 		@163,167 button oButton1 prompt "OK" size 037,012 of oDlg action Selecionar(cComboBox1,cGet1) pixel
 		@163,207 button oButton2 prompt "Cancelar" size 037,012 of oDlg action oDlg:End() pixel
-	activate msdialog oDlg centered*/
+	activate msdialog oDlg centered
 return
 
 static function FGetList()
+	local nCont := 1
+	
 	cQry := "select A6_COD, A6_AGENCIA, A6_NUMCON, A6_NREDUZ "
 	cQry += "from "+RetSqlName("SA6")+" "
-	cQry += "where A6_EXIBREL = 'S' and A6_BLOCKED <> '1' and D_E_L_E_T_ <> '*'"
+	cQry += "where A6_EXIBREL = 'S' and A6_BLOCKED <> '1' and D_E_L_E_T_ <> '*' "
+	cQry += "order by A6_COD, A6_AGENCIA, A6_NUMCON"
 	
 	tcquery cQry alias "TMP" new
 	
@@ -211,7 +215,11 @@ static function FGetList()
 	TMP->(DbGoTop())
 	
 	while !TMP->(Eof())
-		AAdd(aArqList,{.F.,TMP->A6_COD,TMP->A6_AGENCIA,TMP->A6_NUMCON,TMP->A6_NREDUZ})
+		if nCont <= _MAXBCO
+			AAdd(aArqList,{.T.,TMP->A6_COD,TMP->A6_AGENCIA,TMP->A6_NUMCON,TMP->A6_NREDUZ})
+		else
+			AAdd(aArqList,{.F.,TMP->A6_COD,TMP->A6_AGENCIA,TMP->A6_NUMCON,TMP->A6_NREDUZ})
+		endif
 		
 		TMP->(DbSkip())
 	enddo
@@ -260,6 +268,10 @@ static function GeraRel(aBancos,cMes,cAno)
 	local cArqDBF := ""
 	local cQry := ""
 	local dUltDiaMes := LastDate(SToD(cAno+cMes+"01"))
+	local nContDias := 0
+	local nTotDias := 0
+	local aContDias := {}
+	local aTotDias := {}
 	
 	private cReport := "CRY002"
 	private cOpcoes := "1;0;1;Saldo de Contas Bancarias"
@@ -275,7 +287,8 @@ static function GeraRel(aBancos,cMes,cAno)
 	for i := 1 to Len(aBancos)
 		cQry := "select A6_COD, A6_AGENCIA, A6_NUMCON, A6_NREDUZ, A6_CONTATO, A6_TEL, A6_CELULAR "
 		cQry += "from "+RetSqlName("SA6")+" "
-		cQry += "where A6_COD = '"+aBancos[i][2]+"' and A6_AGENCIA = '"+aBancos[i][3]+"' and A6_NUMCON = '"+aBancos[i][4]+"' and A6_BLOCKED <> '1' and A6_EXIBREL = 'S' and D_E_L_E_T_ <> '*'"
+		cQry += "where A6_COD = '"+aBancos[i][2]+"' and A6_AGENCIA = '"+aBancos[i][3]+"' and A6_NUMCON = '"+aBancos[i][4]+"' and A6_BLOCKED <> '1' and A6_EXIBREL = 'S' and D_E_L_E_T_ <> '*' "
+		cQry += "order by A6_COD, A6_AGENCIA, A6_NUMCON"
 		
 		tcquery cQry alias "TMP" new
 		
@@ -439,10 +452,18 @@ static function GeraRel(aBancos,cMes,cAno)
 			
 //			TRB->&("SALDO"+Str(i,1)) := TMP->(ZP_SALATUA + ZP_PENDENT)
 			TRB->&("SALDO"+Str(i,1)) := TMP->ZP_SALATUA
+			nTotDias += TMP->ZP_SALATUA
+			nContDias++
 			
 			MsUnLock()
 			TMP->(DbSkip())
 		enddo
+		
+		AAdd(aTotDias,nTotDias)
+		AAdd(aContDias,nContDias)
+		
+		nTotDias := 0
+		nContDias := 0
 		
 		TMP->(DbCloseArea())
 	next
@@ -487,8 +508,27 @@ static function GeraRel(aBancos,cMes,cAno)
 		endif
 	next
 	
+	//***** SALDO MEDIO *****\\
+	cArqDBF := GetMV("MV_DBFCRY")+"CRY002_5.DBF"
+	
+	DbUseArea(.T.,"DBFCDX",cArqDBF,"TMP",.F.,.F.)
+	
+	ZAP
+	
+	for i := 1 to Len(aBancos)
+		if i == 1
+			RecLock("TMP",.T.)
+		else
+			RecLock("TMP",.F.)
+		endif
+		
+		TMP->&("VALOR"+Str(i,1)) := aTotDias[i] / aContDias[i]
+		MsUnLock()
+	next
+	
 	CallCrys(cReport,cParam,cOpcoes)
 	
+	TMP->(DbCloseArea())
 	TRB->(DbCloseArea())
 	FErase(GetMV("MV_DBFCRY")+"ITRB.CDX")
 return
