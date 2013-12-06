@@ -7,7 +7,7 @@
 #include "topconn.ch"
 
 user function FATOC()
-	private aOrd    := {}
+	private aOrd    := {"Projeto","Emissao"}
 	private aReturn := {"Especial",1,"Administracao",1,2,1,"",1}
 	private cPerg   := "FATOC"
 	private Cabec1  := ""
@@ -92,17 +92,11 @@ static function Impr()
 	private cCliente := ""
 	private cDtVenc := ""
 	
-	cQry := "select CTH_AF, C6_CLVL, D2_TIPO, D2_EMISSAO, D2_DOC, D2_SERIE, D2_CLIENTE, D2_LOJA, C5_PESOL, sum(D2_QUANT) as D2_QUANT, sum(D2_TOTAL) as D2_TOTAL "
-	cQry += "from "+RetSqlName("SD2")+" SD2 inner join "+RetSqlName("SC6")+" SC6 on (SD2.D2_PEDIDO = SC6.C6_NUM) inner join "+RetSqlName("SC5")+" SC5 on (SC6.C6_NUM = SC5.C5_NUM) inner join "+RetSqlName("CTH")+" CTH on (SC6.C6_CLVL = CTH.CTH_CLVL) inner join "+RetSqlName("SF4")+" SF4 on (SD2.D2_TES = SF4.F4_CODIGO) "
-	
-	if nNuPor == 1
-		cQry += "where (C6_CLVL between '"+cPrjIni+"' and '"+cPrjFin+"') and SF4.F4_DUPLIC = 'S' and SC6.C6_TPPROJE in ('0003','0005','0006','0007') and SD2.D_E_L_E_T_ <> '*' and SC6.D_E_L_E_T_ <> '*' and SC5.D_E_L_E_T_ <> '*' and CTH.D_E_L_E_T_ <> '*' and SF4.D_E_L_E_T_ <> '*' "
-	else
-		cQry += "where (CTH_AF between '"+cOcIni+"' and '"+cOcFin+"') and SF4.F4_DUPLIC = 'S' and SC6.C6_TPPROJE in ('0003','0005','0006','0007') and SD2.D_E_L_E_T_ <> '*' and SC6.D_E_L_E_T_ <> '*' and SC5.D_E_L_E_T_ <> '*' and CTH.D_E_L_E_T_ <> '*' and SF4.D_E_L_E_T_ <> '*' "
-	endif
-	
-	cQry += "group by CTH_AF, C6_CLVL, D2_TIPO, D2_EMISSAO, D2_DOC, D2_SERIE, D2_CLIENTE, D2_LOJA, C5_PESOL "
-	cQry += "order by CTH_AF, C6_CLVL, D2_EMISSAO, D2_DOC, D2_SERIE"
+	cQry := "select E1_EMISSAO, E1_VENCREA, E1_CLVLCR, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_NATUREZ, E1_VALOR, E1_CLIENTE, E1_LOJA, A1_NREDUZ, CTH_AF, CTH_DTREAL "
+	cQry += "from "+RetSqlName("SE1")+" SE1 inner join "+RetSqlName("CTH")+" CTH on (E1_CLVLCR = CTH_CLVL) "
+	cQry += "	inner join "+RetSqlName("SA1")+" SA1 on (CTH_CLIENT = A1_COD and CTH_LOJACL = A1_LOJA) "
+	cQry += "where (CTH_AF between '"+cOcIni+"' and '"+cOcFin+"') and SE1.D_E_L_E_T_ <> '*' and CTH.D_E_L_E_T_ <> '*' "
+	cQry += "order by E1_NUM, E1_PREFIXO"
 	
 	tcquery cQry new alias "TEMP"
 	count to nTotReg
@@ -112,65 +106,38 @@ static function Impr()
 	TEMP->(DbGoTop())
 	
 	while !TEMP->(Eof())
-		if TEMP->D2_TIPO $ "B/D"
-			cCliente := IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(D2_CLIENTE+D2_LOJA),.F.)),Left(SA2->A2_NREDUZ,30),"")
-		else
-			cCliente := IIf(SA1->(DbSeek(xFilial("SA1")+TEMP->(D2_CLIENTE+D2_LOJA),.F.)),Left(SA1->A1_NREDUZ,30),"")
-		endif
-		
 		cAF := TEMP->CTH_AF
-		Cabec1 := PadC("O.C.: "+cAF+"          CLIENTE: "+AllTrim(cCliente)+"          VENC.: "+U_ConvData(cDtVenc,"yy"),132)
+		Cabec1 := PadC("O.C.: "+cAF+"          CLIENTE: "+AllTrim(TEMP->A1_NREDUZ)+"          VENC.: "+U_ConvData(CTH_DTREAL,"yy"),132)
 		
 		U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 		
 		nLin++
 		
 		while !TEMP->(Eof()) .and. TEMP->CTH_AF == cAF
-			if CTH->(DbSeek(xFilial("CTH")+TEMP->C6_CLVL,.F.))
-				nQuantPJ := CTH->CTH_PESAF
-				nValorPJ := CTH->CTH_PESAF * CTH->CTH_VLAF
-				cDtVenc := CTH->CTH_DTREAL
-			endif
-			
-//			EMISSAO    | PROJETO | NOTA FISCAL   | NATUREZA                  |           QUANT |              TOTAL | VENCTO
-//			99/99/9999   999999    999999999-999   AAAAAAAAAAAAAAAAAAAAAAAAA   999,999,999.999   999,999,999,999.99   99/99/99
+//			EMISSAO  | NOTA FISCAL | NATUREZA        |            PESO |              TOTAL | VENCTO
+//			99/99/99   999999999     AAAAAAAAAAAAAAA   999,999,999.999   999,999,999,999.99   99/99/99
 //			0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //			          1         2         3         4         5         6         7         8         9        10        11        12
 			
-			@nLin,000 psay U_ConvData(TEMP->D2_EMISSAO)
-			@nLin,013 psay Left(TEMP->C6_CLVL,6)
-			@nLin,023 psay TEMP->D2_DOC+"-"+TEMP->D2_SERIE
-			@nLin,039 psay "NOTA FISCAL"
-			@nLin,067 psay Transf(TEMP->C5_PESOL,"@E 999,999,999.999")
-			@nLin,085 psay Transf(TEMP->D2_TOTAL,"@E 999,999,999,999.99")
-			
-			cQry := "select E1_CLVLCR, E1_VALOR, E1_EMISSAO, E1_VENCREA, E1_NATUREZ, ED_DESCRIC "
-			cQry += "from "+RetSqlName("SE1")+" SE1 inner join "+RetSqlName("SED")+" SED on (SE1.E1_NATUREZ = SED.ED_CODIGO) "
-			cQry += "where E1_NUM = '"+TEMP->D2_DOC+"' and E1_FATURA = 'NOTFAT' and E1_CLIENTE = '"+TEMP->D2_CLIENTE+"' and E1_LOJA = '"+TEMP->D2_LOJA+"' and SE1.D_E_L_E_T_ <> '*' and SED.D_E_L_E_T_ <> '*' "
-			cQry += "order by E1_PARCELA"
-			
-			tcquery cQry new alias "CON"
-			
-			DbSelectArea("CON")
-			CON->(DbGoTop())
-			
-			if !CON->(Eof())
-				while !CON->(Eof())
-					nLin++
-					
-					@nLin,023 psay TEMP->D2_DOC+"-"+TEMP->D2_SERIE
-					@nLin,039 psay CON->ED_DESCRIC
-					@nLin,085 psay Transf(CON->E1_VALOR,"@E 999,999,999,999.99")
-					@nLin,106 psay U_ConvData(CON->E1_VENCREA,"yy")
-					
-					CON->(DbSkip())
-				enddo
+			if TEMP->E1_PARCELA == "001"
+				lNF := .T.
+			else
+				lNF := .F.
 			endif
 			
-			CON->(DbCloseArea())
+			@nLin,000 psay U_ConvData(TEMP->E1_EMISSAO,"yy")
+			@nLin,011 psay TEMP->E1_NUM
 			
-			nQuant += TEMP->C5_PESOL
-			nTotal += TEMP->D2_TOTAL
+			do case
+				case AllTrim(TEMP->E1_NATUREZ) $ "10101/10108"
+					@nLin,025 psay "FATURAMENTO"
+				case AllTrim(TEMP->E1_NATUREZ) $ "10504"
+					@nLin,025 psay "ADIANTAMENTO"
+			endcase
+			
+			@nLin,043 psay Transf(CON->C5_PESOL,"@E 999,999,999.999")
+			@nLin,061 psay Transf(TEMP->E1_VALOR,"@E 999,999,999,999.99")
+			@nLin,082 psay U_ConvData(TEMP->E1_VENCREA,"yy")
 			
 			nLin++
 			

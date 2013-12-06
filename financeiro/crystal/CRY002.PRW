@@ -334,12 +334,14 @@ static function GeraRel(aBancos,cMes,cAno)
 		while !TMP->(Eof())
 			TRB->(DbGoTop())
 			
-			if TRB->(DbSeek(TMP->ZQ_CREDITO,.F.))
+//			if TRB->(DbSeek(TMP->ZQ_CREDITO,.F.))
+			if TRB->(DbSeek("CTA.G./CHQ.E.",.F.))
 				RecLock("TRB",.F.)
 			else
 				RecLock("TRB",.T.)
 				
-				TRB->CREDITO := TMP->ZQ_CREDITO
+//				TRB->CREDITO := TMP->ZQ_CREDITO
+				TRB->CREDITO := "CTA.G./CHQ.E."
 			endif
 			
 			TRB->&("VALOR"+Str(i,1)) := TMP->ZQ_VALOR
@@ -523,6 +525,7 @@ static function GeraRel(aBancos,cMes,cAno)
 		endif
 		
 		TMP->&("VALOR"+Str(i,1)) := aTotDias[i] / aContDias[i]
+		
 		MsUnLock()
 	next
 	

@@ -1,7 +1,7 @@
 /*______________________________________________________________________
    ¦Autor     ¦ Breno Ferreira                      ¦ Data ¦ 22/10/12 ¦
    +----------+-------------------------------------------------------¦
-   ¦Descrição ¦ Relatório de pedidos de compra atendidos              ¦
+   ¦Descrição ¦ Relatório de pedidos de compra atendidos (IQF)        ¦
   ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*/
 #include "rwmake.ch"
 #include "topconn.ch"
@@ -136,7 +136,7 @@ static function Impr()
 		
 		nLin++
 		
-		while TEMP->C7_FORNECE == cFor .and. TEMP->C7_LOJA == cLoj
+		while !TEMP->(Eof()) .and. TEMP->C7_FORNECE == cFor .and. TEMP->C7_LOJA == cLoj
 			@nLin,000 psay TEMP->C7_NUM
 			@nLin,010 psay U_ConvData(TEMP->C7_EMISSAO)
 			@nLin,023 psay TEMP->F1_DOC+"-"+TEMP->F1_SERIE
@@ -157,21 +157,21 @@ static function Impr()
 				nPonto += 100
 				
 				@nLin,091 psay "|   X   |       |       |"
-				@nLin,118 psay Transf("100","@E 9999")
+				@nLin,118 psay Transf("100","@E 99999.99")
 			elseif TEMP->F1_AVIQF == "2" 
 				nContRep++
 				nTotRep++
 				nPonto += 5
 				
 				@nLin,091 psay "|       |   X   |       |"
-				@nLin,118 psay Transf("5","@E 9999")
+				@nLin,118 psay Transf("5","@E 99999.99")
 			elseif TEMP->F1_AVIQF == "3"
 				nContAce++
 				nTotAce++
 				nPonto += 25
 				
 				@nLin,091 psay "|       |       |   X   |"
-				@nLin,118 psay Transf("25","@E 9999")
+				@nLin,118 psay Transf("25","@E 99999.99")
 			else
 				nContSem++
 				nTotSem++

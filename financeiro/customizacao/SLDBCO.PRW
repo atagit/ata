@@ -101,7 +101,8 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 			
 			while !TEMP->(Eof())
 //				if TEMP->E5_NUMCHEQ == QTRB->E5_NUMCHEQ .and. TEMP->E5_VALOR == QTRB->E5_VALOR .and. TEMP->E5_DTDISPO == QTRB->E5_DTDISPO .and. TEMP->E5_DATA == QTRB->E5_DATA
-				if TEMP->E5_NUMCHEQ == QTRB->E5_NUMCHEQ .and. TEMP->E5_VALOR == QTRB->E5_VALOR
+//				if TEMP->E5_NUMCHEQ == QTRB->E5_NUMCHEQ .and. TEMP->E5_VALOR == QTRB->E5_VALOR
+				if TEMP->E5_NUMCHEQ == QTRB->E5_NUMCHEQ .and. TEMP->E5_VALOR == QTRB->E5_VALOR .and. TEMP->E5_DTDISPO == QTRB->E5_DTDISPO
 					TEMP->(DbDelete())
 					
 					exit
@@ -147,8 +148,9 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	
 	while !TEMP->(Eof())
 		cDataDispo := TEMP->E5_DTDISPO
+		lGrava := .F.
 		
-		while !TEMP->(Eof()) .and. TEMP->E5_DTDISPO == cDataDispo
+		while TEMP->E5_DTDISPO == cDataDispo
 			if TEMP->E5_TIPODOC == "VL" .and. TEMP->E5_MOTBX == "DEB" .and. Left(TEMP->E5_DOCUMEN,3) == "TED"
 				cTipoDoc := TEMP->E5_TIPODOC
 				cTipo := TEMP->E5_TIPO
@@ -207,32 +209,35 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 			endif
 			
 			cTipoDoc := "" ; cTipo := "" ; cBenef := "" ; cCliFor := "" ; cDtDispo := "" ; nValorNF := 0 ; cMotBx := "" ; cLoja := ""
+			lGrava := .T.
 			
 			TEMP->(DbSkip())
 		enddo
 		
-		Pendentes()
-		DbSelectArea("SZP")
-		SZP->(DbGoTop())
-		
-		if SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataDispo,.F.))
-			if (SZP->ZP_SALATUA <> nSaldoAtual .and. !Empty(nSaldoAtual)) .or. (SZP->ZP_PENDENT <> nSaldoPendente .and. !Empty(nSaldoPendente))
-				RecLock("SZP",.F.)
+		if lGrava
+			Pendentes()
+			DbSelectArea("SZP")
+			SZP->(DbGoTop())
+			
+			if SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataDispo,.F.))
+				if (SZP->ZP_SALATUA <> nSaldoAtual .and. !Empty(nSaldoAtual)) .or. (SZP->ZP_PENDENT <> nSaldoPendente .and. !Empty(nSaldoPendente))
+					RecLock("SZP",.F.)
+						SZP->ZP_SALATUA := nSaldoAtual
+						SZP->ZP_PENDENT := nSaldoPendente
+					MsUnLock()
+				endif
+			else
+				if RecLock("SZP",.T.)
+					SZP->ZP_FILIAL := xFilial("SZP")
+					SZP->ZP_BANCO := cBancoDe
+					SZP->ZP_AGENCIA := cAgenciaDe
+					SZP->ZP_CONTA := cContaDe
+					SZP->ZP_DTSALDO := SToD(cDataDispo)
 					SZP->ZP_SALATUA := nSaldoAtual
 					SZP->ZP_PENDENT := nSaldoPendente
-				MsUnLock()
-			endif
-		else
-			if RecLock("SZP",.T.)
-				SZP->ZP_FILIAL := xFilial("SZP")
-				SZP->ZP_BANCO := cBancoDe
-				SZP->ZP_AGENCIA := cAgenciaDe
-				SZP->ZP_CONTA := cContaDe
-				SZP->ZP_DTSALDO := SToD(cDataDispo)
-				SZP->ZP_SALATUA := nSaldoAtual
-				SZP->ZP_PENDENT := nSaldoPendente
-				
-				MsUnLock()
+					
+					MsUnLock()
+				endif
 			endif
 		endif
 	enddo
@@ -264,7 +269,10 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 		cDataIni := DToS(SToD(cDataIni) + 1)
 	enddo
 	
-	QTRB->(DbCloseArea())
+	if Select("QTRB") <> 0
+		QTRB->(DbCloseArea())
+	endif
+	
 	TEMP->(DbCloseArea())
 	FErase(cArqTrab1+".dbf")
 	FErase(cArqTrab1+".cdx")

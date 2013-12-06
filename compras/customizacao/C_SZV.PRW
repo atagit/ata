@@ -14,7 +14,7 @@ user function C_SZV()
 						{"Incluir","AxInclui",0,3},;
 						{"Alterar","AxAltera",0,4},;
 						{"Excluir","AxDeleta",0,5},;
-						{"Legenda","U_LEGORCA()",0,6}}
+						{"Legenda","U_LEGSZV()",0,6}}
 	
 	aColors := {{"ZV_QTPEDID > ZV_MAXPED","BR_VERMELHO"},;
 				{"ZV_QTPEDID < ZV_MAXPED","BR_VERDE"},;
