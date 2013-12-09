@@ -7,11 +7,11 @@
 #include "topconn.ch"
 
 user function FATOC()
-	private aOrd    := {"Projeto","Emissao"}
+	private aOrd    := {}
 	private aReturn := {"Especial",1,"Administracao",1,2,1,"",1}
 	private cPerg   := "FATOC"
 	private Cabec1  := ""
-	private Cabec2  := "EMISSAO    | PROJETO | NOTA FISCAL   | NATUREZA                  |           QUANT |              TOTAL"
+	private Cabec2  := "EMISSAO  | NOTA FISCAL | NATUREZA        |            PESO |              TOTAL | VENCTO   |          REALIZADO"
 	private cDesc1  := "FATURA POR O.C."
 	private cString := "SE1"
 	private m_pag   := 1
@@ -31,7 +31,6 @@ user function FATOC()
 	private cCbcNum	:= ""
 	private cEmpresa := SubStr(cNumEmp,1,2)
 	
-	private nNuPor := 0
 	private cPrjIni := ""
 	private cPrjFin := ""
 	private cOcIni := ""
@@ -39,11 +38,10 @@ user function FATOC()
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Parametros utilizados pelo programa                          ³
-	//³ mv_par01 - Por (1-Projeto/2-O.C.)                            ³
-	//³ mv_par02 - Projeto de                                        ³
-	//³ mv_par03 - Projeto ate                                       ³
-	//³ mv_par04 - O.C. de                                           ³
-	//³ mv_par05 - O.C. ate                                          ³
+	//³ mv_par01 - Projeto de                                        ³
+	//³ mv_par02 - Projeto ate                                       ³
+	//³ mv_par03 - O.C. de                                           ³
+	//³ mv_par04 - O.C. ate                                          ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	
 	Pergunte(cPerg,.F.)
@@ -55,11 +53,10 @@ user function FATOC()
 	SetDefault(aReturn,cString)
 	nOrdem  := aReturn[8]
 	
-	nNuPor := mv_par01
-	cPrjIni := mv_par02
-	cPrjFin := mv_par03
-	cOcIni := mv_par04
-	cOcFin := mv_par05
+	cPrjIni := mv_par01
+	cPrjFin := mv_par02
+	cOcIni := mv_par03
+	cOcFin := mv_par04
 	
 	Processa({|| Impr()},"","Aguarde processando...",lAborta)
 	
@@ -79,23 +76,20 @@ user function FATOC()
 return
 
 static function Impr()
-	local nTotReg := 0
-	local nTotal := 0
+	local cNatureza := ""
+	local aNatureza := {}
+	local cAF := ""
+	local nPeso := 0
+	local nValor := 0
+	local nValTot := 0
 	local nQuant := 0
-	local nTgQuant := 0
-	local nTgTotal := 0
+	local nTotal := 0
+	local nTotReg := 0
 	
-	private nQuantOC := 0
-	private nValorOC := 0
-	private nQuantPJ := 0
-	private nValorPJ := 0
-	private cCliente := ""
-	private cDtVenc := ""
-	
-	cQry := "select E1_EMISSAO, E1_VENCREA, E1_CLVLCR, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_NATUREZ, E1_VALOR, E1_CLIENTE, E1_LOJA, A1_NREDUZ, CTH_AF, CTH_DTREAL "
+	cQry := "select E1_EMISSAO, E1_VENCREA, E1_CLVLCR, E1_PREFIXO, E1_NUM, E1_PARCELA, E1_NATUREZ, E1_VALOR, E1_CLIENTE, E1_LOJA, A1_NREDUZ, CTH_AF, CTH_DTREAL, E1_VALLIQ, E1_FATURA "
 	cQry += "from "+RetSqlName("SE1")+" SE1 inner join "+RetSqlName("CTH")+" CTH on (E1_CLVLCR = CTH_CLVL) "
 	cQry += "	inner join "+RetSqlName("SA1")+" SA1 on (CTH_CLIENT = A1_COD and CTH_LOJACL = A1_LOJA) "
-	cQry += "where (CTH_AF between '"+cOcIni+"' and '"+cOcFin+"') and SE1.D_E_L_E_T_ <> '*' and CTH.D_E_L_E_T_ <> '*' "
+	cQry += "where (CTH_AF between '"+cOcIni+"' and '"+cOcFin+"') and (CTH_CLVL between '"+cPrjIni+"' and '"+cPrjFin+"') and CTH_BLOQ <> '1' and SE1.D_E_L_E_T_ <> '*' and CTH.D_E_L_E_T_ <> '*' "
 	cQry += "order by E1_NUM, E1_PREFIXO"
 	
 	tcquery cQry new alias "TEMP"
@@ -114,82 +108,132 @@ static function Impr()
 		nLin++
 		
 		while !TEMP->(Eof()) .and. TEMP->CTH_AF == cAF
-//			EMISSAO  | NOTA FISCAL | NATUREZA        |            PESO |              TOTAL | VENCTO
-//			99/99/99   999999999     AAAAAAAAAAAAAAA   999,999,999.999   999,999,999,999.99   99/99/99
+//			EMISSAO  | NOTA FISCAL | NATUREZA        |            PESO |              TOTAL | VENCTO   |          REALIZADO
+//			99/99/99   999999999     AAAAAAAAAAAAAAA   999,999,999.999   999,999,999,999.99   99/99/99   999,999,999,999.99
 //			0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //			          1         2         3         4         5         6         7         8         9        10        11        12
 			
-			if TEMP->E1_PARCELA == "001"
-				lNF := .T.
-			else
-				lNF := .F.
-			endif
+			if Empty(TEMP->E1_PARCELA) .and. !Empty(TEMP->E1_FATURA) ; TEMP->(DbSkip()) ; loop ; endif
 			
 			@nLin,000 psay U_ConvData(TEMP->E1_EMISSAO,"yy")
 			@nLin,011 psay TEMP->E1_NUM
 			
 			do case
 				case AllTrim(TEMP->E1_NATUREZ) $ "10101/10108"
+					cNatureza := "10101"
+					nPeso := IIf(SF2->(DbSeek(xFilial("SF2")+TEMP->E1_NUM+"U  "+TEMP->E1_CLIENTE+TEMP->E1_LOJA,.F.)),SF2->F2_PLIQUI,0)
+					
 					@nLin,025 psay "FATURAMENTO"
+					@nLin,043 psay Transf(nPeso,"@E 999,999,999.999")
 				case AllTrim(TEMP->E1_NATUREZ) $ "10504"
+					cNatureza := "10504"
+					
 					@nLin,025 psay "ADIANTAMENTO"
+					@nLin,043 psay " "
 			endcase
 			
-			@nLin,043 psay Transf(CON->C5_PESOL,"@E 999,999,999.999")
+			nValor := TEMP->E1_VALLIQ
+			
 			@nLin,061 psay Transf(TEMP->E1_VALOR,"@E 999,999,999,999.99")
 			@nLin,082 psay U_ConvData(TEMP->E1_VENCREA,"yy")
+			@nLin,093 psay Transf(nValor,"@E 999,999,999,999.99")
+			
+			if (nInd := AScan(aNatureza,{|x| x[1] == cNatureza})) == 0
+				AAdd(aNatureza,{cNatureza,nValor})
+			else
+				aNatureza[nInd][2] += nValor
+			endif
+			
+			nLin++
+			nQuant += nPeso
+			nTotal += nValor
+			nValTot += TEMP->E1_VALOR
+			nPeso := 0 ; nValor := 0
+			
+			U_SaltaFolha()
+			IncProc()
+			TEMP->(DbSkip())
+		enddo
+		
+		@nLin,025 psay "T O T A L"
+		@nLin,061 psay Transf(nValTot,"@E 999,999,999,999.99")
+		@nLin,093 psay Transf(nTotal,"@E 999,999,999,999.99")
+		
+		nLin += 3
+		
+		U_SaltaFolha()
+		
+		@nLin,011 psay "REALIZADO..:"
+		@nLin,033 psay Transf(nQuant,"@E 999,999,999.999")
+		@nLin,051 psay Transf(nTotal,"@E 999,999,999,999.99")
+		
+		nLin++
+		
+		U_SaltaFolha()
+		DbSelectArea("SZM")
+		SZM->(DbSetOrder(2))
+		SZM->(DbGoTop())
+		
+		if SZM->(DbSeek(xFilial("SZM")+cAF,.F.))
+			@nLin,011 psay "ORCADO.....:"
+			@nLin,033 psay Transf(SZM->ZM_QUANT,"@E 999,999,999.999")
+			@nLin,051 psay Transf(SZM->ZM_TOTALG,"@E 999,999,999,999.99")
 			
 			nLin++
 			
 			U_SaltaFolha()
 			
-			IncProc()
-			TEMP->(DbSkip())
-		enddo
+			@nLin,011 psay "PENDENTE...:"
+			@nLin,033 psay Transf(SZM->ZM_QUANT - nQuant,"@E 999,999,999.999")
+			@nLin,051 psay Transf(SZM->ZM_TOTALG - nTotal,"@E 999,999,999,999.99")
+		endif
 		
-		TotalOC(cAF)
+		nQuant := 0 ; nTotal := 0 ; nValTot := 0
 		
-		nLin += 2
-		
-		@nLin,014 psay "REALIZADO..:"
-		@nLin,067 psay Transf(nQuant,"@E 999,999,999.999")
-		@nLin,085 psay Transf(nTotal,"@E 999,999,999,999.99")
-		
-		nTgQuant += nQuant
-		nTgTotal += nTotal
-		
-		nLin++
-		
-		@nLin,014 psay "ORCADO.....:"
-		@nLin,067 psay Transf(nQuantPJ,"@E 999,999,999.999")
-		@nLin,085 psay Transf(nValorPJ,"@E 999,999,999,999.99")
-		
-		nLin++
-		
-		@nLin,014 psay "PENDENTE...:"
-		@nLin,067 psay Transf(nQuantPJ - nQuant,"@E 999,999,999.999")
-		@nLin,085 psay Transf(nValorPJ - nTotal,"@E 999,999,999,999.99")
-		
-		nQuant := 0 ; nTotal := 0 ; nQuantPJ := 0 ; nTotalPJ := 0 ; nTgQuant := 0 ; nTgTotal := 0
-		
-		U_SaltaFolha()
+		U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 	enddo
 	
-	U_Rdp(nRdpPag,cRdpLeg,Tamanho)
-	DbSelectArea("TEMP")
-return
-
-static function TotalOC(cOC)
-	nQuantOC := 0
-	nValorOC := 0
+	nLin += 2
 	
-	cCon := "select sum(CTH_PESAF) as PESO, sum(CTH_VLAF) as VALOR, sum(CTH_PESAF * CTH_VLAF) as TOTAL from CTH010 where CTH_AF = '"+cOC+"' and D_E_L_E_T_ <> '*'"
+	U_SaltaFolha()
 	
-	tcquery cCon new alias "CON"
-	DbSelectArea("CON")
+	@nLin,000 psay __PrtThinLine()
 	
-	nQuantOC := CON->PESO
-	nValorOC := CON->TOTAL
+	nLin++
 	
-	CON->(DbCloseArea())
+	U_SaltaFolha()
+	
+	@nLin,000 psay "NATUREZA                                TOTAL"
+	
+	U_SaltaFolha()
+	
+//	NATUREZA                                TOTAL
+//	10101 AAAAAAAAAAAAAAA      999,999,999,999.99
+//	0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+//	          1         2         3         4         5         6         7         8         9        10        11        12
+	
+	nTotal := 0
+	
+	for i := 1 to Len(aNatureza)
+		@nLin,000 psay AllTrim(aNatureza[i][1])
+		
+		do case
+			case aNatureza[i][1] == "10101"
+				@nLin,006 psay "FATURAMENTO"
+			case aNatureza[i][1] == "10504"
+				@nLin,006 psay "ADIANTAMENTO"
+		endcase
+		
+		@nLin,027 psay Transf(aNatureza[i][2],"@E 999,999,999,999.99")
+		
+		nLin++
+		nTotal += aNatureza[i][2]
+		
+		U_SaltaFolha()
+	next
+	
+	@nLin,000 psay "T O T A L"
+	@nLin,027 psay Transf(nTotal,"@E 999,999,999,999.99")
+	
+	TEMP->(DbCloseArea())
 return

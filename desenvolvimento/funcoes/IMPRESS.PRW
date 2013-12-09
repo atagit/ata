@@ -99,6 +99,7 @@ User Function SaltaFolha(nSalto,cCbc1,cCbc2)
 		if nLin >= nSalto
 			U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 			
+			nLin++
 			nRdpPag++
 			lRet := .T.
 		endif
@@ -109,6 +110,7 @@ User Function SaltaFolha(nSalto,cCbc1,cCbc2)
 			U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 			U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 			
+			nLin++
 			nRdpPag++
 			lRet := .T.
 		endif
