@@ -11,7 +11,7 @@ user function POSEST()
 	private aReturn := {"Especial",1,"Administracao",1,2,1,"",1}
 	private cPerg   := "GERALM"
 	private Cabec1  := ""
-	private Cabec2  := "CODIGO  AM  TP  GRUP  DESCRICAO                                           UN  UL ENTRADA                 QUANT               VALOR"
+	private Cabec2  := ""
 	private cDesc1  := "RELATORIO DE ESTOQUE"
 	private ContFun := 0
 	private cString := "SB9"
@@ -104,10 +104,13 @@ static function Impr()
 		GravarMov()
 		
 		Cabec1 := PadC("Periodo: "+U_ConvData(cPriMes)+" a "+U_ConvData(cDataRef),nTamanho)
+//		Cabec2 := "CODIGO  AM  TP  GRUP  DESCRICAO                                           UN  UL ENTRADA                 QUANT               VALOR"
+		Cabec2 := "CODIGO  AM  TP  RET  GRUP  DESCRICAO                                           UN  ULT ENTRAD             QUANT           VALOR"
 	else
 		GravarAtu()
 		
-		Cabec1 := ""
+		Cabec1 := "CODIGO  AM  TP  RET  GRUP  DESCRICAO                                           UN  ULT ENTRAD             QUANT           VALOR"
+		Cabec2 := ""
 	endif
 	
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
@@ -119,14 +122,14 @@ static function Impr()
 	
 	@nLin,000 psay "DEPOSITO: "+cArmazem+" "+IIf(SX5->(DbSeek(xFilial("SX5")+"AM"+cArmazem,.F.)),AllTrim(SX5->X5_DESCRI),"")
 	
-	nLin++
+	nLin += 2
 	
 	U_SaltaFolha()
 	
 	for i := 1 to Len(aAlmox)
-		if nListZero == 2 .and. Empty(aAlmox[i][2])
+/*		if nListZero == 2 .and. Empty(aAlmox[i][2])
 			loop
-		endif
+		endif*/
 		
 		if aAlmox[i][4] <> cArmazem
 			cArmazem := aAlmox[i][4]
@@ -142,36 +145,37 @@ static function Impr()
 			U_SaltaFolha()
 		endif
 		
-//		CODIGO  AM  TP  GRUP  DESCRICAO                                           UN  UL ENTRADA                 QUANT               VALOR
-//		AAA999  99  AA  9999  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  AA  99/99/9999  999,999,999,999.9999  999,999,999,999.99
+//		CODIGO  AM  TP  RET  GRUP  DESCRICAO                                           UN  ULT ENTRAD             QUANT           VALOR
+//		AAA999  99  AA  AAA  9999  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  AA  99/99/9999  999,999,999.9999  999,999,999.99
 //		0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
 //		          1         2         3         4         5         6         7         8         9        10        11        12        13
 		
-		@nLin,000 psay Left(AllTrim(aAlmox[i][1]),60)
-		@nLin,008 psay aAlmox[i][4]
-		
-		if SB1->(DbSeek(xFilial("SB1")+aAlmox[i][1]+aAlmox[i][4],.F.))
+		if SB1->(MsSeek(xFilial("SB1")+aAlmox[i][1]+aAlmox[i][4]))
+			@nLin,000 psay Left(AllTrim(aAlmox[i][1]),60)
+			@nLin,008 psay aAlmox[i][4]
+			
 			@nLin,012 psay AllTrim(SB1->B1_TIPO)
-			@nLin,016 psay AllTrim(SB1->B1_GRUPO)
-			@nLin,022 psay AllTrim(SB1->B1_DESC)
-			@nLin,074 psay AllTrim(SB1->B1_UM)
-			@nLin,078 psay U_ConvData(DToS(SB1->B1_UCOM))
+			@nLin,016 psay IIf(SB1->B1_MATRET == "1","RET","   ")
+			@nLin,021 psay AllTrim(SB1->B1_GRUPO)
+			@nLin,027 psay AllTrim(SB1->B1_DESC)
+			@nLin,079 psay AllTrim(SB1->B1_UM)
+			@nLin,083 psay U_ConvData(DToS(SB1->B1_UCOM))
+			
+			@nLin,095 psay Transf(aAlmox[i][2],"@E 999,999,999.9999")
+			@nLin,113 psay Transf(aAlmox[i][3],"@E 999,999,999.99")
+			
+			nTotQuant += aAlmox[i][2]
+			nTotValor += aAlmox[i][3]
+			nCont++
+			nLin++
+			
+			U_SaltaFolha()
 		endif
-		
-		@nLin,094 psay Transf(aAlmox[i][2],"@E 999,999,999.9999")
-		@nLin,116 psay Transf(aAlmox[i][3],"@E 999,999,999.99")
-		
-		nTotQuant += aAlmox[i][2]
-		nTotValor += aAlmox[i][3]
-		nCont++
-		nLin++
-		
-		U_SaltaFolha()
 	next
 	
-	@nLin,078 psay "TOTAL"
-	@nLin,090 psay Transf(nTotQuant,"@E 999,999,999,999.9999")
-	@nLin,112 psay Transf(nTotValor,"@E 999,999,999,999.99")
+	@nLin,083 psay "TOTAL"
+	@nLin,095 psay Transf(nTotQuant,"@E 999,999,999.9999")
+	@nLin,113 psay Transf(nTotValor,"@E 999,999,999.99")
 	
 	U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 return
@@ -241,9 +245,12 @@ static function GravarMov()
 return
 
 static function GravarAtu()
-	cQry := "select 0 as NUMSEQ, 'SB2' as TM, B2_COD as COD, B2_LOCAL as LOCAL, B1_UM as UM, B2_QATU as QUANT, B2_CM1 as CUSTO "
+	local cCondic := IIf(nListZero == 2," and B2_QATU <> 0","")
+	
+//	cQry := "select 0 as NUMSEQ, 'SB2' as TM, B2_COD as COD, B2_LOCAL as LOCAL, B1_UM as UM, B2_QATU as QUANT, B2_CM1 as CUSTO "
+	cQry := "select 0 as NUMSEQ, 'SB2' as TM, B2_COD as COD, B2_LOCAL as LOCAL, B1_UM as UM, B2_QATU as QUANT, (B2_QATU * B1_ULTPRC) as CUSTO "
 	cQry += "from "+RetSqlName("SB2")+" SB2 inner join "+RetSqlName("SB1")+" SB1 on (B2_COD = B1_COD) "
-	cQry += "where (B2_COD between '"+cProdIni+"' and '"+cProdFin+"') and (B2_LOCAL between '"+cArmaIni+"' and '"+cArmaFin+"') and SB2.D_E_L_E_T_ <> '*' and SB1.D_E_L_E_T_ <> '*' "
+	cQry += "where (B2_COD between '"+cProdIni+"' and '"+cProdFin+"') and (B2_LOCAL between '"+cArmaIni+"' and '"+cArmaFin+"')"+cCondic+" and B1_MSBLQL <> '1' and SB2.D_E_L_E_T_ <> '*' and SB1.D_E_L_E_T_ <> '*' "
 	cQry += "order by B2_LOCAL, B2_COD"
 	
 	tcquery cQry new alias "TEMP"

@@ -205,6 +205,8 @@ static function Impr()
 	
 	@nLin,000 psay "NATUREZA                                TOTAL"
 	
+	nLin++
+	
 	U_SaltaFolha()
 	
 //	NATUREZA                                TOTAL

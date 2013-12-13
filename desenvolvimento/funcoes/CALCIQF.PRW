@@ -18,7 +18,7 @@ user function CalcIQF(nRA,nRC,nRR,nTOT)
 		case nIQF < 60
 			cClassif := "DESQUALIFICADO"
 		case nIQF >= 60 .and. nIQF < 80
-			cClassif := " ACEITO COM RESTRICAO"
+			cClassif := "ACEITO COM RESTRICAO"
 		case nIQF >= 80
 			cClassif := "QUALIFICADO"
 	endcase

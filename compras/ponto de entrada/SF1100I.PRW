@@ -65,8 +65,11 @@ static function Fechar()
 return
 
 static function GravarAvaliacao()
+	local aAreaAnt := GetArea()
+	local nAvaliac := nRadio - 1
+	
 	RecLock("SF1",.F.)
-		SF1->F1_AVIQF := Str(nRadio - 1,1)
+		SF1->F1_AVIQF := Str(nAvaliac,1)
 /*		SF1->F1_AVPRZ := cPrazo
 		SF1->F1_AVIDENT := cIdent
 		SF1->F1_AVESPEC := cEspec
@@ -74,8 +77,28 @@ static function GravarAvaliacao()
 		SF1->F1_AVCERTI := cCertif*/
 	MsUnLock()
 	
-	U_AVFORNE(cForn,cLoja,(nRadio - 1))
+	U_AVFORNE(cForn,cLoja,nAvaliac)
 	
+	if nAvaliac > 1
+		DbSelectArea("SZR")
+		
+		if RecLock("SZR",.T.)
+			SZR->ZR_FILIAL := xFilial("SZR")
+			SZR->ZR_EMISSAO := dDataBase
+			SZR->ZR_NUMPC := ""
+			SZR->ZR_NFISCAL := SF1->F1_DOC
+			SZR->ZR_SERIE := SF1->F1_SERIE
+			SZR->ZR_DTNF := SF1->F1_EMISSAO
+			SZR->ZR_ACDEV := IIf(nAvaliac == 2,"2","1")
+			SZR->ZR_NOTIF := GetSXENum("SZR","ZR_NOTIF")
+			SZR->ZR_TIPO := "1"
+			SZR->ZR_ENCERR := "3"
+		endif
+		Help("",1,"ARQVAZIO")
+		SZR->(DbCloseArea())
+	endif
+	
+	RestArea(aAreaAnt)
 	Fechar()
 return
 

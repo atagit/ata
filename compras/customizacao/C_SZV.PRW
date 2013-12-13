@@ -12,7 +12,7 @@ user function C_SZV()
 	private aRotina := {{"Pesquisar","AxPesqui",0,1},;
 						{"Visualizar","AxVisual",0,2},;
 						{"Incluir","AxInclui",0,3},;
-						{"Alterar","AxAltera",0,4},;
+//						{"Alterar","AxAltera",0,4},;
 						{"Excluir","AxDeleta",0,5},;
 						{"Legenda","U_LEGSZV()",0,6}}
 	

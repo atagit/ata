@@ -123,25 +123,30 @@ static function Impr()
 			cCondicao := "TEMP->A2_AVALIAC "+AllTrim(SX5->X5_DESCSPA)+" .and. TEMP->A2_AVALIAC "+AllTrim(SX5->X5_DESCENG)
 		endif
 	endif*/
-	Cabec1  := "FORNECEDOR                              | ULT. COMP  | CRIT | APROV | REPRO | ACEIT |    IQF | STATUS"
+//	Cabec1  := "FORNECEDOR                              | ULT. COMP  | CRIT | APROV | REPRO | ACEIT |    IQF | STATUS"
+	Cabec1  := "FORNECEDOR                              | ULT COMP | CRIT | APROV | REPRO | ACEIT | NC REP | NC ACE |    IQF | STATUS"
 	
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 	
+	nLin++
+	
 	//FORNECEDOR                              | ULT. COMP  | CRIT | APROV | REPRO | ACEIT |    IQF | STATUS
 	//999999-99 AAAAAAAAAAAAAAAAAAAAAAAAAAAAA   99/99/9999   SIM    99999   99999   99999   999.99   ACEITO COM RESTRICAO
-	//01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
-	//          1         2         3         4         5         6         7         8         9        10
+	
+	
+//	FORNECEDOR                              | ULT COMP | CRIT | APROV | REPRO | ACEIT | NC REP | NC ACE |    IQF | STATUS
+//	999999-99 AAAAAAAAAAAAAAAAAAAAAAAAAAAAA   99/99/99   SIM    99999   99999   99999    99999    99999   999.99   ACEITO COM RESTRICAO
+//	01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+//	          1         2         3         4         5         6         7         8         9        10        11        12        13
 	
 	while !TEMP->(Eof())
 		if cCritico <> "A"
 			if TEMP->A2_CRITICO <> cCritico ; TEMP->(DbSkip()) ; loop ; endif
 		endif
 		
-		nLin++
-		
 		@nLin,000 psay TEMP->A2_COD+"/"+TEMP->A2_LOJA+" "+TEMP->A2_NREDUZ
-		@nLin,042 psay U_ConvData(TEMP->A2_ULTCOM)
-		@nLin,055 psay IIf(TEMP->A2_CRITICO == "S","SIM","NAO")
+		@nLin,042 psay U_ConvData(TEMP->A2_ULTCOM,"yy")
+		@nLin,053 psay IIf(TEMP->A2_CRITICO == "S","SIM","NAO")
 		
 		SZV->(DbGoTop())
 		
@@ -150,18 +155,22 @@ static function Impr()
 				if SZV->ZV_USADO == "S"
 					aCalcIQF := U_CalcIQF(0,0,0,SZV->ZV_VALIQF)
 					
-					@nLin,062 psay Transf(SZV->ZV_RA,"@E 99999")
-					@nLin,070 psay Transf(SZV->ZV_RR,"@E 99999")
-					@nLin,078 psay Transf(SZV->ZV_RC,"@E 99999")
-					@nLin,086 psay Transf(SZV->ZV_VALIQF,"@E 999.99")
-					@nLin,095 psay aCalcIQF[1][2]
+					@nLin,060 psay Transf(SZV->ZV_RA,"@E 99999")
+					@nLin,068 psay Transf(SZV->ZV_RR,"@E 99999")
+					@nLin,076 psay Transf(SZV->ZV_RC,"@E 99999")
+					@nLin,085 psay Transf(SZV->ZV_NCD,"@E 99999")
+					@nLin,094 psay Transf(SZV->ZV_NCA,"@E 99999")
+					@nLin,102 psay Transf(SZV->ZV_VALIQF,"@E 999.99")
+					@nLin,111 psay aCalcIQF[1][2]
 				endif
 				
 				SZV->(DbSkip())
 			enddo
 		else
-			@nLin,095 psay "SEM CLASSIFICACAO"
+			@nLin,111 psay "SEM CLASSIFICACAO"
 		endif
+		
+		nLin++
 		
 		U_SaltaFolha()
 		IncProc()

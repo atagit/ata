@@ -96,21 +96,22 @@ return
 static function Impr()
 	cQry := "select SC7.C7_NUM, SC7.C7_EMISSAO, SC7.C7_FORNECE, SC7.C7_LOJA, SA2.A2_NREDUZ, SF1.F1_AVIQF, SF1.F1_DOC, SF1.F1_SERIE "
 	cQry += "from "+RetSqlName("SC7")+" SC7 inner join "+RetSqlName("SD1")+" SD1 on (SD1.D1_PEDIDO = SC7.C7_NUM and SD1.D1_FORNECE = SC7.C7_FORNECE and SD1.D1_LOJA = SC7.C7_LOJA) inner join "+RetSqlName("SF1")+" SF1 on (SD1.D1_DOC = SF1.F1_DOC and SD1.D1_SERIE = SF1.F1_SERIE and SD1.D1_FORNECE = SF1.F1_FORNECE and SD1.D1_LOJA = SF1.F1_LOJA) inner join "+RetSqlName("SA2")+" SA2 on (SC7.C7_FORNECE = SA2.A2_COD and SC7.C7_LOJA = SA2.A2_LOJA) "
-	cQry += "where (SC7.C7_NUM between '"+cPedIni+"' and '"+cPedFin+"') and (SC7.C7_EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and (SC7.C7_FORNECE between '"+cForIni+"' and '"+cForFin+"') and SF1.D_E_L_E_T_ <> '*' and SD1.D_E_L_E_T_ <> '*' and SC7.D_E_L_E_T_ <> '*' and SA2.D_E_L_E_T_ <> '*' "
+//	cQry += "where (SC7.C7_NUM between '"+cPedIni+"' and '"+cPedFin+"') and (SC7.C7_EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and (SC7.C7_FORNECE between '"+cForIni+"' and '"+cForFin+"') and SF1.D_E_L_E_T_ <> '*' and SD1.D_E_L_E_T_ <> '*' and SC7.D_E_L_E_T_ <> '*' and SA2.D_E_L_E_T_ <> '*' "
+	cQry += "where (SC7.C7_NUM between '"+cPedIni+"' and '"+cPedFin+"') and (SF1.F1_EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and (SC7.C7_FORNECE between '"+cForIni+"' and '"+cForFin+"') and SF1.D_E_L_E_T_ <> '*' and SD1.D_E_L_E_T_ <> '*' and SC7.D_E_L_E_T_ <> '*' and SA2.D_E_L_E_T_ <> '*' "
 	cQry += "group by SC7.C7_NUM, SC7.C7_EMISSAO, SC7.C7_FORNECE, SC7.C7_LOJA, SA2.A2_NREDUZ, SF1.F1_AVIQF, SF1.F1_DOC, SF1.F1_SERIE "
 	
 	do case 
 		case nOrdem == 1
-			cQry += "order by SA2.A2_NREDUZ, SC7.C7_NUM, SC7.C7_EMISSAO"
+			cQry += "order by SA2.A2_NREDUZ, SC7.C7_FORNECE, SC7.C7_LOJA, SC7.C7_NUM, SC7.C7_EMISSAO"
 		case nOrdem == 2
-			cQry += "order by SA2.A2_NREDUZ, SC7.C7_NUM, SC7.C7_EMISSAO"
+			cQry += "order by SA2.A2_NREDUZ, SC7.C7_FORNECE, SC7.C7_LOJA, SC7.C7_NUM, SC7.C7_EMISSAO"
 		case nOrdem == 3
-			cQry += "order by SA2.A2_NREDUZ, SF1.F1_DOC, SF1.F1_SERIE"
+			cQry += "order by SA2.A2_NREDUZ, SC7.C7_FORNECE, SC7.C7_LOJA, SF1.F1_DOC, SF1.F1_SERIE"
 	endcase
 	
 	tcquery cQry new alias "TEMP"
-	DbSelectArea("TEMP")
 	
+	DbSelectArea("TEMP")
 	DbSelectArea("SD1")
 	DbSetOrder(14)
 	
@@ -119,11 +120,12 @@ static function Impr()
 	
 	cCbcRef := Padc("Referencia: "+U_ConvData(cDtIni)+" a "+U_ConvData(cDtFin),132)
 	
-	Cabec1 := "PEDCOMP | EMISSAO    | NOTA FISCAL   |                                               VALOR | APROV | REPRO | ACEIT |   TOTAL"
+	Cabec1 := "PEDCOMP | EMISSAO    | NOTA FISCAL   |                               VALOR | APROV | REPRO | ACEIT | NC AC | NC DV |   TOTAL"
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 	
 //	PEDCOMP | EMISSAO    | NOTA FISCAL   |                                               VALOR | APROV | REPRO | ACEIT |   TOTAL
-//	999999  | 99/99/9999 | 999999999-999 |                                      999,999,999.99     X       X       X     9999.99
+//	PEDCOMP | EMISSAO    | NOTA FISCAL   |                               VALOR | APROV | REPRO | ACEIT | NC AC | NC DV |   TOTAL
+//	999999  | 99/99/9999 | 999999999-999 |                      999,999,999.99     X       X       X       X       X     9999.99
 //	12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //	         1         2         3         4         5         6         7         8         9        10        11        12        13        14
 	
@@ -149,34 +151,36 @@ static function Impr()
 			tcquery cCon new alias "CON"
 			DbSelectArea("CON")
 			
-			@nLin,076 psay Transf(CON->C7_TOTAL,"@E 999,999,999.99")
+			@nLin,061 psay Transf(CON->C7_TOTAL,"@E 999,999,999.99")
+			
+			CON->(DbCloseArea())
 			
 			if TEMP->F1_AVIQF == "1" 
 				nContApr++
 				nTotApr++
 				nPonto += 100
 				
-				@nLin,091 psay "|   X   |       |       |"
-				@nLin,118 psay Transf("100","@E 99999.99")
+				@nLin,076 psay "|   X   |       |       |       |       |"
+				@nLin,118 psay Transf(100,"@E 9999.99")
 			elseif TEMP->F1_AVIQF == "2" 
 				nContRep++
 				nTotRep++
 				nPonto += 5
 				
-				@nLin,091 psay "|       |   X   |       |"
-				@nLin,118 psay Transf("5","@E 99999.99")
+				@nLin,076 psay "|       |   X   |       |       |       |"
+				@nLin,118 psay Transf(5,"@E 9999.99")
 			elseif TEMP->F1_AVIQF == "3"
 				nContAce++
 				nTotAce++
 				nPonto += 25
 				
-				@nLin,091 psay "|       |       |   X   |"
-				@nLin,118 psay Transf("25","@E 99999.99")
+				@nLin,076 psay "|       |       |   X   |       |       |"
+				@nLin,118 psay Transf(25,"@E 9999.99")
 			else
 				nContSem++
 				nTotSem++
 				
-				@nLin,091 psay "|       |       |       |"
+				@nLin,076 psay "|       |       |       |       |       |"
 			endif
 			
 			nLin++
@@ -186,20 +190,23 @@ static function Impr()
 			U_SaltaFolha()
 			
 			IncRegua()
-			CON->(DbCloseArea())
 			TEMP->(DbSkip())
 		enddo
 		
 		@nLin,000 psay "REGISTRO(S): "+AllTrim(Transf(nCont,"@E 999999"))
-		@nLin,085 psay "TOTAL"
-		@nLin,091 psay "|"
-		@nLin,093 psay Transf(nContApr,"@E 99999")
-		@nLin,099 psay "|"
-		@nLin,101 psay Transf(nContRep,"@E 99999")
-		@nLin,107 psay "|"
-		@nLin,109 psay Transf(nContAce,"@E 99999")
-		@nLin,115 psay "|"
-		@nLin,118 psay Transf(nPonto / (nCont - nContSem),"@E 99999.99")
+		@nLin,070 psay "TOTAL"
+		@nLin,076 psay "|"
+		@nLin,078 psay PadC(AllTrim(Transf(nContApr,"@E 99999")),5)
+		@nLin,084 psay "|"
+		@nLin,086 psay PadC(AllTrim(Transf(nContRep,"@E 99999")),5)
+		@nLin,092 psay "|"
+		@nLin,094 psay PadC(AllTrim(Transf(nContAce,"@E 99999")),5)
+		@nLin,100 psay "|"
+		@nLin,102 psay PadC(AllTrim(Transf(nContAce,"@E 99999")),5)
+		@nLin,108 psay "|"
+		@nLin,110 psay PadC(AllTrim(Transf(nContAce,"@E 99999")),5)
+		@nLin,116 psay "|"
+		@nLin,118 psay Transf(nPonto / (nCont - nContSem),"@E 9999.99")
 		
 		nTotPontos += nPonto
 		nLin += 2
@@ -222,15 +229,19 @@ static function Impr()
 	U_SaltaFolha()
 	
 	@nLin,000 psay "REGISTRO(S): "+AllTrim(Transf(nTotReg,"@E 999999"))
-	@nLin,085 psay "TOTAL"
-	@nLin,091 psay "|"
-	@nLin,093 psay Transf(nTotApr,"@E 99999")
-	@nLin,099 psay "|"
-	@nLin,101 psay Transf(nTotRep,"@E 99999")
-	@nLin,107 psay "|"
-	@nLin,109 psay Transf(nTotAce,"@E 99999")
-	@nLin,115 psay "|"
-	@nLin,118 psay Transf(nTotPontos / (nTotReg - nTotSem),"@E 99999.99")
+	@nLin,070 psay "TOTAL"
+	@nLin,076 psay "|"
+	@nLin,078 psay PadC(AllTrim(Transf(nTotApr,"@E 99999")),5)
+	@nLin,084 psay "|"
+	@nLin,086 psay PadC(AllTrim(Transf(nTotRep,"@E 99999")),5)
+	@nLin,092 psay "|"
+	@nLin,094 psay PadC(AllTrim(Transf(nTotAce,"@E 99999")),5)
+	@nLin,100 psay "|"
+	@nLin,102 psay PadC(AllTrim(Transf(nTotRep,"@E 99999")),5)
+	@nLin,108 psay "|"
+	@nLin,110 psay PadC(AllTrim(Transf(nTotAce,"@E 99999")),5)
+	@nLin,116 psay "|"
+	@nLin,118 psay Transf(nTotPontos / (nTotReg - nTotSem),"@E 9999.99")
 	
 //	alert(nTotPontos)
 //	alert(nContPontos)
