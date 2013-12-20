@@ -7,7 +7,7 @@
 #include "topconn.ch"
 
 user function POSEST()
-	private aOrd    := {}
+	private aOrd    := {"Codigo Produto","Descricao Produto"}
 	private aReturn := {"Especial",1,"Administracao",1,2,1,"",1}
 	private cPerg   := "GERALM"
 	private Cabec1  := ""
@@ -248,7 +248,7 @@ static function GravarAtu()
 	local cCondic := IIf(nListZero == 2," and B2_QATU <> 0","")
 	
 //	cQry := "select 0 as NUMSEQ, 'SB2' as TM, B2_COD as COD, B2_LOCAL as LOCAL, B1_UM as UM, B2_QATU as QUANT, B2_CM1 as CUSTO "
-	cQry := "select 0 as NUMSEQ, 'SB2' as TM, B2_COD as COD, B2_LOCAL as LOCAL, B1_UM as UM, B2_QATU as QUANT, (B2_QATU * B1_ULTPRC) as CUSTO "
+	cQry := "select 0 as NUMSEQ, 'SB2' as TM, B2_COD as COD, B2_LOCAL as LOCAL, B1_UM as UM, B2_QATU as QUANT, (B2_QATU * B1_ULTPRC) as CUSTO, B1_DESC as DESC "
 	cQry += "from "+RetSqlName("SB2")+" SB2 inner join "+RetSqlName("SB1")+" SB1 on (B2_COD = B1_COD) "
 	cQry += "where (B2_COD between '"+cProdIni+"' and '"+cProdFin+"') and (B2_LOCAL between '"+cArmaIni+"' and '"+cArmaFin+"')"+cCondic+" and B1_MSBLQL <> '1' and SB2.D_E_L_E_T_ <> '*' and SB1.D_E_L_E_T_ <> '*' "
 	cQry += "order by B2_LOCAL, B2_COD"
@@ -260,11 +260,18 @@ static function GravarAtu()
 	TEMP->(DbGoTop())
 	
 	while !TEMP->(Eof())
-		AAdd(aAlmox,{TEMP->COD,TEMP->QUANT,TEMP->CUSTO,TEMP->LOCAL})
+		AAdd(aAlmox,{TEMP->COD,TEMP->QUANT,TEMP->CUSTO,TEMP->LOCAL,TEMP->DESC})
 		
 		IncProc()
 		TEMP->(DbSkip())
 	enddo
 	
-	ASort(aAlmox,,,{|x,y| x[4]+x[1] < y[4]+y[1]})
+	do case
+		case nOrdem == 1
+			ASort(aAlmox,,,{|x,y| x[4]+x[1] < y[4]+y[1]})
+		case nOrdem == 2
+			ASort(aAlmox,,,{|x,y| x[4]+x[5] < y[4]+y[5]})
+	endcase
+	
+//	ASort(aAlmox,,,{|x,y| x[4]+x[1] < y[4]+y[1]})
 return

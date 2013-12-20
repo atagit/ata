@@ -67,6 +67,7 @@ return
 static function GravarAvaliacao()
 	local aAreaAnt := GetArea()
 	local nAvaliac := nRadio - 1
+	local cPedido := ""
 	
 	RecLock("SF1",.F.)
 		SF1->F1_AVIQF := Str(nAvaliac,1)
@@ -79,13 +80,21 @@ static function GravarAvaliacao()
 	
 	U_AVFORNE(cForn,cLoja,nAvaliac)
 	
-	if nAvaliac > 1
+	if SD1->(DbSeek(xFilial("SD1")+SF1->(F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA)))
+		while !SD1->(Eof()) .and. SD1->D1_DOC == SF1->F1_DOC .and. SD1->D1_SERIE == SF1->F1_SERIE .and. SD1->D1_FORNECE == SF1->F1_FORNECE .and. SD1->D1_LOJA == SF1->F1_LOJA
+			cPedido := SD1->D1_PEDIDO
+			
+			SD1->(DbSkip())
+		enddo
+	endif
+	
+	if nAvaliac > 1 .and. !Empty(cPedido)
 		DbSelectArea("SZR")
 		
 		if RecLock("SZR",.T.)
 			SZR->ZR_FILIAL := xFilial("SZR")
 			SZR->ZR_EMISSAO := dDataBase
-			SZR->ZR_NUMPC := ""
+			SZR->ZR_NUMPC := cPedido
 			SZR->ZR_NFISCAL := SF1->F1_DOC
 			SZR->ZR_SERIE := SF1->F1_SERIE
 			SZR->ZR_DTNF := SF1->F1_EMISSAO
@@ -94,7 +103,7 @@ static function GravarAvaliacao()
 			SZR->ZR_TIPO := "1"
 			SZR->ZR_ENCERR := "3"
 		endif
-		Help("",1,"ARQVAZIO")
+		
 		SZR->(DbCloseArea())
 	endif
 	

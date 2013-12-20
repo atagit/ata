@@ -286,10 +286,10 @@ static function Cbc(cPedido,cUsuario)
 	@nLin+2,060 psay "Fax      : "+IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(C7_FORNECE+C7_LOJA),.F.)),SA2->A2_DDD+" "+Transf(SA2->A2_FAX,"@R 9999-9999"),"")
 	@nLin+2,103 psay U_Negrito(.T.)+"Comprad. : "+cComprador+U_Negrito(.F.)
 	@nLin+3,002 psay "E-mail     : "+IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(C7_FORNECE+C7_LOJA),.F.)),AllTrim(SA2->A2_EMAIL),"")
-	@nLin+3,060 psay "Cd Pagto : "+IIf(SE4->(DbSeek(xFilial("SE4")+TEMP->C7_COND,.F.)),SE4->E4_DESCRI,"")
+	@nLin+3,060 psay "Cd Pagto : "+IIf(TEMP->C7_COND == "998"," ",IIf(SE4->(DbSeek(xFilial("SE4")+TEMP->C7_COND,.F.)),SE4->E4_DESCRI,""))
 	@nLin+3,103 psay "Desconto : "+Transf(CON->C7_VLDESC,"@E 999,999.99")
 	@nLin+4,002 psay "Loc Entrg  : "+IIf(Empty(TEMP->C7_LCLENTR),Space(20),AllTrim(TEMP->C7_LCLENTR)+Space(20 - Len(AllTrim(TEMP->C7_LCLENTR))))
-	@nLin+4,060 psay "Pz Entreg: "+U_ConvData(TEMP->C7_DATPRF)
+	@nLin+4,060 psay "Pz Entreg: "+IIf(TEMP->C7_COND == "998"," ",U_ConvData(TEMP->C7_DATPRF))
 	@nLin+4,103 psay "Despesas : "+Transf(CON->C7_DESPESA,"@E 999,999.99")
 	
 	nLin := 009

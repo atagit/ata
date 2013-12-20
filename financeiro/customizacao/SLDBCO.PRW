@@ -32,7 +32,6 @@ user function SLDBCO(lJob)
 return
 
 static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
-	local cArqTrab1
 	local aTempStru := {}
 	local cTipoDoc := ""
 	local cTipo := ""
@@ -45,6 +44,9 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	
 	private nSaldoAtual := 0
 	private nSaldoPendente := 0
+	private nValor := 0
+	private cArqTrab1
+	private cArqTrab2
 	
 	if Select("TEMP") <> 0
 		TEMP->(DbCloseArea())
@@ -215,15 +217,15 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 		enddo
 		
 		if lGrava
-			Pendentes()
 			DbSelectArea("SZP")
 			SZP->(DbGoTop())
 			
 			if SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataDispo,.F.))
-				if (SZP->ZP_SALATUA <> nSaldoAtual .and. !Empty(nSaldoAtual)) .or. (SZP->ZP_PENDENT <> nSaldoPendente .and. !Empty(nSaldoPendente))
+//				if (SZP->ZP_SALATUA <> nSaldoAtual .and. !Empty(nSaldoAtual)) .or. (SZP->ZP_PENDENT <> nSaldoPendente .and. !Empty(nSaldoPendente))
+				if SZP->ZP_SALATUA <> nSaldoAtual .and. !Empty(nSaldoAtual)
 					RecLock("SZP",.F.)
 						SZP->ZP_SALATUA := nSaldoAtual
-						SZP->ZP_PENDENT := nSaldoPendente
+//						SZP->ZP_PENDENT := nSaldoPendente
 					MsUnLock()
 				endif
 			else
@@ -234,13 +236,28 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 					SZP->ZP_CONTA := cContaDe
 					SZP->ZP_DTSALDO := SToD(cDataDispo)
 					SZP->ZP_SALATUA := nSaldoAtual
-					SZP->ZP_PENDENT := nSaldoPendente
+//					SZP->ZP_PENDENT := nSaldoPendente
 					
 					MsUnLock()
 				endif
 			endif
 		endif
 	enddo
+	
+	Pendentes()
+	
+		if lGrava
+			DbSelectArea("SZP")
+			SZP->(DbGoTop())
+			
+			if SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataAte,.F.))
+				if SZP->ZP_PENDENT <> nSaldoPendente .and. !Empty(nSaldoPendente)
+					RecLock("SZP",.F.)
+						SZP->ZP_PENDENT := nSaldoPendente
+					MsUnLock()
+				endif
+			endif
+		endif
 	
 	cDataIni := cDataDe
 	
@@ -276,12 +293,11 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	TEMP->(DbCloseArea())
 	FErase(cArqTrab1+".dbf")
 	FErase(cArqTrab1+".cdx")
+	FErase(cArqTrab2+".dbf")
+	FErase(cArqTrab2+".cdx")
 return
 
-
 static function Pendentes()
-	local nValor := 0
-	
 	if Select("QTRB") <> 0
 		QTRB->(DbCloseArea())
 	endif
@@ -347,9 +363,8 @@ static function Pendentes()
 		PEND->(DbSkip())
 	enddo
 	
-	nSaldoPendente := nSaldoAtual - nValor
+//	nSaldoPendente := nSaldoAtual - nValor
+	nSaldoPendente := nValor
 	
 	PEND->(DbCloseArea())
-	FErase(cArqTrab2+".dbf")
-	FErase(cArqTrab2+".cdx")
 return

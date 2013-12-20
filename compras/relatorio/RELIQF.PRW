@@ -103,7 +103,7 @@ static function Impr()
 	cQry += "from "+RetSqlName("SA2")+" "
 	cQry += "where (A2_COD between '"+cForIni+"' and '"+cForFin+"') and A2_MSBLQL <> 1 and D_E_L_E_T_ <> '*' "
 	
-	do case 
+	do case
 		case nOrdem == 1
 			cQry += "order by A2_COD, A2_LOJA"
 		case nOrdem == 2
