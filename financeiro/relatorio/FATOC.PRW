@@ -11,7 +11,7 @@ user function FATOC()
 	private aReturn := {"Especial",1,"Administracao",1,2,1,"",1}
 	private cPerg   := "FATOC"
 	private Cabec1  := ""
-	private Cabec2  := "EMISSAO  | NOTA FISCAL | NATUREZA        |            PESO |              TOTAL | VENCTO   |          REALIZADO | DATA PAG | ATRASO"
+	private Cabec2  := "EMISSAO  | NOTA FISCAL | NATUREZA        |           PESO |              TOTAL | VENCTO   |          REALIZADO | DATA PAG | ATRASO"
 	private cDesc1  := "FATURA POR O.C."
 	private cString := "SE1"
 	private m_pag   := 1

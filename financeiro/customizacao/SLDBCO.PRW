@@ -47,6 +47,7 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	private nValor := 0
 	private cArqTrab1
 	private cArqTrab2
+	private lGrava := .F.
 	
 	if Select("TEMP") <> 0
 		TEMP->(DbCloseArea())
@@ -246,18 +247,18 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	
 	Pendentes()
 	
-		if lGrava
-			DbSelectArea("SZP")
-			SZP->(DbGoTop())
-			
-			if SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataAte,.F.))
-				if SZP->ZP_PENDENT <> nSaldoPendente .and. !Empty(nSaldoPendente)
-					RecLock("SZP",.F.)
-						SZP->ZP_PENDENT := nSaldoPendente
-					MsUnLock()
-				endif
+	if lGrava
+		DbSelectArea("SZP")
+		SZP->(DbGoTop())
+		
+		if SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataAte,.F.))
+			if SZP->ZP_PENDENT <> nSaldoPendente .and. !Empty(nSaldoPendente)
+				RecLock("SZP",.F.)
+					SZP->ZP_PENDENT := nSaldoPendente
+				MsUnLock()
 			endif
 		endif
+	endif
 	
 	cDataIni := cDataDe
 	

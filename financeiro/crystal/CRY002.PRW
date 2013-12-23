@@ -454,6 +454,7 @@ static function GeraRel(aBancos,cMes,cAno)
 			
 //			TRB->&("SALDO"+Str(i,1)) := TMP->(ZP_SALATUA + ZP_PENDENT)
 			TRB->&("SALDO"+Str(i,1)) := TMP->ZP_SALATUA
+			TRB->&("PENDT"+Str(i,1)) := TMP->ZP_PENDENT
 			nTotDias += TMP->ZP_SALATUA
 			nContDias++
 			
