@@ -46,6 +46,7 @@ user function IMPRNC()
 	
 	private cReport := "CRY003"
 	private cOpcoes := "1;0;1;Notificacao de Nao Conformidade"
+//	private cOpcoes := "6;0;1;C:\temp\000002"		//PDF
 	private cParam  := AllTrim(cEmpAnt)+";"+AllTrim(cFilAnt)+";"
 	
 	if Select("TMP") <> 0
