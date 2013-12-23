@@ -88,6 +88,7 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	
 	cQry := "select E5_DTDISPO, E5_DATA, E5_HISTOR, E5_DOCUMEN, E5_NUMCHEQ, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_VALOR, E5_RECPAG, E5_RECONC, E5_TIPODOC, E5_DTDIGIT, E5_TIPO, E5_BENEF, E5_CLIFOR, E5_LOJA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_MOTBX, R_E_C_N_O_ as RECNO "
 	cQry += "from "+RetSqlName("SE5")+" "
+//	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and (E5_TIPODOC not in ('MT','BA','CH','EC','PA','ES','DC','JR') or E5_TIPODOC in ('CH','EC')) and E5_RECONC = 'x' and D_E_L_E_T_ <> '*' "
 	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and ((E5_TIPODOC not in ('MT','BA','CH','EC','PA','ES','DC','JR')) or (E5_TIPODOC in ('CH','EC') and E5_RECONC = 'x')) and D_E_L_E_T_ <> '*' "
 	cQry += "order by E5_DTDISPO, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_NUMCHEQ, R_E_C_N_O_"
 	
