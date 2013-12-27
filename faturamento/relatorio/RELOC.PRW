@@ -431,20 +431,21 @@ static function Impr()
 			
 			nLin++
 			
-//			IT TES CFOP DESCRICAO              DESTINATARIO          CNPJ                ENDERECO
-//			99 999 9999 AAAAAAAAAAAAAAAAAAAA   AAAAAAAAAAAAAAAAAAAA  99.999.999/9999-99  
+//			IT TES CFOP DESCRICAO              DESTINATARIO          CODIGO     CNPJ                ENDERECO
+//			99 999 9999 AAAAAAAAAAAAAAAAAAAA   AAAAAAAAAAAAAAAAAAAA  999999-99  99.999.999/9999-99  
 //			012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //			          1         2         3         4         5         6         7         8         9        10        11        12        13
 			
-			@nLin,000 psay "IT TES CFOP DESCRICAO              DESTINATARIO          CNPJ                ENDERECO"
+			@nLin,000 psay "IT TES CFOP DESCRICAO              DESTINATARIO          CODIGO     CNPJ                ENDERECO"
 			
 			if !Empty(TEMP->ZM_TES1)
 				@++nLin,000 psay "01 "+TEMP->ZM_TES1+" "+IIf(SF4->(DbSeek(xFilial("SF4")+TEMP->ZM_TES1,.F.)),AllTrim(SF4->F4_CF)+" "+SF4->F4_TEXTO," ")
 				
 				if SA1->(DbSeek(xFilial("SA1")+TEMP->(ZM_T1CLI+ZM_T1LOJ),.F.))
 					@nLin,035 psay SA1->A1_NREDUZ
-					@nLin,057 psay Transf(SA1->A1_CGC,"@R 99.999.999/999-99")
-					@nLin,077 psay AllTrim(SA1->A1_MUN)+"/"+AllTrim(SA1->A1_EST)+" - "+Transf(SA1->A1_CEP,"@R 99999-999")
+					@nLin,057 psay SA1->A1_COD+"-"+SA1->A1_LOJA
+					@nLin,068 psay Transf(SA1->A1_CGC,"@R 99.999.999/9999-99")
+					@nLin,088 psay AllTrim(SA1->A1_MUN)+"/"+AllTrim(SA1->A1_EST)+" - "+Transf(SA1->A1_CEP,"@R 99999-999")
 				endif
 				
 				U_SaltaFolha()
@@ -455,8 +456,9 @@ static function Impr()
 				
 				if SA1->(DbSeek(xFilial("SA1")+TEMP->(ZM_T2CLI+ZM_T2LOJ),.F.))
 					@nLin,035 psay SA1->A1_NREDUZ
-					@nLin,057 psay Transf(SA1->A1_CGC,"@R 99.999.999/999-99")
-					@nLin,077 psay AllTrim(SA1->A1_MUN)+"/"+AllTrim(SA1->A1_EST)+" - "+Transf(SA1->A1_CEP,"@R 99999-999")
+					@nLin,057 psay SA1->A1_COD+"-"+SA1->A1_LOJA
+					@nLin,068 psay Transf(SA1->A1_CGC,"@R 99.999.999/9999-99")
+					@nLin,088 psay AllTrim(SA1->A1_MUN)+"/"+AllTrim(SA1->A1_EST)+" - "+Transf(SA1->A1_CEP,"@R 99999-999")
 				endif
 
 				U_SaltaFolha()
@@ -467,8 +469,9 @@ static function Impr()
 				
 				if SA1->(DbSeek(xFilial("SA1")+TEMP->(ZM_T3CLI+ZM_T3LOJ),.F.))
 					@nLin,035 psay SA1->A1_NREDUZ
-					@nLin,057 psay Transf(SA1->A1_CGC,"@R 99.999.999/999-99")
-					@nLin,077 psay AllTrim(SA1->A1_MUN)+"/"+AllTrim(SA1->A1_EST)+" - "+Transf(SA1->A1_CEP,"@R 99999-999")
+					@nLin,057 psay SA1->A1_COD+"-"+SA1->A1_LOJA
+					@nLin,068 psay Transf(SA1->A1_CGC,"@R 99.999.999/9999-99")
+					@nLin,088 psay AllTrim(SA1->A1_MUN)+"/"+AllTrim(SA1->A1_EST)+" - "+Transf(SA1->A1_CEP,"@R 99999-999")
 				endif
 
 				U_SaltaFolha()
@@ -479,8 +482,9 @@ static function Impr()
 				
 				if SA1->(DbSeek(xFilial("SA1")+TEMP->(ZM_T3CLI+ZM_T3LOJ),.F.))
 					@nLin,035 psay SA1->A1_NREDUZ
-					@nLin,057 psay Transf(SA1->A1_CGC,"@R 99.999.999/999-99")
-					@nLin,077 psay AllTrim(SA1->A1_MUN)+"/"+AllTrim(SA1->A1_EST)+" - "+Transf(SA1->A1_CEP,"@R 99999-999")
+					@nLin,057 psay SA1->A1_COD+"-"+SA1->A1_LOJA
+					@nLin,068 psay Transf(SA1->A1_CGC,"@R 99.999.999/9999-99")
+					@nLin,088 psay AllTrim(SA1->A1_MUN)+"/"+AllTrim(SA1->A1_EST)+" - "+Transf(SA1->A1_CEP,"@R 99999-999")
 				endif
 
 				U_SaltaFolha()
@@ -519,7 +523,7 @@ static function Impr()
 //					          1         2         3         4         5         6         7         8         9        10        11        12        13
 					
 					@nLin,000 psay SZN->ZN_PROJETO
-					@nLin,008 psay IIf(CTH->(DbSeek(xFilial("CTH")+SZN->ZN_PROJETO,.F.)),Left(CTH->CTH_DESC01,55)," ")
+					@nLin,008 psay IIf(CTH->(DbSeek(xFilial("CTH")+SZN->ZN_PROJETO,.F.)),Left(AllTrim(CTH->CTH_DESC01),55)," ")
 					@nLin,065 psay SZN->ZN_PRODUTO
 					@nLin,073 psay Transf(SZN->ZN_QUANT,"@E 999,999,999.99")
 					@nLin,088 psay SZN->ZN_UM
