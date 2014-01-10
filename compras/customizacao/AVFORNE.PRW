@@ -38,6 +38,15 @@ user function AVFORNE(cForn,cLoja,nAval)
 					endif
 				MsUnLock()
 				
+				if aCalcIQF[1][1] < 60
+					if SA2->(DbSeek(xFilial("SA2")+cForn+cLoja,.F.))
+						RecLock("SA2",.F.)
+							SA2->A2_MSBLQL := "1"
+							SA2->A2_OBSBLOQ := "BLOQUEADO DEVIDO IQF ("+AllTrim(Str(aCalcIQF[1][1]))+") ABAIXO DO PERMITIDO."
+						MsUnLock()
+					endif
+				endif
+				
 				lOK := .T.
 			else
 				while !SZV->(Eof()) .and. SZV->ZV_FORNECE == cForn .and. SZV->ZV_LOJA == cLoja

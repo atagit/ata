@@ -14,7 +14,43 @@ user function ACERTAVAL()
 return
 
 static function Atualiza()
-	local nCont, nSoma
+	DbSelectArea("SZV")
+	SZV->(DbSetOrder(3))
+	
+	DbSelectArea("SA2")
+	SA2->(DbGoTop())
+	
+	if SA2->(DbSeek(xFilial("SA2")+mv_par01,.F.))
+		while SA2->A2_COD >= mv_par01 .and. SA2->A2_COD <= mv_par02
+			if SA2->A2_MSBLQL <> "2" ; SA2->(DbSkip()) ; loop ; endif
+			
+			if SZV->(DbSeek(xFilial("SZV")+SA2->(A2_COD+A2_LOJA),.F.))
+				if SZV->ZV_STATUS == "A"
+					aCalcIQF := U_CalcIQF(SZV->ZV_RA,SZV->ZV_RC,SZV->ZV_RR)
+					
+					RecLock("SZV",.F.)
+						SZV->ZV_VALIQF := aCalcIQF[1][1]
+					MsUnLock()
+				else
+					aCalcIQF := SZV->ZV_VALIQF
+				endif
+				
+				if aCalcIQF[1][1] < 60
+					RecLock("SA2",.F.)
+						SA2->A2_MSBLQL := "1"
+						SA2->A2_OBSBLOQ := "BLOQUEADO DEVIDO IQF ("+AllTrim(Str(aCalcIQF[1][1]))+") ABAIXO DO PERMITIDO."
+					MsUnLock()
+				endif
+			endif
+			
+			SA2->(DbSkip())
+		enddo
+		
+		MsgInfo("Avaliacao de fornecedores atualizado com sucesso!")
+	else
+		MsgAlert("Fornecedor nao encontrado.")
+	endif
+/*	local nCont, nSoma
 	local nS1, nS2, nS3, nS4, nS5
 	
 	nCont := 0 ; nSoma := 0
@@ -85,7 +121,5 @@ static function Atualiza()
 		
 		TMP1->(DbCloseArea())
 		SA2->(DbSkip())
-	enddo
-	
-	MsgBox("Avaliacao de fornecedores atualizado com sucesso!","Informacao","INFO")
+	enddo*/
 return

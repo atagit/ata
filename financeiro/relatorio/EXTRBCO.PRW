@@ -165,8 +165,8 @@ static function Impr()
 	cQry := "select E5_DTDISPO, E5_DATA, E5_HISTOR, E5_DOCUMEN, E5_NUMCHEQ, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_VALOR, E5_RECPAG, E5_RECONC, E5_TIPODOC, E5_DTDIGIT, E5_TIPO, E5_BENEF, E5_CLIFOR, E5_LOJA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_MOTBX, R_E_C_N_O_ as RECNO "
 	cQry += "from "+RetSqlName("SE5")+" "
 //	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and ((E5_TIPODOC not in ('MT','BA','CH','EC','PA','ES','DC','JR')) or (E5_TIPODOC in ('CH','EC') and E5_RECONC = 'x')) and D_E_L_E_T_ <> '*' "
-	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and ((E5_TIPODOC not in ('MT','BA','CH','EC','PA','ES','DC','JR')) or (E5_TIPODOC in ('CH','EC','PA','ES') and E5_RECONC = 'x')) and D_E_L_E_T_ <> '*' "
-//	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and E5_RECONC = 'x' and E5_TIPODOC not in ('MT','BA','PA','ES','DC','JR') and D_E_L_E_T_ <> '*' "
+//	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and ((E5_TIPODOC not in ('MT','BA','CH','EC','PA','ES','DC','JR')) or (E5_TIPODOC in ('CH','EC','PA','ES') and E5_RECONC = 'x')) and D_E_L_E_T_ <> '*' "
+	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and E5_RECONC = 'x' and E5_TIPODOC not in ('MT','BA','DC','JR') and D_E_L_E_T_ <> '*' "
 	
 	if cBancoDe == "341"
 		cQry += "order by E5_DTDISPO, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_NUMCHEQ, E5_RECPAG, R_E_C_N_O_"
@@ -274,6 +274,7 @@ static function Impr()
 		AAdd(aBanco,SA6->A6_NREDUZ)
 		AAdd(aBanco,SA6->A6_AGENCIA)
 		AAdd(aBanco,SA6->A6_NUMCON)
+//		AAdd(aBanco,SA6->A6_VLBLJUD)
 		
 		if SZQ->(DbSeek(xFilial("SZQ")+cBancoDe+cAgenciaDe+cContaDe,.F.))
 			nTotal := 0
@@ -528,6 +529,33 @@ static function Impr()
 	nLin += 2
 	
 	U_SaltaFolha()
+	
+	if cBancoDe == "033" .and. cContaDe <> "000000002"
+		aArea1 := GetArea()
+		nAplicacao := Aplicacao(cBancoDe,cAgenciaDe,"000000002 ",cDataDe,cDataAte)
+		
+/*		@nLin,000 psay "Saldo Bloqueio Judicial"
+		@nLin,118 psay Transf(aBanco[8],"@E 999,999,999.99")
+		
+		nLin++
+		
+		U_SaltaFolha()*/
+		
+		@nLin,000 psay "Saldo Invest. c/ Resgate Automatico"
+		@nLin,118 psay Transf(nAplicacao,"@E 999,999,999.99")
+		
+/*		nLin++
+		
+		U_SaltaFolha()
+		
+		@nLin,000 psay "Saldo Total Disponivel"
+		@nLin,118 psay Transf(nAplicacao - aBanco[8],"@E 999,999,999.99")*/
+		
+		nLin += 2
+		
+		U_SaltaFolha()
+		RestArea(aArea1)
+	endif
 	
 	@nLin,000 psay __PrtThinLine()
 	@++nLin,000 psay PadC("* * * * *   P E N D E N T E S   * * * * *",132)
@@ -1203,3 +1231,205 @@ static function ExibirLimite(nPosicao)
 		endif
 	endif
 return
+
+static function Aplicacao(cBco,cAgc,cCta,cDtDe,cDtAte)
+	local aTempStru := {}
+	local cTipoDoc := ""
+	local cTipo := ""
+	local cBenef := ""
+	local cCliFor := ""
+	local cLoja := ""
+	local cDtDispo := ""
+	local cMotBx := ""
+	local nValorNF := 0
+	
+	local nSaldoAtual := 0
+	local nSaldoPendente := 0
+	local nValor := 0
+	local cArqTrab1
+	local cArqTrab2
+	local lGrava := .F.
+	
+	if Select("TEMP") <> 0
+		TEMP->(DbCloseArea())
+	endif
+	
+	DbSelectArea("SZP")
+	SZP->(DbGoTop())
+	SZP->(DbSeek(xFilial("SZP")+cBco+cAgc+cCta+cDtDe+cDtAte,.T.))
+	SZP->(DbSkip(-1))
+	
+	nSaldoAtual := SZP->ZP_SALATUA
+	
+	AAdd(aTempStru,{"E5_DTDISPO","C",08,0})
+	AAdd(aTempStru,{"E5_DATA","C",08,0})
+	AAdd(aTempStru,{"E5_HISTOR","C",40,0})
+	AAdd(aTempStru,{"E5_DOCUMEN","C",50,0})
+	AAdd(aTempStru,{"E5_NUMCHEQ","C",15,0})
+	AAdd(aTempStru,{"E5_PREFIXO","C",03,0})
+	AAdd(aTempStru,{"E5_NUMERO","C",09,0})
+	AAdd(aTempStru,{"E5_PARCELA","C",03,0})
+	AAdd(aTempStru,{"E5_VALOR","N",17,2})
+	AAdd(aTempStru,{"E5_RECPAG","C",01,0})
+	AAdd(aTempStru,{"E5_RECONC","C",01,0})
+	AAdd(aTempStru,{"E5_TIPODOC","C",02,0})
+	AAdd(aTempStru,{"E5_DTDIGIT","C",08,0})
+	AAdd(aTempStru,{"E5_TIPO","C",03,0})
+	AAdd(aTempStru,{"E5_BENEF","C",30,0})
+	AAdd(aTempStru,{"E5_CLIFOR","C",06,0})
+	AAdd(aTempStru,{"E5_LOJA","C",02,0})
+	AAdd(aTempStru,{"E5_BANCO","C",03,0})
+	AAdd(aTempStru,{"E5_AGENCIA","C",05,0})
+	AAdd(aTempStru,{"E5_CONTA","C",10,0})
+	AAdd(aTempStru,{"E5_RECNO","C",06,0})
+	AAdd(aTempStru,{"E5_MOTBX","C",3,0})
+	
+	cArqTrab1 := CriaTrab(aTempStru,.T.)
+	
+	DbUseArea(.T.,,cArqTrab1,"TEMP1",.F.,.F.)
+	
+	cQry := "select E5_DTDISPO, E5_DATA, E5_HISTOR, E5_DOCUMEN, E5_NUMCHEQ, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_VALOR, E5_RECPAG, E5_RECONC, E5_TIPODOC, E5_DTDIGIT, E5_TIPO, E5_BENEF, E5_CLIFOR, E5_LOJA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_MOTBX, R_E_C_N_O_ as RECNO "
+	cQry += "from "+RetSqlName("SE5")+" "
+//	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and ((E5_TIPODOC not in ('MT','BA','CH','EC','PA','ES','DC','JR')) or (E5_TIPODOC in ('CH','EC','PA','ES') and E5_RECONC = 'x')) and D_E_L_E_T_ <> '*' "
+	cQry += "where (E5_DTDISPO between '"+cDtDe+"' and '"+cDtAte+"') and E5_BANCO = '"+cBco+"' and E5_AGENCIA = '"+cAgc+"' and E5_CONTA = '"+cCta+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and E5_RECONC = 'x' and E5_TIPODOC not in ('MT','BA','DC','JR') and D_E_L_E_T_ <> '*' "
+	
+	if cBancoDe == "341"
+		cQry += "order by E5_DTDISPO, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_NUMCHEQ, E5_RECPAG, R_E_C_N_O_"
+	else
+		cQry += "order by E5_DTDISPO, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_NUMCHEQ, R_E_C_N_O_"
+	endif
+	
+	tcquery cQry new alias "QTRB1"
+	
+	DbSelectArea("QTRB1")
+	ProcRegua(QTRB1->(RecCount()))
+	QTRB1->(DbGoTop())
+	
+	while !QTRB1->(Eof())
+		if QTRB1->E5_TIPODOC == "EC"
+			TEMP1->(DbGoTop())
+			
+			while !TEMP1->(Eof())
+//				if TEMP->E5_NUMCHEQ == QTRB->E5_NUMCHEQ .and. TEMP->E5_VALOR == QTRB->E5_VALOR .and. TEMP->E5_DTDISPO == QTRB->E5_DTDISPO .and. TEMP->E5_DATA == QTRB->E5_DATA
+//				if TEMP->E5_NUMCHEQ == QTRB->E5_NUMCHEQ .and. TEMP->E5_VALOR == QTRB->E5_VALOR
+				if TEMP1->E5_NUMCHEQ == QTRB1->E5_NUMCHEQ .and. TEMP1->E5_VALOR == QTRB1->E5_VALOR .and. TEMP1->E5_DTDISPO == QTRB1->E5_DTDISPO
+					TEMP1->(DbDelete())
+					
+					exit
+				endif
+				
+				TEMP1->(DbSkip())
+			enddo
+		else
+			TEMP1->(DbAppend())
+			
+			replace TEMP1->E5_DTDISPO with QTRB1->E5_DTDISPO,;
+					TEMP1->E5_DATA with QTRB1->E5_DATA,;
+					TEMP1->E5_HISTOR with QTRB1->E5_HISTOR,;
+					TEMP1->E5_DOCUMEN with QTRB1->E5_DOCUMEN,;
+					TEMP1->E5_NUMCHEQ with QTRB1->E5_NUMCHEQ,;
+					TEMP1->E5_PREFIXO with QTRB1->E5_PREFIXO,;
+					TEMP1->E5_NUMERO with QTRB1->E5_NUMERO,;
+					TEMP1->E5_PARCELA with QTRB1->E5_PARCELA,;
+					TEMP1->E5_VALOR with QTRB1->E5_VALOR,;
+					TEMP1->E5_RECPAG with QTRB1->E5_RECPAG,;
+					TEMP1->E5_RECONC with QTRB1->E5_RECONC,;
+					TEMP1->E5_TIPODOC with QTRB1->E5_TIPODOC,;
+					TEMP1->E5_DTDIGIT with QTRB1->E5_DTDIGIT,;
+					TEMP1->E5_TIPO with QTRB1->E5_TIPO,;
+					TEMP1->E5_BENEF with QTRB1->E5_BENEF,;
+					TEMP1->E5_CLIFOR with QTRB1->E5_CLIFOR,;
+					TEMP1->E5_LOJA with QTRB1->E5_LOJA,;
+					TEMP1->E5_BANCO with QTRB1->E5_BANCO,;
+					TEMP1->E5_AGENCIA with QTRB1->E5_AGENCIA,;
+					TEMP1->E5_CONTA with QTRB1->E5_CONTA,;
+					TEMP1->E5_RECNO with Str(QTRB1->RECNO,6),;
+					TEMP1->E5_MOTBX with QTRB1->E5_MOTBX
+			
+			TEMP1->(DbCommit())
+		endif
+		
+		IncProc()
+		QTRB1->(DbSkip())
+	enddo
+	
+	QTRB1->(DbCloseArea())
+	TEMP1->(DbGoTop())
+	
+	while !TEMP1->(Eof())
+		cDataDispo := TEMP1->E5_DTDISPO
+		lGrava := .F.
+		
+		while TEMP1->E5_DTDISPO == cDataDispo
+			if TEMP1->E5_TIPODOC == "VL" .and. TEMP1->E5_MOTBX == "DEB" .and. Left(TEMP1->E5_DOCUMEN,3) == "TED"
+				cTipoDoc := TEMP1->E5_TIPODOC
+				cTipo := TEMP1->E5_TIPO
+				cBenef := TEMP1->E5_BENEF
+				cCliFor := TEMP1->E5_CLIFOR
+				cLoja := TEMP1->E5_LOJA
+				cDtDispo := TEMP1->E5_DTDISPO
+				cMotBx := TEMP1->E5_MOTBX
+				
+				while !TEMP1->(Eof()) .and. TEMP1->E5_DTDISPO == cDtDispo .and. TEMP1->E5_TIPODOC == cTipoDoc .and. TEMP1->E5_BENEF == cBenef .and. TEMP1->E5_CLIFOR == cCliFor .and. TEMP1->E5_LOJA == cLoja .and. TEMP1->E5_MOTBX == cMotBx .and. Left(TEMP1->E5_DOCUMEN,3) == "TED"
+					nValorNF += TEMP1->E5_VALOR
+					
+					TEMP1->(DbSkip())
+				enddo
+				
+				TEMP1->(DbSkip(-1))
+			elseif TEMP1->E5_TIPODOC == "VL" .and. TEMP1->E5_MOTBX $ "DEB/NOR" .and. Empty(TEMP1->E5_NUMCHEQ)
+				cTipoDoc := TEMP1->E5_TIPODOC
+				cTipo := TEMP1->E5_TIPO
+				cBenef := TEMP1->E5_BENEF
+				cCliFor := TEMP1->E5_CLIFOR
+				cLoja := TEMP1->E5_LOJA
+				cDtDispo := TEMP1->E5_DTDISPO
+				cMotBx := TEMP1->E5_MOTBX
+				nValorNF := TEMP1->E5_VALOR
+				nCont := 0
+				
+				TEMP1->(DbSkip())
+				
+				while !TEMP1->(Eof()) .and. TEMP1->E5_DTDISPO == cDtDispo .and. TEMP1->E5_TIPODOC == cTipoDoc .and. TEMP1->E5_BENEF == cBenef .and. TEMP1->E5_CLIFOR == cCliFor .and. TEMP1->E5_MOTBX == cMotBx .and. TEMP1->E5_LOJA == cLoja .and. Empty(TEMP1->E5_NUMCHEQ)
+					nValorNF += TEMP1->E5_VALOR
+					nCont++
+					
+					TEMP1->(DbSkip())
+				enddo
+				
+				if Empty(nCont)
+					cTipoDoc := "" ; cTipo := "" ; cBenef := "" ; cCliFor := "" ; cLoja := "" ; cDtDispo := "" ; cMotBx := "" ; nValorNF := 0
+				endif
+				
+				TEMP1->(DbSkip(-1))
+			endif
+			
+			if TEMP1->E5_RECPAG == "R"
+				if Empty(cBenef)
+					nSaldoAtual += TEMP1->E5_VALOR
+				else
+					nSaldoAtual += nValorNF
+				endif
+			else
+				if Empty(cBenef)
+					nSaldoAtual -= TEMP1->E5_VALOR
+				else
+					nSaldoAtual -= nValorNF
+				endif
+			endif
+			
+			cTipoDoc := "" ; cTipo := "" ; cBenef := "" ; cCliFor := "" ; cDtDispo := "" ; nValorNF := 0 ; cMotBx := "" ; cLoja := ""
+			lGrava := .T.
+			
+			TEMP1->(DbSkip())
+		enddo
+	enddo
+	
+	if Select("QTRB1") <> 0
+		QTRB1->(DbCloseArea())
+	endif
+	
+	TEMP1->(DbCloseArea())
+	FErase(cArqTrab1+".dbf")
+	FErase(cArqTrab1+".cdx")
+return(nSaldoAtual)

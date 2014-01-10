@@ -101,7 +101,8 @@ static function Impr()
 	
 	cQry := "select A2_COD, A2_LOJA, A2_NREDUZ, A2_ULTCOM, A2_CRITICO "
 	cQry += "from "+RetSqlName("SA2")+" "
-	cQry += "where (A2_COD between '"+cForIni+"' and '"+cForFin+"') and A2_MSBLQL <> 1 and D_E_L_E_T_ <> '*' "
+	cQry += "where (A2_COD between '"+cForIni+"' and '"+cForFin+"') and D_E_L_E_T_ <> '*' "
+//	cQry += "where (A2_COD between '"+cForIni+"' and '"+cForFin+"') and A2_MSBLQL <> 1 and D_E_L_E_T_ <> '*' "
 	
 	do case
 		case nOrdem == 1
@@ -129,10 +130,6 @@ static function Impr()
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 	
 	nLin++
-	
-	//FORNECEDOR                              | ULT. COMP  | CRIT | APROV | REPRO | ACEIT |    IQF | STATUS
-	//999999-99 AAAAAAAAAAAAAAAAAAAAAAAAAAAAA   99/99/9999   SIM    99999   99999   99999   999.99   ACEITO COM RESTRICAO
-	
 	
 //	FORNECEDOR                              | ULT COMP | CRIT | APROV | REPRO | ACEIT | NC REP | NC ACE |    IQF | STATUS
 //	999999-99 AAAAAAAAAAAAAAAAAAAAAAAAAAAAA   99/99/99   SIM    99999   99999   99999    99999    99999   999.99   ACEITO COM RESTRICAO

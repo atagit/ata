@@ -80,31 +80,54 @@ static function GravarAvaliacao()
 	
 	U_AVFORNE(cForn,cLoja,nAvaliac)
 	
-	if SD1->(DbSeek(xFilial("SD1")+SF1->(F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA)))
-		while !SD1->(Eof()) .and. SD1->D1_DOC == SF1->F1_DOC .and. SD1->D1_SERIE == SF1->F1_SERIE .and. SD1->D1_FORNECE == SF1->F1_FORNECE .and. SD1->D1_LOJA == SF1->F1_LOJA
-			cPedido := SD1->D1_PEDIDO
-			
-			SD1->(DbSkip())
-		enddo
-	endif
-	
-	if nAvaliac > 1 .and. !Empty(cPedido)
-		DbSelectArea("SZR")
-		
-		if RecLock("SZR",.T.)
-			SZR->ZR_FILIAL := xFilial("SZR")
-			SZR->ZR_EMISSAO := dDataBase
-			SZR->ZR_NUMPC := cPedido
-			SZR->ZR_NFISCAL := SF1->F1_DOC
-			SZR->ZR_SERIE := SF1->F1_SERIE
-			SZR->ZR_DTNF := SF1->F1_EMISSAO
-			SZR->ZR_ACDEV := IIf(nAvaliac == 2,"2","1")
-			SZR->ZR_NOTIF := GetSXENum("SZR","ZR_NOTIF")
-			SZR->ZR_TIPO := "1"
-			SZR->ZR_ENCERR := "3"
+	if !Empty(nAvaliac)
+		if SD1->(DbSeek(xFilial("SD1")+SF1->(F1_DOC+F1_SERIE+F1_FORNECE+F1_LOJA)))
+			while !SD1->(Eof()) .and. SD1->D1_DOC == SF1->F1_DOC .and. SD1->D1_SERIE == SF1->F1_SERIE .and. SD1->D1_FORNECE == SF1->F1_FORNECE .and. SD1->D1_LOJA == SF1->F1_LOJA
+				cPedido := SD1->D1_PEDIDO
+				
+				SD1->(DbSkip())
+			enddo
 		endif
 		
-		SZR->(DbCloseArea())
+		if nAvaliac > 1 .and. !Empty(cPedido)
+			DbSelectArea("SZR")
+			
+			cNotif := GetSXENum("SZR","ZR_NOTIF")
+			
+			if RecLock("SZR",.T.)
+				SZR->ZR_FILIAL := xFilial("SZR")
+				SZR->ZR_EMISSAO := dDataBase
+				SZR->ZR_NUMPC := cPedido
+				SZR->ZR_NFISCAL := SF1->F1_DOC
+				SZR->ZR_SERIE := SF1->F1_SERIE
+				SZR->ZR_DTNF := SF1->F1_EMISSAO
+				SZR->ZR_ACDEV := IIf(nAvaliac == 2,"2","1")
+				SZR->ZR_NOTIF := cNotif
+				SZR->ZR_TIPO := "1"
+				SZR->ZR_ENCERR := "3"
+			endif
+			
+			SZR->(DbCloseArea())
+			
+			cSubject := "Notificacao de N.C."
+			cTo := "informatica@ata.ind.br"
+			cMensagem := ""
+			cEmp := ""
+			
+			do case
+				case cEmpAnt == "01" ; cEmp := "ATA"
+				case cEmpAnt == "02" ; cEmp := "ATF"
+				otherwise ; cEmp := "TESTE"
+			endcase
+			
+			cMensagem := "<html> "
+			cMensagem += "Foi aberto a notificação de não conformidade número <b>"+cNotif+" </b> da empresa "+cEmp+". Favor completar com as informações que faltam para concluir a notificação. "
+			cMensagem += "</html> "
+			
+			if U_EnvEmail(.T.,.F.,,,,cTo,,cSubject,cMensagem)
+				MsgInfo("E-mail enviado com sucesso.")
+			endif
+		endif
 	endif
 	
 	RestArea(aAreaAnt)

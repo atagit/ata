@@ -53,7 +53,7 @@ user function PCIQF()
 	
 	SetPrvt("nCont","nTotGeral","nTotValor","nContApr","nContRep","nContAce","nContSem")
 	
-	nCont := 0 ; nContApr := 0 ; nContRep := 0 ; nContAce := 0 ; nContSem := 0
+	nCont := 0 ; nContApr := 0 ; nContRep := 0 ; nContAce := 0 ; nContSem := 0 ; nContRepNC := 0 ; nContAceNC := 0
 	
 	Pergunte(cPerg,.F.)
 	
@@ -120,18 +120,18 @@ static function Impr()
 	
 	cCbcRef := Padc("Referencia: "+U_ConvData(cDtIni)+" a "+U_ConvData(cDtFin),132)
 	
-	Cabec1 := "PEDCOMP | EMISSAO    | NOTA FISCAL   |                               VALOR | APROV | REPRO | ACEIT | NC AC | NC DV |   TOTAL"
+	Cabec1 := "PEDCOMP | EMISSAO    | NOTA FISCAL   |                                VALOR | APROV | REPRO | ACEIT | NC RP | NC AC |   TOTAL"
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 	
 //	PEDCOMP | EMISSAO    | NOTA FISCAL   |                                               VALOR | APROV | REPRO | ACEIT |   TOTAL
-//	PEDCOMP | EMISSAO    | NOTA FISCAL   |                               VALOR | APROV | REPRO | ACEIT | NC AC | NC DV |   TOTAL
+//	PEDCOMP | EMISSAO    | NOTA FISCAL   |                               VALOR | APROV | REPRO | ACEIT | NC RP | NC AC |   TOTAL
 //	999999  | 99/99/9999 | 999999999-999 |                      999,999,999.99     X       X       X       X       X     9999.99
 //	12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //	         1         2         3         4         5         6         7         8         9        10        11        12        13        14
 	
 	cFor := TEMP->C7_FORNECE
 	cLoj := TEMP->C7_LOJA
-	nTotApr := 0 ; nTotRep := 0 ; nTotAce := 0 ; nTotSem := 0 ; nTotReg := 0 ; nTotPontos := 0 ; nPonto := 0 ; nContPontos := 0
+	nTotApr := 0 ; nTotRep := 0 ; nTotAce := 0 ; nTotSem := 0 ; nTotReg := 0 ; nTotPontos := 0 ; nPonto := 0 ; nContPontos := 0 ; nTotRepNC := 0 ; nTotAceNC := 0
 	
 	while !TEMP->(Eof())
 		@nLin,000 psay U_Negrito(.T.)+TEMP->C7_FORNECE+"-"+TEMP->C7_LOJA+" "+TEMP->A2_NREDUZ+U_Negrito(.F.)
@@ -160,22 +160,74 @@ static function Impr()
 				nTotApr++
 				nPonto += 100
 				
-				@nLin,076 psay "|   X   |       |       |       |       |"
-				@nLin,118 psay Transf(100,"@E 9999.99")
+				cCon1 := "select ZR_NOTIF, ZR_ACDEV from "+RetSqlName("SZR")+" where ZR_NUMPC = '"+TEMP->C7_NUM+"' and ZR_ENCERR = '1' and D_E_L_E_T_ <> '*' "
+				
+				tcquery cCon1 new alias "CON1"
+				DbSelectArea("CON1")
+				
+				if Empty(CON1->ZR_NOTIF)
+					@nLin,076 psay "|   X   |       |       |       |       |"
+				else
+					if CON1->ZR_ACDEV == "1"
+						nContAceNC++
+						nTotAceNC++
+						
+						@nLin,076 psay "|   X   |       |       |       |   X   |"
+					else
+						nContRepNC++
+						nTotRepNC++
+						
+						@nLin,076 psay "|   X   |       |       |   X   |       |"
+					endif
+				endif
+				
+				CON1->(DbCloseArea())
+				
+				@nLin,118 psay Transf(100,"@E 9999999")
 			elseif TEMP->F1_AVIQF == "2" 
 				nContRep++
 				nTotRep++
 				nPonto += 5
 				
-				@nLin,076 psay "|       |   X   |       |       |       |"
-				@nLin,118 psay Transf(5,"@E 9999.99")
+				cCon1 := "select ZR_NOTIF from "+RetSqlName("SZR")+" where ZR_NUMPC = '"+TEMP->C7_NUM+"' and D_E_L_E_T_ <> '*' "
+				
+				tcquery cCon1 new alias "CON1"
+				DbSelectArea("CON1")
+				
+				if Empty(CON1->ZR_NOTIF)
+					@nLin,076 psay "|       |   X   |       |       |       |"
+				else
+					nContRepNC++
+					nTotRepNC++
+					
+					@nLin,076 psay "|       |   X   |       |   X   |       |"
+				endif
+				
+				CON1->(DbCloseArea())
+				
+				@nLin,118 psay Transf(5,"@E 9999999")
 			elseif TEMP->F1_AVIQF == "3"
 				nContAce++
 				nTotAce++
 				nPonto += 25
 				
-				@nLin,076 psay "|       |       |   X   |       |       |"
-				@nLin,118 psay Transf(25,"@E 9999.99")
+				cCon1 := "select ZR_NOTIF from "+RetSqlName("SZR")+" where ZR_NUMPC = '"+TEMP->C7_NUM+"' and D_E_L_E_T_ <> '*' "
+				
+				tcquery cCon1 new alias "CON1"
+				DbSelectArea("CON1")
+				
+				if Empty(CON1->ZR_NOTIF)
+					@nLin,076 psay "|       |       |   X   |       |       |"
+				else
+					nTotAceNC++
+					nContAceNC++
+					
+					@nLin,076 psay "|       |       |   X   |       |   X   |"
+				endif
+				
+				CON1->(DbCloseArea())
+				
+				@nLin,118 psay Transf(25,"@E 9999999")
 			else
 				nContSem++
 				nTotSem++
@@ -202,15 +254,15 @@ static function Impr()
 		@nLin,092 psay "|"
 		@nLin,094 psay PadC(AllTrim(Transf(nContAce,"@E 99999")),5)
 		@nLin,100 psay "|"
-		@nLin,102 psay PadC(AllTrim(Transf(nContAce,"@E 99999")),5)
+		@nLin,102 psay PadC(AllTrim(Transf(nContRepNC,"@E 99999")),5)
 		@nLin,108 psay "|"
-		@nLin,110 psay PadC(AllTrim(Transf(nContAce,"@E 99999")),5)
+		@nLin,110 psay PadC(AllTrim(Transf(nContAceNC,"@E 99999")),5)
 		@nLin,116 psay "|"
 		@nLin,118 psay Transf(nPonto / (nCont - nContSem),"@E 9999.99")
 		
 		nTotPontos += nPonto
 		nLin += 2
-		nCont := 0 ; nContApr := 0 ; nContRep := 0 ; nContAce := 0 ; nContSem := 0 ; nPonto := 0
+		nCont := 0 ; nContApr := 0 ; nContRep := 0 ; nContAce := 0 ; nContSem := 0 ; nPonto := 0 ; nContRepNC := 0 ; nContAceNC := 0
 		
 		U_SaltaFolha()
 		
@@ -237,9 +289,9 @@ static function Impr()
 	@nLin,092 psay "|"
 	@nLin,094 psay PadC(AllTrim(Transf(nTotAce,"@E 99999")),5)
 	@nLin,100 psay "|"
-	@nLin,102 psay PadC(AllTrim(Transf(nTotRep,"@E 99999")),5)
+	@nLin,102 psay PadC(AllTrim(Transf(nTotRepNC,"@E 99999")),5)
 	@nLin,108 psay "|"
-	@nLin,110 psay PadC(AllTrim(Transf(nTotAce,"@E 99999")),5)
+	@nLin,110 psay PadC(AllTrim(Transf(nTotAceNC,"@E 99999")),5)
 	@nLin,116 psay "|"
 	@nLin,118 psay Transf(nTotPontos / (nTotReg - nTotSem),"@E 9999.99")
 	

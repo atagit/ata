@@ -430,6 +430,10 @@ static function GeraRel(aBancos,cMes,cAno)
 	ZAP
 	
 	for i := 1 to Len(aBancos)
+		if aBancos[i][2] == "033"
+			aBancos[i][4] := "000000002"
+		endif
+		
 		cQry := "select ZP_BANCO, ZP_AGENCIA, ZP_CONTA, ZP_DTSALDO, ZP_SALATUA, ZP_PENDENT, day(ZP_DTSALDO) as DIA, datename(weekday,ZP_DTSALDO) as SEMANA "
 		cQry += "from "+RetSqlName("SZP")+" "
 		cQry += "where ZP_BANCO = '"+aBancos[i][2]+"' and ZP_AGENCIA = '"+aBancos[i][3]+"' and ZP_CONTA = '"+aBancos[i][4]+"' and month(ZP_DTSALDO) = "+cMes+" and year(ZP_DTSALDO) = "+cAno+" and D_E_L_E_T_ <> '*' "

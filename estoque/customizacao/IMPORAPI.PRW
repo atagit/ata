@@ -190,11 +190,11 @@ static function MErro(lMsErroAuto,nValProd,nValProj,aErro,cRetorno)
 	local cMensagem := ""
 	local cQry := ""
 	local nRet := 0
-	local cServer := GetMV("MV_RELSERV")
-	local cPassword := GetMV("MV_RELPSW")
-	local cAccount := GetMV("MV_RELACNT")
-	local cSubject := "Erro na importacao da baixa pela API"
-	local cTo := "informatica@ata.ind.br"
+//	local cServer := GetMV("MV_RELSERV")
+//	local cPassword := GetMV("MV_RELPSW")
+//	local cAccount := GetMV("MV_RELACNT")
+//	local cSubject := 
+//	local cTo := 
 	
 	cMsgErro := "Erro na inclusao do ID "+AllTrim(Str(aErro[1][3]))+"! Empresa: "+aErro[1][4]
 	
@@ -230,7 +230,8 @@ static function MErro(lMsErroAuto,nValProd,nValProj,aErro,cRetorno)
 //	ConOut(cMsgErro)
 	
 	if cRetorno == "E"			//via e-mail
-		U_EnvEmail(.T.,.F.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
+//		U_EnvEmail(.T.,.F.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
+		Processa({|| U_EnvMail("informatica@ata.ind.br","","","Erro na importacao da baixa pela API",,cMensagem,.T.)},"Enviando e-mail...")
 	elseif cRetorno == "D"		//em disco
 		//
 	elseif cRetorno == "A"		//ambos

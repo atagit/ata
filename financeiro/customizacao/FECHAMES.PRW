@@ -13,6 +13,7 @@ user function FECHAMES()
 	local cGet1 := GetMV("MV_DATAFIN")
 	local cGet2 := GetMV("MV_BXDTFIN")
 	
+	private dFechAtual := cGet1
 	private oDlg
 	
 	define msdialog oDlg title "Fechar Mes" from 000,000 to 175,460 colors 0,16777215 pixel
@@ -28,8 +29,13 @@ user function FECHAMES()
 return
 
 static function Gravar(dFechamento)
-	PutMV("MV_DATAFIN",dFechamento)
-	PutMV("MV_BXDTFIN","2")
-	MsgAlert("Movimentacoes fechado ate a data informada.")
+	if dFechamento < dFechAtual
+		MsgAlert("O data de fechamento do mes e mais atual que a data informada.")
+	else
+		PutMV("MV_DATAFIN",dFechamento)
+		PutMV("MV_BXDTFIN","2")
+		MsgAlert("Movimentacoes fechado ate a data informada.")
+	endif
+	
 	Close(oDlg)
 return

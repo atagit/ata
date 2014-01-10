@@ -7,12 +7,12 @@
 #include "rwmake.ch"
 
 user function SF2520E()
-	local cServer := GetMV("MV_RELSERV")
-	local cPassword := GetMV("MV_RELPSW")
-	local cAccount := GetMV("MV_RELACNT")
-	local cSubject := "Cancelamento Nota Fiscal"
-	local cTo := "fiscal@ata.ind.br"
-	local cMensagem := ""
+//	local cServer := GetMV("MV_RELSERV")
+//	local cPassword := GetMV("MV_RELPSW")
+//	local cAccount := GetMV("MV_RELACNT")
+//	local cSubject := "Cancelamento Nota Fiscal"
+//	local cTo := "fiscal@ata.ind.br"
+//	local cMensagem := ""
 	local cEmp := ""
 	
 	do case
@@ -26,6 +26,7 @@ user function SF2520E()
 	cMensagem += "</html> "
 	
 	if APMsgNoYes("Cancelar nota fiscal?")
-		U_EnvEmail(.T.,.F.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
+//		U_EnvEmail(.T.,.F.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
+		Processa({|| U_EnvMail("fiscal@ata.ind.br","","","Cancelamento Nota Fiscal",,cMensagem,.T.)},"Enviando e-mail...")
 	endif
 return
