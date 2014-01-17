@@ -6,7 +6,6 @@
 #include "rwmake.ch"
 #include "protheus.ch"
 #include "topconn.ch"
-#include "ap5mail.ch"
 
 user function C_SZR()
 	private lRetInc := .T.
