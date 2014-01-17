@@ -7,9 +7,6 @@
 #include "topconn.ch"
 
 user function MT097END()
-	local cServer := getmv("MV_RELSERV")
-	local cPassword := getmv("MV_RELPSW")
-	local cAccount := getmv("MV_RELACNT")
 	local cSubject := IIf(Lower(AllTrim(GetEnvServer())) $ "testepro/testeofi","TESTE - ","")
 	local cAlias := Alias()
 	local cTo := ""
@@ -17,17 +14,17 @@ user function MT097END()
 	
 	private cMensagem := ""
 	
-	setprvt("cPedido","cEmissao","cProjeto","cAprov","cCompra","cDescForn","cDescComp","cLiberado")
-	setprvt("cForn","cLojaForn","nTotal","cDescProj","cCliente","cLojaCli","cDescCli","cDescAprov")
+	SetPrvt("cPedido","cEmissao","cProjeto","cAprov","cCompra","cDescForn","cDescComp","cLiberado")
+	SetPrvt("cForn","cLojaForn","nTotal","cDescProj","cCliente","cLojaCli","cDescCli","cDescAprov")
 	
 	if Paramixb[3] == 2
 		cPedido := Paramixb[1]
 		cSubject += "Liberado PEDIDO DE COMPRA "+cPedido
 		
-		dbselectarea("SC7")
-		SC7->(dbseek(xFilial("SC7")+cPedido,.F.))
+		DbSelectArea("SC7")
+		SC7->(DbSeek(xFilial("SC7")+cPedido,.F.))
 		
-		cEmissao := U_ConvData(dtos(SC7->C7_EMISSAO))
+		cEmissao := U_ConvData(DToS(SC7->C7_EMISSAO))
 		cProjeto := SC7->C7_CLVL
 		cAprov := SC7->C7_APROV
 		cCompra := SC7->C7_USER
@@ -39,19 +36,19 @@ user function MT097END()
 		cQry += "where C7_NUM = '"+cPedido+"'"
 		
 		TCQuery cQry New Alias "TEMP"
-		dbselectarea("TEMP")
+		DbSelectArea("TEMP")
 	
 		nTotal := TEMP->TOTAL
 		
-		TEMP->(dbclosearea())
+		TEMP->(DbCloseArea())
 		
-		if SCR->(dbseek(xFilial("SCR")+cProjeto,.F.))
-			cLiberado := U_ConvData(dtos(SCR->CR_DATALIB))
+		if SCR->(DbSeek(xFilial("SCR")+cProjeto,.F.))
+			cLiberado := U_ConvData(DToS(SCR->CR_DATALIB))
 		else
-			cLiberado := dtos(date())
+			cLiberado := DToS(Date())
 		endif
 	
-		if CTH->(dbseek(xFilial("CTH")+cProjeto,.F.))
+		if CTH->(DbSeek(xFilial("CTH")+cProjeto,.F.))
 			cDescProj := CTH->CTH_DESC01
 			cCliente := CTH->CTH_CLIENT
 			cLojaCli := CTH->CTH_LOJACL
@@ -61,32 +58,32 @@ user function MT097END()
 			cLojaCli := " "
 		endif
 		
-		if SA1->(dbseek(xFilial("SA1")+cCliente+cLojaCli,.F.))
+		if SA1->(DbSeek(xFilial("SA1")+cCliente+cLojaCli,.F.))
 			cDescCli := SA1->A1_NOME
 		else
 			cDescCli := " "
 		endif
 		
-		if SA2->(dbseek(xFilial("SA2")+cForn+cLojaForn,.F.))
+		if SA2->(DbSeek(xFilial("SA2")+cForn+cLojaForn,.F.))
 			cDescForn := SA2->A2_NOME
 		else
 			cDescForn := " "
 		endif
 		
-		dbselectarea("SY1")
-		SY1->(dbsetorder(3))
+		DbSelectArea("SY1")
+		SY1->(DbSetOrder(3))
 		
-		if SY1->(dbseek(xFilial("SY1")+cCompra,.F.))
+		if SY1->(DbSeek(xFilial("SY1")+cCompra,.F.))
 			cDescComp := SY1->Y1_NOME
 		else
 			cDescComp := " "
 		endif
 		
-		dbselectarea("SAL")
-		SAL->(dbsetorder(3))
-		SAL->(dbseek(xFilial("SAL")+cAprov,.F.))
+		DbSelectArea("SAL")
+		SAL->(DbSetOrder(3))
+		SAL->(DbSeek(xFilial("SAL")+cAprov,.F.))
 		
-		if !empty(SAL->AL_COD)
+		if !Empty(SAL->AL_COD)
 			while SAL->AL_COD == cAprov
 				if SAL->AL_MSBLQL <> "1"
 					cDescAprov := AllTrim(SAL->AL_NOME)
@@ -100,10 +97,10 @@ user function MT097END()
 						cTo := AllTrim(SX5->X5_DESCRI)
 					endif*/
 					
-					if !empty(cTo)
-						U_EnvEmail(.T.,.T.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
+					if !Empty(cTo)
+						Processa({|| U_EnvMail(cTo,"","",cSubject,,cMensagem,.T.)},"Enviando e-mail...")
 					else
-						alert("Email não cadastrado para o funcinário "+alltrim(cCompra)+"!")
+						Alert("Email não cadastrado para o funcinário "+AllTrim(cCompra)+"!")
 					endif
 				endif
 				
@@ -114,15 +111,17 @@ user function MT097END()
 			
 			MsgHtml()
 			
-			dbselectarea("SX5")
-			if SX5->(dbseek(xFilial("SX5")+"WK"+"COM"))
+			DbSelectArea("SX5")
+			
+			if SX5->(DbSeek(xFilial("SX5")+"WK"+"COM"))
 				cTo := AllTrim(SX5->X5_DESCRI)
 			endif
 			
-			U_EnvEmail(.T.,.T.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
+//			U_EnvEmail(.T.,.F.,,,,cTo,,cSubject,cMensagem)
+			Processa({|| U_EnvMail(cTo,"","",cSubject,,cMensagem,.T.)},"Enviando e-mail...")
 		endif
 		
-		dbselectarea(cAlias)
+		DbSelectArea(cAlias)
 	endif
 return
 

@@ -8,14 +8,12 @@
 #include "topconn.ch"
 #include "ap5mail.ch"
 
-#define _REL "CRY003"
-
 user function C_SZR()
 	private lRetInc := .T.
 	private cCadastro := "Notificacao de NC"
-	private aAcho := {"ZR_NUMPC","ZR_NUMIT","ZR_EMISSAO","ZR_VEND","ZR_QUANT","ZR_ESPEC","ZR_IDENTI","ZR_CERTI","ZR_NUMNC","ZR_NOTIF","ZR_EMAIL","ZR_NFISCAL","ZR_SERIE","ZR_DTNF","ZR_ACDEV","ZR_PRAZO","ZR_TIPO","ZR_ENCERR","ZR_OBS"}
-	private aCposI := {"ZR_NUMPC","ZR_NUMIT","ZR_EMISSAO","ZR_VEND","ZR_QUANT","ZR_ESPEC","ZR_IDENTI","ZR_CERTI","ZR_NUMNC","ZR_NOTIF","ZR_EMAIL","ZR_NFISCAL","ZR_SERIE","ZR_DTNF","ZR_ACDEV","ZR_PRAZO","ZR_TIPO","ZR_ENCERR","ZR_OBS"}
-	private aCposA := {"ZR_VEND","ZR_QUANT","ZR_ESPEC","ZR_IDENTI","ZR_CERTI","ZR_NOTIF","ZR_EMAIL","ZR_NFISCAL","ZR_SERIE","ZR_DTNF","ZR_PRAZO","ZR_NUMNC","ZR_OBS"}
+	private aAcho := {"ZR_NUMPC","ZR_NUMIT","ZR_EMISSAO","ZR_VEND","ZR_QUANT","ZR_ESPEC","ZR_IDENTI","ZR_CERTI","ZR_NUMNC","ZR_NOTIF","ZR_EMAIL","ZR_NFISCAL","ZR_SERIE","ZR_DTNF","ZR_ACDEV","ZR_PRAZO","ZR_TIPO","ZR_ENCERR","ZR_OBS","ZR_DESCMAT"}
+	private aCposI := {"ZR_NUMPC","ZR_NUMIT","ZR_EMISSAO","ZR_VEND","ZR_QUANT","ZR_ESPEC","ZR_IDENTI","ZR_CERTI","ZR_NUMNC","ZR_NOTIF","ZR_EMAIL","ZR_NFISCAL","ZR_SERIE","ZR_DTNF","ZR_ACDEV","ZR_PRAZO","ZR_TIPO","ZR_ENCERR","ZR_OBS","ZR_DESCMAT"}
+	private aCposA := {"ZR_VEND","ZR_QUANT","ZR_ESPEC","ZR_IDENTI","ZR_CERTI","ZR_NOTIF","ZR_EMAIL","ZR_NFISCAL","ZR_SERIE","ZR_DTNF","ZR_PRAZO","ZR_NUMNC","ZR_OBS","ZR_DESCMAT"}
 	private aRotina1 := {{"Em Disco","U_IMPRNC('I')",0,6},;
 						 {"Via Email","U_IMPRNC('E')",0,6}}
 	private aRotina := {{"Pesquisar","AxPesqui",0,1},;
@@ -48,8 +46,8 @@ user function LEGSZR()
 return(.T.)
 
 user function IMPRNC(cImpr)
-	local cArqDBF := GetMV("MV_DBFCRY")+_REL+".DBF"
-	local cReport := _REL
+	local cArqDBF := GetMV("MV_DBFCRY")+"CRY003.DBF"
+	local cReport := "CRY003"
 	local cOpcoes := "1;0;1;Notificacao de Nao Conformidade"
 	local cParam  := AllTrim(cEmpAnt)+";"+AllTrim(cFilAnt)+";"
 	local oButton1, oButton2, oGet1, oSay1
@@ -58,6 +56,7 @@ user function IMPRNC(cImpr)
 	private oDlg
 	private cNotif := AllTrim(SZR->ZR_NOTIF)
 	private cPedid := AllTrim(SZR->ZR_NUMPC)
+	private cItem := IIf(Empty(SZR->ZR_NUMIT),"0001",AllTrim(SZR->ZR_NUMIT))
 	
 	do case
 		case cImpr == "I"
@@ -78,12 +77,13 @@ user function IMPRNC(cImpr)
 	
 	TMP->NUMPC := cPedid
 	TMP->DATPC := U_ConvData(DToS(SZR->ZR_EMISSAO))
-	TMP->FORNEC := IIf(SC7->(DbSeek(xFilial("SC7")+cPedid,.F.)),AllTrim(SC7->C7_NOMFORN),"")
 	TMP->VENDED := AllTrim(SZR->ZR_VEND)
 	TMP->EMAIL := AllTrim(cGet1)
 	TMP->NOTFIS := AllTrim(SZR->ZR_NFISCAL)+IIf(Empty(SZR->ZR_SERIE),"","-"+AllTrim(SZR->ZR_SERIE))
 	TMP->DATNF := U_ConvData(DToS(SZR->ZR_DTNF))
 	TMP->OBS := AnsiToOem(SZR->ZR_OBS)
+	TMP->PRODUT := AllTrim(SZR->ZR_DESCMAT)
+	TMP->FORNEC := IIf(SC7->(DbSeek(xFilial("SC7")+cPedid+cItem,.F.)),AllTrim(SC7->C7_NOMFORN),"")
 	
 	if SZR->ZR_ACDEV == "1"
 		TMP->ACREST := "X"
@@ -93,7 +93,6 @@ user function IMPRNC(cImpr)
 		TMP->DEVOLV := "X"
 	endif
 	
-//	TMP->PRODUT :=
 	TMP->PRAZO := IIf(SZR->ZR_PRAZO,"X","")
 	TMP->QUANT := IIf(SZR->ZR_QUANT,"X","")
 	TMP->ESPEC := IIf(SZR->ZR_ESPEC,"X","")
@@ -162,64 +161,23 @@ return
 
 static function Enviar(cEmail)
 	local aDados := {}
+	local cMensagem := ""
 	
-	AAdd(aDados, {"ID_000003.PDF","P:\Microsiga\EXPORT\000003.PDF"})
+	CpyT2S("P:\Microsiga\EXPORT\"+cNotif+".PDF","\crystal\export")
+	AAdd(aDados,{"ID_"+cNotif+".PDF","\crystal\export\"+cNotif+".PDF"})
 	
-	Processa({|| U_EnvMail("informatica@ata.ind.br",;			//_cPara
+	cMensagem := "<html> "
+	cMensagem += "Segue em anexo a notificação de não conformidade aberto para sua empresa:<br><br>Notificação...: <b>"+cNotif+" </b><br>Ped. de Compra: <b>"+cPedid+"</b><br><br>. Qualquer dúvida ou problema, favor entrar em contato com o setor de compras da empresa. "
+	cMensagem += "</html> "
+	
+	Processa({|| U_EnvMail(cEmail,;								//_cPara
 							"",;								//_cCc
 							"",;								//_cBCC
-							"teste",;							//_cTitulo
+							"Notificacao de N.C.",;				//_cTitulo
 							aDados,;							//_aAnexo
-							"TESTE DE ENVIO DE EMAIL",;			//_cMsg
+							cMensagem,;							//_cMsg
 							.T.)},"Enviando e-mail...")			//_lAudit
-	
-/*	local oMailServer := tMailManager():New()
-	local oMessage := tMailMessage():New()
-	local nErro := 0
-	local cServer := GetMV("MV_RELSERV")
-	local cAccount := GetMV("MV_RELPSW")
-	local cPassword := GetMV("MV_RELACNT")
-	
-	oMailServer:Init("",cServer,cAccount,cPassword,0,25)
-	
-	if ((nErro := oMailServer:SmtpConnect()) != 0)
-		MsgStop("Não conectou. "+oMailServer:GetErrorString(nErro))
-		
-	    return
-	endif
-	
-	oMessage:Clear()
-	oMessage:cFrom := "wks@ata.ind.br"
-	oMessage:cTo := "informatica@ata.ind.br"
-	//oMessage:cCc := ""
-	//oMessage:cBcc := ""
-	oMessage:cSubject := "Teste de envio d e-mail"
-	oMessage:cBody := "Teste"
-	
-	//Para solicitar confimação de envio
-	//oMessage:SetConfirmRead(.T.)
-	
-	//Adiciona um anexo, nesse caso a imagem esta no root
-	oMessage:AddAttHTag("Content-ID: <ID_000003.PDF>")
-	oMessage:AttachFile("\EXPORT\000003.PDF")
-	oMessage:MsgBodyType("text/html")
-	
-	nErro := oMessage:Send(oMailServer)
-	
-	if nErro != 0
-		MsgStop("Não enviou o e-mail. "+oMailServer:GetErrorString(nErro))
-		
-	    return
-	endif
-	
-	nErro := oMailServer:SmtpDisconnect()
-	
-	if nErro != 0
-		MsgStop("Não desconectou. "+oMailServer:GetErrorString(nErro))
-		
-		return
-	endif*/
-	
+
 /*	local cSubject := "Notificacao de N.C."
 	local aTo := {}
 	local cMensagem := ""
@@ -464,17 +422,15 @@ user function AlterarSZR()
 		
 		return
 	else
-		lRetInc := .T.
-	endif
-	
-	if !Empty(M->ZR_NUMNC) .and. M->ZR_NUMNC == cNumNC
-		MsgAlert("O campo NAO CONFORM nao pode ser alterado.")
-		
-		lRetInc := .F.
-		
-		return
-	else
-		lRetInc := .T.
+		if AllTrim(M->ZR_NUMNC) <> AllTrim(cNumNC)
+			MsgAlert("O campo NAO CONFORM nao pode ser alterado.")
+			
+			lRetInc := .F.
+			
+			return
+		else
+			lRetInc := .T.
+		endif
 	endif
 	
 	if Empty(M->ZR_OBS)
@@ -554,7 +510,7 @@ user function Deletar()
 	local nOpca := 0
 	local aParam := {}
 	
-	private aCpos := {"ZR_NUMPC","ZR_NUMIT","ZR_EMISSAO","ZR_VEND","ZR_QUANT","ZR_ESPEC","ZR_IDENTI","ZR_CERTI","ZR_NUMNC","ZR_NOTIF","ZR_EMAIL","ZR_NFISCAL","ZR_SERIE","ZR_DTNF","ZR_ACDEV","ZR_PRAZO","ZR_TIPO","ZR_ENCERR","ZR_OBS"}
+	private aCpos := {"ZR_NUMPC","ZR_NUMIT","ZR_EMISSAO","ZR_VEND","ZR_QUANT","ZR_ESPEC","ZR_IDENTI","ZR_CERTI","ZR_NUMNC","ZR_NOTIF","ZR_EMAIL","ZR_NFISCAL","ZR_SERIE","ZR_DTNF","ZR_ACDEV","ZR_PRAZO","ZR_TIPO","ZR_ENCERR","ZR_OBS","ZR_DESCMAT"}
 	private cCadastro := "Notificacao de NC - EXCLUIR"
 	
 	AAdd(aParam,{|| U_DeletarSZR("1")})

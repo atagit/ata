@@ -105,12 +105,17 @@ static function GravarAvaliacao()
 				SZR->ZR_NOTIF := cNotif
 				SZR->ZR_TIPO := "1"
 				SZR->ZR_ENCERR := "3"
+				SZR->ZR_FORNECE := SF1->F1_FORNECE
+				SZR->ZR_LOJA := SF1->F1_LOJA
+				
+				MsUnLock()
 			endif
 			
 			SZR->(DbCloseArea())
+			ConfirmSX8()
 			
 			cSubject := "Notificacao de N.C."
-			cTo := "informatica@ata.ind.br"
+			cTo := "compras@ata.ind.br"
 			cMensagem := ""
 			cEmp := ""
 			
@@ -124,7 +129,7 @@ static function GravarAvaliacao()
 			cMensagem += "Foi aberto a notificação de não conformidade número <b>"+cNotif+" </b> da empresa "+cEmp+". Favor completar com as informações que faltam para concluir a notificação. "
 			cMensagem += "</html> "
 			
-			if U_EnvEmail(.T.,.F.,,,,cTo,,cSubject,cMensagem)
+			if Processa({|| U_EnvMail(cTo,"","",cSubject,,cMensagem,.T.)},"Enviando e-mail...")
 				MsgInfo("E-mail enviado com sucesso.")
 			endif
 		endif

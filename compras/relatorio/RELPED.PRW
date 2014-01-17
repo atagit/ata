@@ -42,6 +42,8 @@ user function RELPED()
 	private cComFin := ""
 	private nPCReceb := 0
 	private nRelGerenc := 0
+	private cArmazDe := ""
+	private cArmazAte := ""
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Parametros utilizados pelo programa                          ³
@@ -53,6 +55,8 @@ user function RELPED()
 	//³ mv_par06 - Comprador ate                                     ³
 	//³ mv_par07 - So PC Recebido (1-Nao/2-Sim)                      ³
 	//³ mv_par08 - Rel Gerencial (1-Nao/2-Sim)                       ³
+	//³ mv_par09 - Armazem de                                        ³
+	//³ mv_par10 - Armazem ate                                       ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	
 	Pergunte(cPerg,.F.)
@@ -72,6 +76,8 @@ user function RELPED()
 	cComFin := mv_par06
 	nPCReceb := mv_par07
 	nRelGerenc := mv_par08
+	cArmazDe := mv_par09
+	cArmazAte := mv_par10
 	
 	Processa({|| Impr()},"","Aguarde processando...",lAborta)
 	
@@ -92,6 +98,7 @@ return
 
 static function Impr()
 	local aPedido := {}
+	local nSaltFol := IIf(aReturn[5] == 1,65,55)
 	
 	private nTotQuant := 0, nTotGerQuant := 0 ; nTotAtras := 0
 	private nTotValor := 0, nTotGerValor := 0
@@ -120,7 +127,7 @@ static function Impr()
 	
 	cQry := "select C7_NUM, C7_EMISSAO, C7_FORNECE, C7_LOJA, C7_NOMFORN, C7_DATPRF, C7_USER, C7_CONAPRO, sum((C7_TOTAL + C7_VALIPI)) as C7_TOTAL "
 	cQry += "from "+RetSqlName("SC7")+" "
-	cQry += "where (C7_EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and (C7_FORNECE between '"+cForIni+"' and '"+cForFin+"') and (C7_USER between '"+cComIni+"' and '"+cComFin+"') and D_E_L_E_T_ <> '*' "
+	cQry += "where (C7_EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and (C7_FORNECE between '"+cForIni+"' and '"+cForFin+"') and (C7_USER between '"+cComIni+"' and '"+cComFin+"') and (C7_LOCAL between '"+cArmazDe+"' and '"+cArmazAte+"') and D_E_L_E_T_ <> '*' "
 	cQry += "group by C7_NUM, C7_EMISSAO, C7_FORNECE, C7_LOJA, C7_NOMFORN, C7_DATPRF, C7_USER, C7_CONAPRO "
 	cQry += "order by C7_NUM"
 	
@@ -148,7 +155,6 @@ static function Impr()
 			nRepeti := 0
 			
 			while !TEMP1->(Eof())
-				
 				if Empty(nRepeti)
 					AAdd(aPedido,{TEMP->C7_NUM,;
 									TEMP->C7_CONAPRO,;
@@ -289,11 +295,12 @@ static function Impr()
 			nTotGerQuant++
 			nTotGerValor += aPedido[i][9]
 			
-			if nLin >= 53
-	//			REGISTRO...:  999999        TOTAL.....:  999,999,999,999.99        VLR MEDIO:  999,999,999.99
-	//			REGIS. GER.:  999999        TOTAL GER.:  999,999,999,999.99        VLR MEDIO:  999,999,999.99
-	//			012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
-	//			          1         2         3         4         5         6         7         8         9        10
+			if nLin >= nSaltFol
+//				REGISTRO...:  999999        TOTAL.....:  999,999,999,999.99        VLR MEDIO:  999,999,999.99
+//				REGIS. GER.:  999999        TOTAL GER.:  999,999,999,999.99        VLR MEDIO:  999,999,999.99
+//				012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+//				          1         2         3         4         5         6         7         8         9        10
+				
 				nLin += 2
 				
 				@nLin,000 psay "REGISTRO...:  "+AllTrim(Transf(nTotQuant,"@E 999999"))
@@ -302,24 +309,24 @@ static function Impr()
 				
 				nTotQuant := 0
 				nTotValor := 0
-				nLin := 57
+				nLin := 67
 			endif
 			
 			U_SaltaFolha()
 			IncProc()
 		next
 		
-		if nLin < 53
+		if nLin <= nSaltFol
 			nLin += 2
 			
 			@nLin,000 psay "REGISTRO...:  "+AllTrim(Transf(nTotQuant,"@E 999999"))
 			@nLin,028 psay "TOTAL.....:  "+AllTrim(Transf(nTotValor,"@E 999,999,999,999.99"))
 			@nLin,067 psay "VLR MEDIO:  "+AllTrim(Transf((nTotValor / nTotQuant),"@E 999,999,999.99"))
-			
-			nLin++
-			
-			U_SaltaFolha()
 		endif
+		
+		nLin++
+		
+		U_SaltaFolha()
 		
 		@nLin,000 psay "REGIS. GER.:  "+AllTrim(Transf(nTotGerQuant,"@E 999999"))
 		@nLin,028 psay "TOTAL GER.:  "+AllTrim(Transf(nTotGerValor,"@E 999,999,999,999.99"))
