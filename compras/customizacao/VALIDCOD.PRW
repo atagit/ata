@@ -1,3 +1,0 @@
-user function VALIDCOD()
-
-return

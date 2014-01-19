@@ -16,89 +16,6 @@
 // lConfirma  (L): Confirmação de leitura                                                                           //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*User Function EnvEmail(lMenu,lMostra,cServer,cAccount,cPassword,cTo,aFiles,cSubject,cMensagem,lConfirma)
-	       
-	Local lOk     := .F.               
-	Local cErro   := Space(0)
-	Local aArea   := GetArea()                                                    
-	Local cAnexos := MontaAnexo(aFiles)
-	Local cServer := ""
-	Local cAccount := ""                                                    
-	Local cPassword := ""
-	
-	default cServer := GetMV("MV_RELSERV")
-	default cAccount := GetMV("MV_RELPSW")
-	default cPassword := GetMV("MV_RELACNT")
-	
-	lMenu   		:= Iif(lMenu == Nil 	,.T.,lMenu)
-	lMostra 		:= Iif(lMostra == Nil  	,.T.,lMostra)  
-	lConfirma 		:= Iif(lConfirma == Nil  	,.F.,lConfirma)  
-	
-	CONNECT SMTP SERVER cServer ACCOUNT cAccount PASSWORD cPassword RESULT lOK
-	
-	If lOk 
-		ConfirmMailRead(lConfirma)
-		
-		SEND MAIL FROM cAccount TO cTo SUBJECT cSubject BODY cMensagem ATTACHMENT cAnexos RESULT lOk
-		
-		If !(lOk)
-			GET MAIL ERROR cErro  
-			
-			If lMostra
-				If lMenu    
-					MsgAlert(cErro, "Erro durante o envio")
-		  		Else
-					ConOut("Erro durante o envio: "+cErro)
-				EndIf
-			EndIf
-		EndIf
-		
-		DISCONNECT SMTP SERVER RESULT lOK
-		
-		If !(lOk)
-			GET MAIL ERROR cErro     
-			
-			If lMostra
-				If lMenu 
-					MsgAlert(cErro, "Erro durante a desconexao")                     
-				Else
-					ConOut("Erro durante a desconexao: "+cErro)
-				EndIf
-			EndIf
-		Else     
-			If lMostra
-				If lMenu 
-					MsgBox("Email Enviado com sucesso","Email","INFO")
-				Else                     
-					ConOut("Email Enviado com sucesso!")
-					ConOut("")
-				EndIf
-			EndIf
-		EndIf
-		
-	EndIf
-	
-	RestArea(aArea)
-	
-Return(lOk)
-
-Static Function MontaAnexo(aFiles)
-	
-	Local cAnexo := "" 
-	
-	aFiles  := Iif(aFiles = Nil .Or. Empty(aFiles)	,{} ,aFiles)
-	
-	For nX := 1 To Len(aFiles)       
-		If nX = Len(aFiles)
-			cAnexo += aFiles[nX]
-		Else                 
-			cAnexo += aFiles[nX]+","
-		EndIf
-	Next nX
-	
-Return(cAnexo)*/
-
-
 User Function EnvMail(_cPara, _cCc, _cBCC, _cTitulo, _aAnexo, _cMsg, _lAudit)
 	Local oMail
 	Local oMessage
@@ -278,3 +195,85 @@ User Function EnvMail(_cPara, _cCc, _cBCC, _cTitulo, _aAnexo, _cMsg, _lAudit)
 	EndIf
 
 Return(.T.)
+
+/*User Function EnvEmail(lMenu,lMostra,cServer,cAccount,cPassword,cTo,aFiles,cSubject,cMensagem,lConfirma)
+	       
+	Local lOk     := .F.               
+	Local cErro   := Space(0)
+	Local aArea   := GetArea()                                                    
+	Local cAnexos := MontaAnexo(aFiles)
+	Local cServer := ""
+	Local cAccount := ""                                                    
+	Local cPassword := ""
+	
+	default cServer := GetMV("MV_RELSERV")
+	default cAccount := GetMV("MV_RELPSW")
+	default cPassword := GetMV("MV_RELACNT")
+	
+	lMenu   		:= Iif(lMenu == Nil 	,.T.,lMenu)
+	lMostra 		:= Iif(lMostra == Nil  	,.T.,lMostra)  
+	lConfirma 		:= Iif(lConfirma == Nil  	,.F.,lConfirma)  
+	
+	CONNECT SMTP SERVER cServer ACCOUNT cAccount PASSWORD cPassword RESULT lOK
+	
+	If lOk 
+		ConfirmMailRead(lConfirma)
+		
+		SEND MAIL FROM cAccount TO cTo SUBJECT cSubject BODY cMensagem ATTACHMENT cAnexos RESULT lOk
+		
+		If !(lOk)
+			GET MAIL ERROR cErro  
+			
+			If lMostra
+				If lMenu    
+					MsgAlert(cErro, "Erro durante o envio")
+		  		Else
+					ConOut("Erro durante o envio: "+cErro)
+				EndIf
+			EndIf
+		EndIf
+		
+		DISCONNECT SMTP SERVER RESULT lOK
+		
+		If !(lOk)
+			GET MAIL ERROR cErro     
+			
+			If lMostra
+				If lMenu 
+					MsgAlert(cErro, "Erro durante a desconexao")                     
+				Else
+					ConOut("Erro durante a desconexao: "+cErro)
+				EndIf
+			EndIf
+		Else     
+			If lMostra
+				If lMenu 
+					MsgBox("Email Enviado com sucesso","Email","INFO")
+				Else                     
+					ConOut("Email Enviado com sucesso!")
+					ConOut("")
+				EndIf
+			EndIf
+		EndIf
+		
+	EndIf
+	
+	RestArea(aArea)
+	
+Return(lOk)
+
+Static Function MontaAnexo(aFiles)
+	
+	Local cAnexo := "" 
+	
+	aFiles  := Iif(aFiles = Nil .Or. Empty(aFiles)	,{} ,aFiles)
+	
+	For nX := 1 To Len(aFiles)       
+		If nX = Len(aFiles)
+			cAnexo += aFiles[nX]
+		Else                 
+			cAnexo += aFiles[nX]+","
+		EndIf
+	Next nX
+	
+Return(cAnexo)*/
