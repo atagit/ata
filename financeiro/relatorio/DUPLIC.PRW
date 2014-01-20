@@ -39,6 +39,7 @@ user function DUPLIC()
 	private cCliIni		:= ""
 	private cLojIni		:= ""
 	private cForIni		:= ""
+	private nTipoDupli	:= 0
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Parametros utilizados pelo programa                          ³
@@ -48,6 +49,7 @@ user function DUPLIC()
 	//³ mv_par04 - Especifico (1-Sim/2-Nao)                          ³
 	//³ mv_par05 - Cliente                                           ³
 	//³ mv_par06 - Fornecedor                                        ³
+	//³ mv_par07 - Tipo Duplic (1-Em Aberto/2-Vencido/3-Relacao)     ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	
 	Pergunte(cPerg,.F.)
@@ -65,6 +67,7 @@ user function DUPLIC()
 	nTipo	:= mv_par04
 	cCliIni := Left(mv_par05,6)
 	cForIni := Left(mv_par06,6)
+	nTipoDupli := mv_par07
 	
 	if nContas == 1
 		cLojIni := Right(mv_par06,2)
@@ -72,10 +75,14 @@ user function DUPLIC()
 		cLojIni := Right(mv_par05,2)
 	endif
 	
-	if nTipo == 1			//Sim
-		Processa({|| Impr()},"","Aguarde processando...",lAborta)
-	else					//Nao
-		Processa({|| Impr1()},"","Aguarde processando...",lAborta)
+	if nTipoDupli == 3
+		if nTipo == 1			//Sim
+			Processa({|| Impr()},"","Aguarde processando...",lAborta)
+		else					//Nao
+			Processa({|| Impr1()},"","Aguarde processando...",lAborta)
+		endif
+	else
+		Processa({|| Impr2()},"","Aguarde processando...",lAborta)
 	endif
 	
 	set device to screen
@@ -283,6 +290,104 @@ static function Impr1()
 				IncProc()
 				TEMP->(DbSkip())
 			enddo
+		enddo
+		
+		nLin++
+		
+		U_SaltaFolha()
+		
+		@nLin,030 psay "SUBTOTAL VENCIMENTO.: "
+		@nLin,052 psay Transf(nSubQtdVenc,"@R 9999")
+		@nLin,085 psay Transf(nSubTotVenc,"@E 9,999,999,999.99")
+		
+		nLin++
+		nSubTotVenc := 0
+		nSubQtdVenc := 0
+		
+		U_SaltaFolha()
+		
+		@nLin,000 psay __PrtThinLine()
+		
+		nLin++
+		
+		U_SaltaFolha()
+	enddo
+	
+	nLin++
+	
+	U_SaltaFolha()
+	
+	@nLin,030 psay "T O T A L  G E R A L: "
+	@nLin,052 psay Transf(nSubQtdGeral,"@R 9999")
+	@nLin,085 psay Transf(nSubTotGeral,"@E 9,999,999,999.99")
+	
+	U_Rdp(nRdpPag,cRdpLeg,Tamanho)
+	TEMP->(DbCloseArea())
+return
+
+//**************************************************************\\
+// Impressao de duplicatas em aberto ou vencidas                \\
+//**************************************************************\\
+static function Impr2()
+	local nSubTotVenc := 0
+	local nSubTotGeral := 0
+	local nSubQtdVenc := 0
+	local nSubQtdGeral := 0
+	
+	if nContas == 1
+		cQry := "select E2_VENCREA, E2_NUM, E2_PREFIXO, E2_PARCELA, E2_EMISSAO, E2_TIPO, E2_CR, E2_BCOPAG, E2_VALOR, E2_BANCO "
+		cQry += "from "+RetSqlName("SE2")+" "
+		cQry += "where E2_FORNECE = '"+cForIni+"' and E2_LOJA = '"+cLojIni+"' and E2_BAIXA = '' and D_E_L_E_T_ <> '*' "
+		cQry += "order by E2_VENCREA, E2_NUM, E2_PREFIXO, E2_PARCELA"
+		cDesc1 := "DUPLICATAS EM ABERTO"
+		Cabec2  := "FORNECEDOR                      PRESTACAO      PARC  EMISSAO   ATRASO                             VALOR"
+	else
+/*		cQry := "select E1_CLIENTE as CLIFOR, E1_LOJA as LOJA, E1_NOMCLI as NOMCLIFOR, E1_VENCREA as VENCREA, E1_NUM as NUM, E1_PREFIXO as PREFIXO, E1_PARCELA as PARCELA, E1_EMISSAO as EMISSAO, E1_VALOR as VALOR, E1_BAIXA as BAIXA, E1_SALDO as SALDO, datediff(day, E1_VENCREA, getdate()) as DIFF "
+		cQry += "from "+RetSqlName("SE1")+" "
+		cQry += "where (E1_VENCREA between '"+cVenIni+"' and '"+cVenFin+"') and (E1_BAIXA = '' or (E1_BAIXA <> '' and E1_SALDO > 0)) and D_E_L_E_T_ <> '*' "
+		cQry += "order by E1_VENCREA, E1_NOMCLI"
+		cDesc1 := "DUPLICATAS A RECEBER - TODOS OS CLIENTES"
+		Cabec2  := "CLIENTE                         PRESTACAO      PARC  EMISSAO   ATRASO                             VALOR"*/
+	endif
+	
+	tcquery cQry new alias "TEMP"
+	
+	DbSelectArea("TEMP")
+	ProcRegua(TEMP->(RecCount()))
+	TEMP->(DbGoTop())
+	
+//	FORNECEDOR                     VENCTO   NOTA FISCAL   PARC EMISSAO  TIP PROT.   BCO              VALOR
+//	999999-99 AAAAAAAAAAAAAAAAAAAA 99/99/99 999999999-999 999  99/99/99 AAA 9999999 AAAA 99,999,999,999.99
+//	01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+//	          1         2         3         4         5         6         7         8         9        10        11        12        13
+	
+	while !TEMP->(Eof())
+		U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
+		
+		nLin++
+		
+		@nLin,000 psay "FORNECEDOR: "+IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(E2_FORNECE+E2_LOJA),.F.)),AllTrim(SA2->A2_NREDUZ),"")+" ("+TEMP->E2_FORNECE+"-"+TEMP->E2_LOJA+")"
+		
+		nLin++
+		
+		@nLin,000 psay Replicate("-",132)
+		
+		cFornCli := TEMP->(E2_FORNECE+E2_LOJA)
+		nLin++
+		
+		U_SaltaFolha()
+		
+		while !TEMP->(Eof()) .and. TEMP->(E2_FORNECE+E2_LOJA) == cFornCli
+//			VENCTO   NOTA FISCAL   PARC EMISSAO  TIP PROT.   BCO              VALOR
+//			99/99/99 999999999-999 999  99/99/99 AAA 9999999 AAAA 99,999,999,999.99
+//			01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+//			          1         2         3         4         5         6         7         8         9        10        11        12        13
+			
+			@nLin,000 psay U_ConvData(TEMP->E2_VENCREA,"yy")
+			@nLin,010 psay TEMP->NOMCLIFOR
+			U_SaltaFolha()
+			IncProc()
+			TEMP->(DbSkip())
 		enddo
 		
 		nLin++
