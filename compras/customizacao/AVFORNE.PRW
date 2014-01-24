@@ -25,8 +25,10 @@ user function AVFORNE(cForn,cLoja,nAval)
 							SZV->ZV_RA += 1
 						case nAval == 2
 							SZV->ZV_RR += 1
+							SZV->ZV_NCD += 1
 						case nAval == 3
 							SZV->ZV_RC += 1
+							SZV->ZV_NCA += 1
 					endcase
 					
 					aCalcIQF := U_CalcIQF(SZV->ZV_RA,SZV->ZV_RC,SZV->ZV_RR)

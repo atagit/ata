@@ -256,7 +256,7 @@ user function IncluirSZR()
 	nRet := TCSqlExec(cQry)
 	
 //	if M->ZR_TIPO == "1"
-		cQry := "select F1_AVIQF, C7_EMISSAO, C7_FORNECE, C7_LOJA "
+		cQry := "select F1_AVIQF, F1_EMISSAO, C7_FORNECE, C7_LOJA "
 		cQry += "from "+RetSqlName("SF1")+" SF1 inner join "+RetSqlName("SD1")+" SD1 on (F1_DOC = D1_DOC and F1_SERIE = D1_SERIE and F1_FORNECE = D1_FORNECE and F1_LOJA = D1_LOJA) "
 		cQry += "	inner join "+RetSqlName("SC7")+" SC7 on (D1_PEDIDO = C7_NUM) "
 		cQry += "where C7_NUM = '"+M->ZR_NUMPC+"' and SF1.D_E_L_E_T_ <> '*' and SD1.D_E_L_E_T_ <> '*' and SC7.D_E_L_E_T_ <> '*'"
@@ -271,7 +271,7 @@ user function IncluirSZR()
 		if SZV->(DbSeek(xFilial("SZV")+NF->(C7_FORNECE+C7_LOJA),.F.))
 			while !SZV->(Eof()) .and. SZV->ZV_FORNECE == NF->C7_FORNECE .and. SZV->ZV_LOJA == NF->C7_LOJA
 				if SZV->ZV_STATUS == "F"
-					if NF->C7_EMISSAO >= DToS(SZV->ZV_INIAVAL) .and. NF->C7_EMISSAO <= DToS(SZV->ZV_FINAVAL)
+					if NF->F1_EMISSAO >= DToS(SZV->ZV_INIAVAL) .and. NF->F1_EMISSAO <= DToS(SZV->ZV_FINAVAL)
 						RecLock("SZV",.F.)
 							do case
 								case NF->F1_AVIQF == "3"
@@ -330,7 +330,7 @@ user function IncluirSZR()
 						exit
 					endif
 				elseif SZV->ZV_STATUS == "A"
-					if NF->C7_EMISSAO >= DToS(SZV->ZV_INIAVAL)
+					if NF->F1_EMISSAO >= DToS(SZV->ZV_INIAVAL)
 						RecLock("SZV",.F.)
 							do case
 								case NF->F1_AVIQF == "3"
@@ -452,7 +452,7 @@ user function AlterarSZR()
 			M->ZR_ENCERR := "2"
 		MsUnLock()
 		
-		cQry := "select F1_AVIQF, C7_EMISSAO, C7_FORNECE, C7_LOJA "
+		cQry := "select F1_AVIQF, F1_EMISSAO, C7_FORNECE, C7_LOJA "
 		cQry += "from "+RetSqlName("SF1")+" SF1 inner join "+RetSqlName("SD1")+" SD1 on (F1_DOC = D1_DOC and F1_SERIE = D1_SERIE and F1_FORNECE = D1_FORNECE and F1_LOJA = D1_LOJA) "
 		cQry += "	inner join "+RetSqlName("SC7")+" SC7 on (D1_PEDIDO = C7_NUM) "
 		cQry += "where C7_NUM = '"+M->ZR_NUMPC+"' and SF1.D_E_L_E_T_ <> '*' and SD1.D_E_L_E_T_ <> '*' and SC7.D_E_L_E_T_ <> '*'"
@@ -467,7 +467,7 @@ user function AlterarSZR()
 		if SZV->(DbSeek(xFilial("SZV")+NF->(C7_FORNECE+C7_LOJA),.F.))
 			while !SZV->(Eof()) .and. SZV->ZV_FORNECE == NF->C7_FORNECE .and. SZV->ZV_LOJA == NF->C7_LOJA
 				if SZV->ZV_STATUS == "F"
-					if NF->C7_EMISSAO >= DToS(SZV->ZV_INIAVAL) .and. NF->C7_EMISSAO <= DToS(SZV->ZV_FINAVAL)
+					if NF->F1_EMISSAO >= DToS(SZV->ZV_INIAVAL) .and. NF->F1_EMISSAO <= DToS(SZV->ZV_FINAVAL)
 						RecLock("SZV",.F.)
 							do case
 								case NF->F1_AVIQF == "3"
@@ -480,7 +480,7 @@ user function AlterarSZR()
 						exit
 					endif
 				elseif SZV->ZV_STATUS == "A"
-					if NF->C7_EMISSAO >= DToS(SZV->ZV_INIAVAL)
+					if NF->F1_EMISSAO >= DToS(SZV->ZV_INIAVAL)
 						RecLock("SZV",.F.)
 							do case
 								case NF->F1_AVIQF == "3"

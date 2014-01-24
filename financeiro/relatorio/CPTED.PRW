@@ -95,9 +95,14 @@ static function Impr()
 	cQry += "where (E5_DOCUMEN between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') and E5_NATUREZ = '40103' and E5_DOCUMEN <> '' and SE5.D_E_L_E_T_ <> '*' and SE2.D_E_L_E_T_ <> '*' "
 	cQry += "order by E5_DOCUMEN, E2_NUM, E2_PARCELA"*/
 	
-	cQry := "select E5_DTDISPO, E5_DOCUMEN, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E5_RECONC, E5_PREFIXO, E5_NUMERO, E5_PARCELA "
+/*	cQry := "select E5_DTDISPO, E5_DOCUMEN, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E5_RECONC, E5_PREFIXO, E5_NUMERO, E5_PARCELA "
 	cQry += "from "+RetSqlName("SE5")+" "
 	cQry += "where (E5_DOCUMEN between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_NATUREZ = '40103' and E5_DOCUMEN <> '' and D_E_L_E_T_ <> '*' "
+	cQry += "order by E5_DOCUMEN"*/
+	
+	cQry := "select E5_DTDISPO, E5_DOCUMEN, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E5_RECONC, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_NUMCHEQ, E5_TIPO "
+	cQry += "from "+RetSqlName("SE5")+" "
+	cQry += "where (((E5_DOCUMEN between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_NATUREZ = '40103') or ((E5_NUMCHEQ between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_TIPO = 'PA ')) and (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and D_E_L_E_T_ <> '*' "
 	cQry += "order by E5_DOCUMEN"
 	
 	tcquery cQry new alias "TEMP"
@@ -116,7 +121,8 @@ static function Impr()
 		U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 		
 		nLin++
-		cTed := AllTrim(TEMP->E5_DOCUMEN)
+//		cTed := AllTrim(TEMP->E5_DOCUMEN)
+		cTed := IIf(TEMP->E5_TIPO == "PA ",AllTrim(TEMP->E5_NUMCHEQ),AllTrim(TEMP->E5_DOCUMEN))
 		nValor := 0
 		
 		if SA6->(DbSeek(xFilial("SA6")+TEMP->(E5_BANCO+E5_AGENCIA+E5_CONTA),.F.))

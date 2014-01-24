@@ -36,13 +36,19 @@ user function RELTED()
 	private cDataFin	:= ""
 	private cTedIni 	:= ""
 	private cTedFin 	:= ""
+	private cBancoDe	:= ""
+	private cAgenciaDe	:= ""
+	private cContaDe	:= ""
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Parametros utilizados pelo programa                          ³
-	//³ mv_par01 - Emissao de                                        ³
-	//³ mv_par02 - Emissao ate                                       ³
-	//³ mv_par03 - TED de                                            ³
-	//³ mv_par04 - TED ate                                           ³
+	//³ mv_par01 - TED de                                            ³
+	//³ mv_par02 - TED ate                                           ³
+	//³ mv_par03 - Emissao de                                        ³
+	//³ mv_par04 - Emissao ate                                       ³
+	//³ mv_par05 - Banco                                             ³
+	//³ mv_par06 - Agencia                                           ³
+	//³ mv_par07 - Conta                                             ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	
 	Pergunte(cPerg,.F.)
@@ -54,10 +60,13 @@ user function RELTED()
 	SetDefault(aReturn,cString)
 	nOrdem  := aReturn[8]
 	
-	cDataIni := DToS(mv_par01)
-	cDataFin := DToS(mv_par02)
-	cTedIni := mv_par03
-	cTedFin := mv_par04
+	cTedIni 	:= mv_par01
+	cTedFin 	:= mv_par02
+	cDataIni	:= DToS(mv_par03)
+	cDataFin	:= DToS(mv_par04)
+	cBancoDe	:= mv_par05
+	cAgenciaDe	:= mv_par06
+	cContaDe	:= mv_par07
 	
 	Processa({|| Impr()},"","Aguarde processando...",lAborta)
 	
@@ -81,10 +90,17 @@ static function Impr()
 	local nValor := 0
 	local nTotValor := 0
 	
-	cQry := "select E5_DTDISPO, E5_DOCUMEN, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E2_NUM, E2_PREFIXO, E2_PARCELA, E2_EMISSAO, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_VALLIQ "
+/*	cQry := "select E5_DTDISPO, E5_DOCUMEN, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E2_NUM, E2_PREFIXO, E2_PARCELA, E2_EMISSAO, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_VALLIQ "
 	cQry += "from "+RetSqlName("SE5")+" SE5 inner join "+RetSqlName("SE2")+" SE2 on (E5_NUMERO = E2_FATURA and E5_PREFIXO = E2_FATPREF) "
 	cQry += "where (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') and (E5_DOCUMEN between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_NATUREZ = '40103' and SE5.D_E_L_E_T_ <> '*' and SE2.D_E_L_E_T_ <> '*' "
-	cQry += "order by E5_DOCUMEN, E2_NUM, E2_PARCELA"
+	cQry += "order by E5_DOCUMEN, E2_NUM, E2_PARCELA"*/
+	
+	cCondicBco := IIf(Empty(cBancoDe+cAgenciaDe+cContaDe),"","and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' ")
+	
+	cQry := "select E5_DTDISPO, E5_DOCUMEN, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E5_RECONC, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_NUMCHEQ, E5_TIPO "
+	cQry += "from [DADOSP11P].dbo."+RetSqlName("SE5")+" "
+	cQry += "where (((E5_DOCUMEN between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_NATUREZ = '40103') or ((E5_NUMCHEQ between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_TIPO = 'PA ')) and (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') "+cCondicBco+"and D_E_L_E_T_ <> '*' "
+	cQry += "order by E5_DOCUMEN"
 	
 	tcquery cQry new alias "TEMP"
 	
@@ -104,24 +120,25 @@ static function Impr()
 //		01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //		          1         2         3         4         5         6         7         8         9        10        11        12        13
 		
-		cTed := AllTrim(TEMP->E5_DOCUMEN)
+		cCampo := "TEMP->"+IIf(TEMP->E5_TIPO == "PA ","E5_NUMCHEQ","E5_DOCUMEN")
+		cTed := AllTrim(&(cCampo))
 		nValor := 0
 		
-		while !TEMP->(Eof()) .and. AllTrim(TEMP->E5_DOCUMEN) == cTed
+		while !TEMP->(Eof()) .and. AllTrim(&(cCampo)) == cTed
 			@nLin,000 psay StrZero(nTotItem,3)
 			@nLin,005 psay cTed
-			@nLin,016 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(E5_CLIFOR+E5_LOJA),.F.)),SA2->A2_NREDUZ," ")
-			@nLin,038 psay IIf(SA6->(DbSeek(xFilial("SA6")+TEMP->(E5_BANCO+E5_AGENCIA+E5_CONTA),.F.)),SA6->A6_NREDUZ," ")
-			@nLin,060 psay U_ConvData(TEMP->E5_DTDISPO,"yy")
-			@nLin,070 psay U_ConvData(TEMP->E2_EMISSAO,"yy")
-			@nLin,080 psay TEMP->E2_NUM+"-"+TEMP->E2_PREFIXO
-			@nLin,095 psay TEMP->E2_PARCELA
-			@nLin,103 psay Transf(TEMP->E2_VALLIQ,"@E 9,999,999,999.99")
+//			@nLin,016 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(E5_CLIFOR+E5_LOJA),.F.)),SA2->A2_NREDUZ," ")
+//			@nLin,038 psay IIf(SA6->(DbSeek(xFilial("SA6")+TEMP->(E5_BANCO+E5_AGENCIA+E5_CONTA),.F.)),SA6->A6_NREDUZ," ")
+//			@nLin,060 psay U_ConvData(TEMP->E5_DTDISPO,"yy")
+//			@nLin,070 psay U_ConvData(TEMP->E2_EMISSAO,"yy")
+//			@nLin,080 psay TEMP->E2_NUM+"-"+TEMP->E2_PREFIXO
+//			@nLin,095 psay TEMP->E2_PARCELA
+//			@nLin,103 psay Transf(TEMP->E2_VALLIQ,"@E 9,999,999,999.99")
 			
 			nLin++
 			nTotItem++
-			nValor += TEMP->E2_VALLIQ
-			nTotValor += TEMP->E2_VALLIQ
+//			nValor += TEMP->E2_VALLIQ
+//			nTotValor += TEMP->E2_VALLIQ
 			
 			U_SaltaFolha()
 			IncProc()

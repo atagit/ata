@@ -89,9 +89,9 @@ user function HISTCOM()
 return
 
 static function Impr()
-	cQry := "select E2_FORNECE, E2_LOJA, E2_NUM, E2_PREFIXO, E2_PARCELA, E2_EMISSAO, E2_VENCREA, E2_BAIXA, E2_CR, E2_BCOPAG, E2_NUMBCO, E2_VALOR, E2_MULTA, E2_DESCONT "
+	cQry := "select E2_FORNECE, E2_LOJA, E2_NUM, E2_PREFIXO, E2_PARCELA, E2_EMISSAO, E2_VENCREA, E2_BAIXA, E2_CR, E2_BCOPAG, E2_NUMBCO, E2_VALOR, E2_MULTA, E2_DESCONT, E2_FATURA, E2_FATPREF "
 	cQry += "from "+RetSqlName("SE2")+" "
-	cQry += "where (E2_EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and (E2_FORNECE between '"+cForIni+"' and '"+cForFin+"') and (E2_NUM between '"+cNFIni+"' and '"+cNFFin+"') and (E2_BCOPAG between '"+cBcoIni+"' and '"+cBcoFin+"') and D_E_L_E_T_ <> '*' "
+	cQry += "where (E2_EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and (E2_FORNECE between '"+cForIni+"' and '"+cForFin+"') and (E2_NUM between '"+cNFIni+"' and '"+cNFFin+"') and (E2_BCOPAG between '"+cBcoIni+"' and '"+cBcoFin+"') and E2_FATURA <> 'NOTFAT' and D_E_L_E_T_ <> '*' "
 	cQry += "order by E2_FORNECE, E2_LOJA, E2_EMISSAO, E2_NUM, E2_PARCELA"
 	
 	tcquery cQry new alias "TEMP"
@@ -125,6 +125,8 @@ static function Impr()
 		cFornecedor := TEMP->(E2_FORNECE+E2_LOJA)
 		
 		while !TEMP->(Eof()) .and. TEMP->(E2_FORNECE+E2_LOJA) == cFornecedor
+			nAtraso := IIf(Empty(TEMP->E2_BAIXA),dDataBase - SToD(TEMP->E2_VENCREA),SToD(TEMP->E2_BAIXA) - SToD(TEMP->E2_VENCREA))
+			
 			@nLin,000 psay TEMP->E2_NUM+"-"+TEMP->E2_PREFIXO
 			@nLin,016 psay TEMP->E2_PARCELA
 			@nLin,023 psay U_ConvData(TEMP->E2_EMISSAO,"yy")
@@ -132,11 +134,26 @@ static function Impr()
 			@nLin,045 psay U_ConvData(TEMP->E2_BAIXA,"yy")
 			@nLin,056 psay Left(TEMP->E2_CR,7)
 			@nLin,066 psay Left(TEMP->E2_NUMBCO,6)
-			@nLin,075 psay IIf(SA6->(DbSeek(xFilial("SA6")+TEMP->E2_BCOPAG,.F.)),SA6->A6_SIGLA," ")
+			
+			if Empty(TEMP->(E2_FATURA+E2_FATPREF))
+				cBcoPag := TEMP->E2_BCOPAG
+			else
+				cQry := "select E2_BCOPAG from "+RetSqlName("SE2")+" where E2_NUM = '"+TEMP->E2_FATURA+"' and E2_PREFIXO = '"+TEMP->E2_FATPREF+"' and E2_FATURA = 'NOTFAT' and D_E_L_E_T_ <> '*'"
+				
+				tcquery cQry new alias "CON"
+				
+				DbSelectArea("CON")
+				
+				cBcoPag := CON->E2_BCOPAG
+				
+				CON->(DbCloseArea())
+			endif
+			
+			@nLin,075 psay IIf(SA6->(DbSeek(xFilial("SA6")+cBcoPag,.F.)),SA6->A6_SIGLA," ")
 			@nLin,082 psay Transf(TEMP->E2_VALOR,"@E 999,999,999.99")
 			@nLin,099 psay Transf(TEMP->E2_MULTA,"@E 999,999.99")
 			@nLin,112 psay Transf(TEMP->E2_DESCONT,"@E 999,999.99")
-			@nLin,125 psay Transf(SToD(TEMP->E2_BAIXA) - SToD(TEMP->E2_VENCREA),"@R 9999")
+			@nLin,125 psay Transf(nAtraso,"@R 9999")
 			
 			nLin++
 			nCont++
@@ -144,7 +161,7 @@ static function Impr()
 			nTotMulta += TEMP->E2_MULTA
 			nTotDesco += TEMP->E2_DESCONT
 			
-			if Empty(TEMP->E2_BCOPAG)
+			if Empty(cBcoPag)
 				nTotAberto += TEMP->E2_VALOR
 				nContAberto++
 			else

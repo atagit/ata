@@ -22,7 +22,7 @@ static function Atualiza()
 	
 	if SA2->(DbSeek(xFilial("SA2")+mv_par01,.F.))
 		while SA2->A2_COD >= mv_par01 .and. SA2->A2_COD <= mv_par02
-			if SA2->A2_MSBLQL <> "2" ; SA2->(DbSkip()) ; loop ; endif
+			if SA2->A2_MSBLQL == "1" ; SA2->(DbSkip()) ; loop ; endif
 			
 			if SZV->(DbSeek(xFilial("SZV")+SA2->(A2_COD+A2_LOJA),.F.))
 				if SZV->ZV_STATUS == "A"
