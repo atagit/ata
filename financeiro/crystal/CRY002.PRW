@@ -434,7 +434,7 @@ static function GeraRel(aBancos,cMes,cAno)
 			aBancos[i][4] := "000000002"
 		endif
 		
-		cQry := "select ZP_BANCO, ZP_AGENCIA, ZP_CONTA, ZP_DTSALDO, ZP_SALATUA, ZP_PENDENT, day(ZP_DTSALDO) as DIA, datename(weekday,ZP_DTSALDO) as SEMANA "
+		cQry := "select ZP_BANCO, ZP_AGENCIA, ZP_CONTA, ZP_DTSALDO, ZP_SALATUA, ZP_PENDENT, ZP_SALBLJU, day(ZP_DTSALDO) as DIA, datename(weekday,ZP_DTSALDO) as SEMANA "
 		cQry += "from "+RetSqlName("SZP")+" "
 		cQry += "where ZP_BANCO = '"+aBancos[i][2]+"' and ZP_AGENCIA = '"+aBancos[i][3]+"' and ZP_CONTA = '"+aBancos[i][4]+"' and month(ZP_DTSALDO) = "+cMes+" and year(ZP_DTSALDO) = "+cAno+" and D_E_L_E_T_ <> '*' "
 		cQry += "order by ZP_DTSALDO"
@@ -457,7 +457,7 @@ static function GeraRel(aBancos,cMes,cAno)
 			endif
 			
 //			TRB->&("SALDO"+Str(i,1)) := TMP->(ZP_SALATUA + ZP_PENDENT)
-			TRB->&("SALDO"+Str(i,1)) := TMP->ZP_SALATUA
+			TRB->&("SALDO"+Str(i,1)) := TMP->ZP_SALATUA - TMP->ZP_SALBLJU
 			TRB->&("PENDT"+Str(i,1)) := TMP->ZP_PENDENT
 			nTotDias += TMP->ZP_SALATUA
 			nContDias++

@@ -44,6 +44,7 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	
 	private nSaldoAtual := 0
 	private nSaldoPendente := 0
+	private nBlqJudic := 0
 	private nValor := 0
 	private cArqTrab1
 	private cArqTrab2
@@ -51,6 +52,10 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	
 	if Select("TEMP") <> 0
 		TEMP->(DbCloseArea())
+	endif
+	
+	if SA6->(DbSeek(xFilial("SA6")+cBancoDe+cAgenciaDe+cContaDe,.F.))
+		nBlqJudic := SA6->A6_VLBLJUD
 	endif
 	
 	DbSelectArea("SZP")
@@ -244,6 +249,7 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 					SZP->ZP_DTSALDO := SToD(cDataDispo)
 					SZP->ZP_SALATUA := nSaldoAtual
 //					SZP->ZP_PENDENT := nSaldoPendente
+					SZP->ZP_SALBLJU := nBlqJudic
 					
 					MsUnLock()
 				endif
@@ -276,6 +282,7 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 			
 			nSaldoA := SZP->ZP_SALATUA
 			nSaldoP := SZP->ZP_PENDENT
+			nSaldoJ := SZP->ZP_SALBLJU
 			
 			if RecLock("SZP",.T.)
 				SZP->ZP_FILIAL := xFilial("SZP")
@@ -285,6 +292,7 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 				SZP->ZP_DTSALDO := SToD(cDataIni)
 				SZP->ZP_SALATUA := nSaldoA
 				SZP->ZP_PENDENT := nSaldoP
+				SZP->ZP_SALBLJU := nSaldoJ
 				
 				MsUnLock()
 			endif
@@ -321,12 +329,14 @@ static function Pendentes()
 	cArqTrab2 := CriaTrab(aTempStru,.T.)
 	
 	DbUseArea(.T.,,cArqTrab2,"PEND",.F.,.F.)
-	index on PREVISAO+CHEQUE to IPEND
+	
+	ZAP
+	index on PREVISAO+CHEQUE to &(cArqTrab2)
 	
 	cQry := "select E5_DTDISPO, E5_NUMCHEQ, E5_DTDIGIT, E5_HISTOR, E5_VALOR, EF_DTPREDA, EF_PREDATA, E5_TIPODOC "
 	cQry += "from "+RetSqlName("SE5")+" SE5 inner join "+RetSqlName("SEF")+" SEF on (E5_NUMCHEQ = EF_NUM and '' = EF_TIPO and E5_BANCO = EF_BANCO and E5_AGENCIA = EF_AGENCIA and E5_CONTA = EF_CONTA) "
 	cQry += "where E5_DTDISPO <= '"+DToS(mv_par05)+"' and E5_BANCO = '"+mv_par01+"' and E5_AGENCIA = '"+mv_par02+"' and E5_CONTA = '"+mv_par03+"' and E5_TIPODOC in ('CH','EC') and E5_RECONC <> 'x' and SE5.D_E_L_E_T_ <> '*' and SEF.D_E_L_E_T_ <> '*' "
-	cQry += "order by E5_DTDISPO, E5_NUMCHEQ"
+	cQry += "order by E5_DTDISPO, E5_NUMCHEQ, E5_TIPODOC"
 	
 	tcquery cQry new alias "QTRB"
 	
@@ -340,7 +350,11 @@ static function Pendentes()
 			
 			while !PEND->(Eof())
 				if AllTrim(PEND->CHEQUE) == AllTrim(QTRB->E5_NUMCHEQ) .and. PEND->VALOR == QTRB->E5_VALOR
-					PEND->(DbDelete())
+					RecLock("PEND",.F.)
+						PEND->(DbDelete())
+					MsUnLock()
+					
+					exit
 				endif
 				
 				PEND->(DbSkip())

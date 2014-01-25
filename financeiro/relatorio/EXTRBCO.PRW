@@ -79,13 +79,13 @@ user function EXTRBCO()
 		DbCloseArea()
 	endif
 	
+	Ms_Flush()
 	FErase(cArqTrab1+".dbf")
 	FErase(cArqTrab1+".cdx")
 	FErase(cArqTrab2+".dbf")
 	FErase(cArqTrab2+".cdx")
 	FErase("itemp.cdx")
 	FErase("ipend.cdx")
-	Ms_Flush()
 return
 
 static function Impr()
@@ -103,6 +103,7 @@ static function Impr()
 	private nSaldoAtual := 0
 	private nValor := 0
 	private nTotReg := 0
+	private aAplicacao := {}
 	private aConciliados := {}
 	private aTempStru := {}
 	private aPendentes := {}
@@ -274,7 +275,7 @@ static function Impr()
 		AAdd(aBanco,SA6->A6_NREDUZ)
 		AAdd(aBanco,SA6->A6_AGENCIA)
 		AAdd(aBanco,SA6->A6_NUMCON)
-//		AAdd(aBanco,SA6->A6_VLBLJUD)
+		AAdd(aBanco,SA6->A6_VLBLJUD)
 		
 		if SZQ->(DbSeek(xFilial("SZQ")+cBancoDe+cAgenciaDe+cContaDe,.F.))
 			nTotal := 0
@@ -351,8 +352,6 @@ static function Impr()
 //		nTamTit := Len("BANCO: "+SA6->A6_COD+" - "+SA6->A6_NREDUZ+"   AG: "+SA6->A6_AGENCIA+"   CC: "+SA6->A6_NUMCON+"   SLD. ANTERIOR: "+AllTrim(Transf(nSaldoAtual,"@E 99,999,999,999.99")))
 //		cDef := "BANCO: "+SA6->A6_COD+" - "+SA6->A6_NREDUZ+"   AG: "+SA6->A6_AGENCIA+"   CC: "+SA6->A6_NUMCON+Space(132 - nTamTit)+"   SLD. ANTERIOR: "+AllTrim(Transf(nSaldoAtual,"@E 99,999,999,999.99"))
 	endif
-	
-	
 	
 //	Cabec1 := PadC(U_ConvData(cDataDe)+" A "+U_ConvData(cDataAte),132)
 //	Cabec2 := cDef
@@ -521,10 +520,19 @@ static function Impr()
 	
 	U_SaltaFolha()
 	
+	if !Empty(aBanco[9])
+		@nLin,000 psay "Saldo Bloqueio Judicial"
+		@nLin,118 psay Transf(aBanco[9],"@E 999,999,999.99")
+		
+		nLin++
+		
+		U_SaltaFolha()
+	endif
+	
 	@nLin,000 psay "T O T A L  G E R A L  ----->"
 	@nLin,087 psay Transf(nEntrada,"@E 999,999,999.99")
 	@nLin,102 psay Transf(nSaida,"@E 999,999,999.99")
-	@nLin,118 psay Transf(nSaldoAtual,"@E 999,999,999.99")
+	@nLin,118 psay Transf(nSaldoAtual - aBanco[9],"@E 999,999,999.99")
 	
 	nLin += 2
 	
@@ -532,24 +540,28 @@ static function Impr()
 	
 	if cBancoDe == "033" .and. cContaDe <> "000000002"
 		aArea1 := GetArea()
-		nAplicacao := Aplicacao(cBancoDe,cAgenciaDe,"000000002 ",cDataDe,cDataAte)
+		aAplicacao := Aplicacao(cBancoDe,cAgenciaDe,"000000002 ",cDataDe,cDataAte)
 		
-/*		@nLin,000 psay "Saldo Bloqueio Judicial"
-		@nLin,118 psay Transf(aBanco[8],"@E 999,999,999.99")
-		
-		nLin++
-		
-		U_SaltaFolha()*/
+		if !Empty(aAplicacao[2])
+			@nLin,000 psay "Saldo Bloqueio Judicial (Sub-Conta)"
+			@nLin,118 psay Transf(aAplicacao[2],"@E 999,999,999.99")
+			
+			nLin++
+			
+			U_SaltaFolha()
+		endif
 		
 		@nLin,000 psay "Saldo Invest. c/ Resgate Automatico"
-		@nLin,118 psay Transf(nAplicacao,"@E 999,999,999.99")
+		@nLin,118 psay Transf(aAplicacao[1],"@E 999,999,999.99")
 		
-/*		nLin++
-		
-		U_SaltaFolha()
-		
-		@nLin,000 psay "Saldo Total Disponivel"
-		@nLin,118 psay Transf(nAplicacao - aBanco[8],"@E 999,999,999.99")*/
+		if !Empty(aAplicacao[2])
+			nLin++
+			
+			U_SaltaFolha()
+			
+			@nLin,000 psay "Saldo Total Disponivel"
+			@nLin,118 psay Transf(aAplicacao[1] - aAplicacao[2],"@E 999,999,999.99")
+		endif
 		
 		nLin += 2
 		
@@ -821,13 +833,15 @@ static function Pendentes(nSaldoAtual)
 	cArqTrab2 := CriaTrab(aTempStru,.T.)
 	
 	DbUseArea(.T.,,cArqTrab2,"PEND",.F.,.F.)
-	index on PREVISAO+CHEQUE to IPEND
+	
+	ZAP
+	index on PREVISAO+CHEQUE to &(cArqTrab2)
 	
 	cQry := "select E5_DTDISPO, E5_NUMCHEQ, E5_DTDIGIT, E5_HISTOR, E5_VALOR, EF_DTPREDA, EF_PREDATA, E5_TIPODOC "
 	cQry += "from "+RetSqlName("SE5")+" SE5 inner join "+RetSqlName("SEF")+" SEF on (E5_NUMCHEQ = EF_NUM and '' = EF_TIPO and E5_BANCO = EF_BANCO and E5_AGENCIA = EF_AGENCIA and E5_CONTA = EF_CONTA) "
 //	cQry += "where ((E5_DTDISPO between '"+DToS(mv_par04)+"' and '"+DToS(mv_par05)+"') or (E5_DTDISPO <= '"+DToS(mv_par05)+"')) and E5_BANCO = '"+mv_par01+"' and E5_AGENCIA = '"+mv_par02+"' and E5_CONTA = '"+mv_par03+"' and E5_TIPODOC in ('CH','EC') and E5_RECONC <> 'x' and SE5.D_E_L_E_T_ <> '*' and SEF.D_E_L_E_T_ <> '*' "
 	cQry += "where E5_DTDISPO <= '"+DToS(mv_par05)+"' and E5_BANCO = '"+mv_par01+"' and E5_AGENCIA = '"+mv_par02+"' and E5_CONTA = '"+mv_par03+"' and E5_TIPODOC in ('CH','EC') and E5_RECONC <> 'x' and SE5.D_E_L_E_T_ <> '*' and SEF.D_E_L_E_T_ <> '*' "
-	cQry += "order by E5_DTDISPO, E5_NUMCHEQ"
+	cQry += "order by E5_DTDISPO, E5_NUMCHEQ, E5_TIPODOC"
 	
 	tcquery cQry new alias "QTRB"
 	
@@ -841,7 +855,11 @@ static function Pendentes(nSaldoAtual)
 			
 			while !PEND->(Eof())
 				if AllTrim(PEND->CHEQUE) == AllTrim(QTRB->E5_NUMCHEQ) .and. PEND->VALOR == QTRB->E5_VALOR
-					PEND->(DbDelete())
+					RecLock("PEND",.F.)
+						PEND->(DbDelete())
+					MsUnLock()
+					
+					exit
 				endif
 				
 				PEND->(DbSkip())
@@ -967,7 +985,8 @@ static function Pendentes(nSaldoAtual)
 //	@nLin,000 psay "T O T A L  G E R A L  ----->"
 //	@nLin,102 psay Transf(nValor,"@E 999,999,999.99")
 //	@nLin,118 psay Transf(nSaldoAtual - nValor,"@E 999,999,999.99")
-//	TEMP->(DbCloseArea())
+//	PEND->(DbCloseArea())
+//	QTRB->(DbCloseArea())
 return
 
 static function Predatados(nSaldoAtual)
@@ -1245,6 +1264,7 @@ static function Aplicacao(cBco,cAgc,cCta,cDtDe,cDtAte)
 	
 	local nSaldoAtual := 0
 	local nSaldoPendente := 0
+	local nBlqJudic := 0
 	local nValor := 0
 	local cArqTrab1
 	local cArqTrab2
@@ -1252,6 +1272,10 @@ static function Aplicacao(cBco,cAgc,cCta,cDtDe,cDtAte)
 	
 	if Select("TEMP") <> 0
 		TEMP->(DbCloseArea())
+	endif
+	
+	if SA6->(DbSeek(xFilial("SA6")+cBco+cAgc+cCta,.F.))
+		nBlqJudic := SA6->A6_VLBLJUD
 	endif
 	
 	DbSelectArea("SZP")
@@ -1432,4 +1456,4 @@ static function Aplicacao(cBco,cAgc,cCta,cDtDe,cDtAte)
 	TEMP1->(DbCloseArea())
 	FErase(cArqTrab1+".dbf")
 	FErase(cArqTrab1+".cdx")
-return(nSaldoAtual)
+return {nSaldoAtual,nBlqJudic}
