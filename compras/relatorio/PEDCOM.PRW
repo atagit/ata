@@ -143,7 +143,7 @@ static function Impr()
 					nLin++
 					
 					if k == 2
-						if TEMP->C7_QUJE > 0 .and. TEMP->C7_QUJE < TEMP->C7_QUANT
+						if TEMP->C7_QUJE > 0 .and. TEMP->C7_QUJE < TEMP->C7_QUANT .and. TEMP->C7_RESIDUO <> "S"
 							@nLin,002 psay Transf(TEMP->C7_QUANT - TEMP->C7_QUJE,"@E 999999.99")
 							@nLin,014 psay TEMP->C7_UM
 							@nLin,019 psay MemoLine(cProd,_MAXTEXTO,k)
@@ -163,7 +163,7 @@ static function Impr()
 			else
 				nLin++
 				
-				if TEMP->C7_QUJE > 0 .and. TEMP->C7_QUJE < TEMP->C7_QUANT
+				if TEMP->C7_QUJE > 0 .and. TEMP->C7_QUJE < TEMP->C7_QUANT .and. TEMP->C7_RESIDUO <> "S"
 					@nLin,002 psay Transf(TEMP->C7_QUANT - TEMP->C7_QUJE,"@E 999999.99")
 					@nLin,014 psay TEMP->C7_UM
 					@nLin,019 psay MemoLine(cObs,_MAXTEXTO,1)

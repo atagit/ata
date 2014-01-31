@@ -1,7 +1,7 @@
 /*______________________________________________________________________
-   ¦Autor     ¦ Breno Ferreira                      ¦ Data ¦ 17/03/10 ¦
+   ¦Autor     ¦ Breno Ferreira                      ¦ Data ¦ 17/03/13 ¦
    +----------+-------------------------------------------------------¦
-   ¦Descrição ¦ Adiciona botão na tela de geração cheques             ¦
+   ¦Descrição ¦ Validar dados na juncao do cheque                     ¦
   ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*/
 #include "rwmake.ch"
 #include "protheus.ch"
@@ -41,7 +41,7 @@ user function FA190TOK()
 	else
 		nError := 2
 	endif
-return(MsgError(nError))
+return MsgError(nError)
 
 static function MsgError(nError)
 	local lRet := .F.
@@ -60,4 +60,4 @@ static function MsgError(nError)
 		case nError == 5
 			MsgAlert("O cheque nao esta cadastrado para uso.")
 	endcase
-return(lRet)
+return lRet

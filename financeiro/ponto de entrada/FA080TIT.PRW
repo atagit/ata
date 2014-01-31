@@ -54,5 +54,7 @@ user function FA080TIT()
 				lRet := .F.
 			endif*/
 		endif
+	elseif CMOTBX == "NORMAL"
+	//
 	endif
 return lRet

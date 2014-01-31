@@ -133,7 +133,8 @@ user function MT160WF()
 			cTo := SX5->X5_DESCRI
 		endif
 		
-		U_EnvEmail(.T.,.T.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
+//		U_EnvEmail(.T.,.T.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
+		Processa({|| U_EnvMail(cTo,"","",cSubject,,cMensagem,.T.)},"Enviando e-mail...")
 	endif
 	
 	dbselectarea(cAlias)

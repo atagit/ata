@@ -30,7 +30,7 @@ User Function EnvMail(_cPara, _cCc, _cBCC, _cTitulo, _aAnexo, _cMsg, _lAudit)
 	Local cMailAud := GetMv("MV_MAILADT")	//Conta oculta de auditoria utilizada no envio de E-Mail para os relatorios;
 	Local lUseSSL  := GetMv("MV_RELSSL")	//Define se o envio e recebimento de E-Mail na rotina SPED utilizara conexao segura (SSL);
 	Local lUseTLS  := GetMv("MV_RELTLS")	//Informe se o servidor de SMTP possui conexao do tipo segura (SSL/TLS);
-	Local _nPorta  := 25			//Porta Default;
+	Local _nPorta  := 25					//Porta Default;
 	
 	DEFAULT _cPara := ""
 	DEFAULT _cCc   := ""
@@ -41,6 +41,20 @@ User Function EnvMail(_cPara, _cCc, _cBCC, _cTitulo, _aAnexo, _cMsg, _lAudit)
 	DEFAULT _lAudit  := ""
 
 	ProcRegua(15)
+	
+	//---------------------------------------------------------------------------------------------------------------------
+	//ENVIAR EMAIL PARA TI QUANDO FOR AMBIENTE TESTE
+	if cEmpAnt <> "01" .and. cEmpAnt <> "02"
+		_cPara := "informatica@ata.ind.br"
+	endif
+	
+	//---------------------------------------------------------------------------------------------------------------------
+	//PREENCHENDO O EMAIL PARA RESPOSTA
+	DbSelectArea("SX5")
+	
+	if SX5->(DbSeek(xFilial("SX5")+"WK"+AllTrim(PswID())))
+		cEmailFr := AllTrim(SX5->X5_DESCSPA)
+	endif
 
 	//---------------------------------------------------------------------------------------------------------------------
 	//VALIDANDO OS PARAMETROS INFORMADOS

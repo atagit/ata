@@ -11,7 +11,7 @@ user function RELTED()
 	private aReturn := {"Especial",1,"Administracao",1,2,1,"",1}
 	private cPerg   := "RELTED"
 	private Cabec1  := ""
-	private Cabec2  := "ITM  DOCUMENTO  FORNECEDOR            BANCO                 PREVISAO  EMISSAO   TITULO         PARC               VALOR"
+	private Cabec2  := "ITM  DOCUMENTO  FORNECEDOR              BANCO                 PREVISAO  EMISSAO   TITULO         PARC               VALOR"
 	private cDesc1  := "RELACAO DE TED"
 	private ContFun := 0
 	private cString := "SE5"
@@ -97,8 +97,8 @@ static function Impr()
 	
 	cCondicBco := IIf(Empty(cBancoDe+cAgenciaDe+cContaDe),"","and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' ")
 	
-	cQry := "select E5_DTDISPO, E5_DOCUMEN, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E5_RECONC, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_NUMCHEQ, E5_TIPO "
-	cQry += "from [DADOSP11P].dbo."+RetSqlName("SE5")+" "
+	cQry := "select E5_DTDISPO, E5_DOCUMEN = case when E5_DOCUMEN <> '' then E5_DOCUMEN else E5_NUMCHEQ end, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E5_RECONC, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_NUMCHEQ, E5_TIPO "
+	cQry += "from "+RetSqlName("SE5")+" "
 	cQry += "where (((E5_DOCUMEN between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_NATUREZ = '40103') or ((E5_NUMCHEQ between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_TIPO = 'PA ')) and (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') "+cCondicBco+"and D_E_L_E_T_ <> '*' "
 	cQry += "order by E5_DOCUMEN"
 	
@@ -115,28 +115,33 @@ static function Impr()
 	nLin++
 	
 	while !TEMP->(Eof())
-//		ITM  DOCUMENTO  FORNECEDOR            BANCO                 PREVISAO  EMISSAO   TITULO         PARC               VALOR
-//		999  AAA999999  AAAAAAAAAAAAAAAAAAAA  AAAAAAAAAAAAAAAAAAAA  99/99/99  99/99/99  999999999-999  999     9,999,999,999.99
+//		ITM  DOCUMENTO  FORNECEDOR              BANCO                 PREVISAO  EMISSAO   TITULO         PARC               VALOR
+//		999  AAA999999  AAAAAAAAAAAAAAAAAAAA    AAAAAAAAAAAAAAAAAAAA  99/99/99  99/99/99  999999999-999  999     9,999,999,999.99
 //		01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //		          1         2         3         4         5         6         7         8         9        10        11        12        13
 		
-		cCampo := "TEMP->"+IIf(TEMP->E5_TIPO == "PA ","E5_NUMCHEQ","E5_DOCUMEN")
-		cTed := AllTrim(&(cCampo))
+		cTed := AllTrim(TEMP->E5_DOCUMEN)
 		nValor := 0
 		
-		while !TEMP->(Eof()) .and. AllTrim(&(cCampo)) == cTed
+		while !TEMP->(Eof()) .and. AllTrim(TEMP->E5_DOCUMEN) == cTed
 			@nLin,000 psay StrZero(nTotItem,3)
 			@nLin,005 psay cTed
-//			@nLin,016 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(E5_CLIFOR+E5_LOJA),.F.)),SA2->A2_NREDUZ," ")
-//			@nLin,038 psay IIf(SA6->(DbSeek(xFilial("SA6")+TEMP->(E5_BANCO+E5_AGENCIA+E5_CONTA),.F.)),SA6->A6_NREDUZ," ")
-//			@nLin,060 psay U_ConvData(TEMP->E5_DTDISPO,"yy")
+			@nLin,016 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(E5_CLIFOR+E5_LOJA),.F.)),SA2->A2_NREDUZ," ")
+			@nLin,040 psay IIf(SA6->(DbSeek(xFilial("SA6")+TEMP->(E5_BANCO+E5_AGENCIA+E5_CONTA),.F.)),SA6->A6_NREDUZ," ")
+			@nLin,062 psay U_ConvData(TEMP->E5_DTDISPO,"yy")
+			@nLin,072 psay U_ConvData(TEMP->E5_DATA,"yy")
 //			@nLin,070 psay U_ConvData(TEMP->E2_EMISSAO,"yy")
+			@nLin,082 psay TEMP->E5_NUMERO+"-"+TEMP->E5_PREFIXO
+			@nLin,097 psay TEMP->E5_PARCELA
+			@nLin,105 psay Transf(TEMP->E5_VALOR,"@E 9,999,999,999.99")
 //			@nLin,080 psay TEMP->E2_NUM+"-"+TEMP->E2_PREFIXO
 //			@nLin,095 psay TEMP->E2_PARCELA
 //			@nLin,103 psay Transf(TEMP->E2_VALLIQ,"@E 9,999,999,999.99")
 			
 			nLin++
 			nTotItem++
+			nValor += TEMP->E5_VALOR
+			nTotValor += TEMP->E5_VALOR
 //			nValor += TEMP->E2_VALLIQ
 //			nTotValor += TEMP->E2_VALLIQ
 			
@@ -145,8 +150,8 @@ static function Impr()
 			TEMP->(DbSkip())
 		enddo
 		
-		@nLin,080 psay "T O T A L"
-		@nLin,103 psay Transf(nValor,"@E 9,999,999,999.99")
+		@nLin,082 psay "T O T A L"
+		@nLin,105 psay Transf(nValor,"@E 9,999,999,999.99")
 		
 		nLin++
 		

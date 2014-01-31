@@ -109,10 +109,10 @@ static function GravarAvaliacao()
 				SZR->ZR_LOJA := SF1->F1_LOJA
 				
 				MsUnLock()
+				ConfirmSX8()
 			endif
 			
 			SZR->(DbCloseArea())
-			ConfirmSX8()
 			
 			cSubject := "Notificacao de N.C."
 			cTo := "compras@ata.ind.br"
