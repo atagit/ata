@@ -421,7 +421,7 @@ user function AlterarSZR()
 		
 		return
 	else
-		if AllTrim(M->ZR_NUMNC) <> AllTrim(cNumNC)
+		if AllTrim(M->ZR_NUMNC) <> AllTrim(cNumNC) .and. !Empty(cNumNC)
 			MsgAlert("O campo NAO CONFORM nao pode ser alterado.")
 			
 			lRetInc := .F.

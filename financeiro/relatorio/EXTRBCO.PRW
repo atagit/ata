@@ -387,9 +387,10 @@ static function Impr()
 			cLoja := TEMP->E5_LOJA
 			cDtDispo := TEMP->E5_DTDISPO
 			cMotBx := TEMP->E5_MOTBX
+			cTed := TEMP->E5_DOCUMEN
 			
 //			while !TEMP->(Eof()) .and. TEMP->E5_DTDISPO == cDtDispo .and. TEMP->E5_TIPODOC == cTipoDoc .and. TEMP->E5_TIPO == cTipo .and. TEMP->E5_BENEF == cBenef .and. TEMP->E5_CLIFOR == cCliFor .and. TEMP->E5_LOJA == cLoja .and. TEMP->E5_MOTBX == cMotBx .and. Left(TEMP->E5_DOCUMEN,3) == "TED"
-			while !TEMP->(Eof()) .and. TEMP->E5_DTDISPO == cDtDispo .and. TEMP->E5_TIPODOC == cTipoDoc .and. TEMP->E5_BENEF == cBenef .and. TEMP->E5_CLIFOR == cCliFor .and. TEMP->E5_LOJA == cLoja .and. TEMP->E5_MOTBX == cMotBx .and. Left(TEMP->E5_DOCUMEN,3) == "TED"
+			while !TEMP->(Eof()) .and. TEMP->E5_DTDISPO == cDtDispo .and. TEMP->E5_TIPODOC == cTipoDoc .and. TEMP->E5_BENEF == cBenef .and. TEMP->E5_CLIFOR == cCliFor .and. TEMP->E5_LOJA == cLoja .and. TEMP->E5_MOTBX == cMotBx .and. Left(TEMP->E5_DOCUMEN,3) == "TED" .and. TEMP->E5_DOCUMEN == cTed
 				nValorNF += TEMP->E5_VALOR
 				
 				TEMP->(DbSkip())
@@ -535,6 +536,7 @@ static function Impr()
 	@nLin,118 psay Transf(nSaldoAtual - aBanco[9],"@E 999,999,999.99")
 	
 	nLin += 2
+	nSldCtaPrin := nSaldoAtual - aBanco[9]
 	
 	U_SaltaFolha()
 	
@@ -551,17 +553,18 @@ static function Impr()
 			U_SaltaFolha()
 		endif
 		
-		@nLin,000 psay "Saldo Invest. c/ Resgate Automatico"
+		@nLin,000 psay "Saldo Invest. c/ Resgate Automatico (Sub-Conta)"
 		@nLin,118 psay Transf(aAplicacao[1],"@E 999,999,999.99")
 		
-		if !Empty(aAplicacao[2])
+//		if !Empty(aAplicacao[2])
 			nLin++
 			
 			U_SaltaFolha()
 			
 			@nLin,000 psay "Saldo Total Disponivel"
-			@nLin,118 psay Transf(aAplicacao[1] - aAplicacao[2],"@E 999,999,999.99")
-		endif
+			@nLin,118 psay Transf(nSldCtaPrin - aAplicacao[2] + aAplicacao[1],"@E 999,999,999.99")
+//			@nLin,118 psay Transf(aAplicacao[2] - aAplicacao[1],"@E 999,999,999.99")
+//		endif
 		
 		nLin += 2
 		

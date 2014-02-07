@@ -24,14 +24,11 @@
 	MBrowse(06,01,22,75,"SZS")
 return*/
 
-//COMPRADO	select sum(C7_TOTAL + C7_VALIPI) from SC7010 where (C7_EMISSAO between '20140102' and '20140102') and D_E_L_E_T_ <> '*'
-//VENDIDO	select sum(F2_VALMERC) from SF2010 where (F2_EMISSAO between '20140131' and '20140131') and F2_TIPO <> 'B' and D_E_L_E_T_ <> '*'
-
 user function CRY004()
 	local cArqDBF := GetMV("MV_DBFCRY")+_RELCRY+".DBF"
-	local cArqCDX := GetMV("MV_DBFCRY")+"I"+_RELCRY+".CDX"
 	local cAno := ""
 	local cMes := ""
+	local aTabela := {}
 	
 	private cReport := _RELCRY
 	private cOpcoes := "1;0;1;Relatorio de Acompanhamento"
@@ -48,57 +45,47 @@ user function CRY004()
 	cAno := mv_par01
 	cMes := mv_par02
 	
-	DbUseArea(.T.,"DBFCDX",cArqDBF,"TRB",.F.,.F.)
-	FErase(cArqCDX)
-	
-	index on DIA to &(cArqCDX)
-	ZAP
-	
 	DbSelectArea("SZS")
 	ProcRegua(SZS->(RecCount()))
 	SZS->(DbGoTop())
 	
 	if SZS->(DbSeek(xFilial("SZS")+cAno+cMes,.F.))
 		while !SZS->(Eof()) .and. SZS->(ZS_ANO+ZS_MES) == cAno+cMes
-			RecLock("TRB",.T.)
-				TRB->EMPRESA := cEmpAnt
-				TRB->DIA := SZS->ZS_DIA
-				TRB->MES := _MES[Val(cMes)]
-				TRB->ANO := cAno
-				TRB->RECFIN := SZS->ZS_RECFIN
-				TRB->PAGFIN := SZS->ZS_PAGFIN
-				TRB->SLDFIN := SZS->ZS_SLDFIN
-				TRB->RECFAT := SZS->ZS_RECFAT
-				TRB->PAGFAT := SZS->ZS_PAGFAT
-				TRB->SLDFAT := SZS->ZS_SLDFAT
-			MsUnLock()
-			IncProc()
+			AAdd(aTabela,{SZS->ZS_DIA,SZS->ZS_RECFIN,SZS->ZS_PAGFIN,SZS->ZS_SLDFIN,SZS->ZS_RECFAT,SZS->ZS_PAGFAT,SZS->ZS_SLDFAT})
+			
 			SZS->(DbSkip())
 		enddo
 		
 		for i := 1 to Last_Day(SToD(cAno+cMes+"01"))
-			TRB->(DbGoTop())
-			
-			if !TRB->(DbSeek(StrZero(i,2),.F.))
-				RecLock("TRB",.T.)
-					TRB->EMPRESA := cEmpAnt
-					TRB->DIA := StrZero(i,2)
-					TRB->MES := _MES[Val(cMes)]
-					TRB->ANO := cAno
-					TRB->RECFIN := 0
-					TRB->PAGFIN := 0
-					TRB->SLDFIN := 0
-					TRB->RECFAT := 0
-					TRB->PAGFAT := 0
-					TRB->SLDFAT := 0
-				MsUnLock()
+			if (nInd := AScan(aTabela,{|x| x[1] = StrZero(i,2)})) == 0
+				AAdd(aTabela,{StrZero(i,2),0,0,0,0,0,0})
 			endif
 		next
 		
+		ASort(aTabela,,,{|x,y| x[1] < y[1]})
+		DbUseArea(.T.,"DBFCDX",cArqDBF,"TRB",.F.,.F.)
+		
+		ZAP
+		
+		for i := 1 to Len(aTabela)
+			RecLock("TRB",.T.)
+				TRB->EMPRESA := cEmpAnt
+				TRB->DIA := aTabela[i][1]
+				TRB->MES := _MES[Val(cMes)]
+				TRB->ANO := cAno
+				TRB->RECFIN := aTabela[i][2]
+				TRB->PAGFIN := aTabela[i][3]
+				TRB->SLDFIN := aTabela[i][4]
+				TRB->RECFAT := aTabela[i][5]
+				TRB->PAGFAT := aTabela[i][6]
+				TRB->SLDFAT := aTabela[i][7]
+			MsUnLock()
+			IncProc()
+		next
+		
+		TRB->(DbCloseArea())
 		CallCrys(cReport,cParam,cOpcoes)
 	else
 		MsgAlert("O ANO e MES de referencia informado nao existe.")
 	endif
-	
-	TRB->(DbCloseArea())
 return

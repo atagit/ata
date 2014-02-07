@@ -11,7 +11,7 @@ user function FA080TIT()
 	
 	public _NumTED := ""
 	
-	if CMOTBX == "DEBITO CC"
+	if AllTrim(CMOTBX) == "DEBITO CC"
 		if MsgYesNo("Gerar um TED para essa baixa?","TED")
 			if SA6->(DbSeek(xFilial("SA6")+CBANCO+CAGENCIA+CCONTA,.F.))
 				if Empty(SA6->A6_NUMTED)
@@ -54,7 +54,9 @@ user function FA080TIT()
 				lRet := .F.
 			endif*/
 		endif
-	elseif CMOTBX == "NORMAL"
-	//
+	elseif AllTrim(CMOTBX) == "NORMAL"
+		if !Empty(CCHEQUE)
+			lRet := U_VALCHQ(CBANCO+CAGENCIA+CCONTA,CCHEQUE)
+		endif
 	endif
 return lRet

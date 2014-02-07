@@ -164,6 +164,8 @@ static function Impr()
 		CON1->(DbGoTop())
 		
 		while !CON1->(Eof())
+			nValPA := IIf(TEMP->E5_TIPO == "PA ",CON1->E2_VALOR,CON1->E2_VALLIQ)
+			
 			@nLin,000 psay StrZero(nTotItem,3)
 			@nLin,005 psay CON1->E2_NOMFOR
 			@nLin,028 psay CON1->E2_PREFIXO
@@ -173,12 +175,12 @@ static function Impr()
 			@nLin,056 psay IIf(SZ5->(DbSeek(xFilial("SZ5")+CON1->E2_BALGER,.F.)),SZ5->Z5_NOME," ")
 			@nLin,091 psay U_ConvData(TEMP->E5_DTDISPO,"yy")
 			@nLin,101 psay IIf(!Empty(TEMP->E5_RECONC),U_ConvData(TEMP->E5_DTDISPO,"yy")," ")
-			@nLin,115 psay Transf(CON1->E2_VALLIQ,"@E 9,999,999,999.99")
+			@nLin,115 psay Transf(nValPA,"@E 9,999,999,999.99")
 			
 			nLin++
 			nTotItem++
-			nValor += CON1->E2_VALLIQ
-			nTotValor += CON1->E2_VALLIQ
+			nValor += nValPA
+			nTotValor += nValPA
 			
 			U_SaltaFolha()
 			IncProc()

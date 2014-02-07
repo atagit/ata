@@ -119,13 +119,16 @@ static function Impr()
 		if SE5->(DbSeek(xFilial("SE5")+cBancoDe+cAgenciaDe+cContaDe+cNum,.F.)) .and. TEMP->EF_PREDATA == "T"
 			while !SE5->(Eof()) .and. SE5->E5_BANCO == cBancoDe .and. SE5->E5_AGENCIA == cAgenciaDe .and. SE5->E5_CONTA == cContaDe .and. SE5->E5_NUMCHEQ == cNum
 				if SE5->E5_TIPODOC == "CH"
-					dData := SE5->E5_DTDIGIT
+//					dData := SE5->E5_DTDIGIT
+					dData := SE5->E5_DTDISPO
+					dEmiss := SE5->E5_DTDIGIT
 				endif
 				
 				SE5->(DbSkip())
 			enddo
 		else
 			dData := SToD(TEMP->EF_DATA)
+			dEmiss := SToD(TEMP->EF_DATA)
 		endif
 		
 		lFirst := .T.
@@ -140,9 +143,10 @@ static function Impr()
 		@nLin  ,021 psay IIf(SA6->(DbSeek(xFilial("SA6")+cBancoDe+cAgenciaDe+cContaDe,.F.)),AllTrim(SA6->A6_AGENCIA)+" / "+SA6->A6_NUMCON," ")
 		@nLin  ,042 psay Transf(nTotChq,"@E 999,999,999.99")
 		@nLin  ,059 psay cNum
-		@nLin  ,077 psay U_ConvData(DToS(dData))
+//		@nLin  ,077 psay U_ConvData(DToS(dData))
+		@nLin  ,077 psay U_ConvData(DToS(dEmiss))
 		@nLin  ,090 psay IIf(TEMP->EF_PREDATA == "F","AVISTA","PREDATADO")
-		@nLin  ,102 psay IIf(TEMP->EF_PREDATA == "F",U_ConvData(DToS(dData)),U_ConvData(TEMP->EF_DATA))
+		@nLin  ,102 psay U_ConvData(IIf(TEMP->EF_PREDATA == "F",TEMP->EF_DATA,DToS(dData)))
 //		@nLin  ,090 psay IIf(!Empty(TEMP->EF_DTPREDA),U_ConvData(TEMP->EF_DTPREDA)," ")
 		@++nLin,003 psay "HISTORICO: "+AllTrim(TEMP->EF_HIST)
 		@++nLin,002 psay Replicate("=",132)

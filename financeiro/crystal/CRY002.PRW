@@ -12,164 +12,6 @@
 #define _MAXBCO 7
 
 user function CRY002()
-/*user function CRY002(cOpc,cConta,cCelula)
-	local cRetorno := ""
-	local nPos := Val(Right(cCelula,1))
-	local aLimite := {"CHEQUE EMPRESA","CONTA GARANTIDA"}
-	local cAno := StrZero(Year(dDataBase),4)
-	local cMes := StrZero(Month(dDataBase),2)
-	local cContas := GetMV("MV_CONTAS")
-	
-	if cOpc == "EMP"
-		return IIf(cFilAnt == "01","ATA","ATF")
-	elseif cOpc == "CAB" .and. cConta $ cContas
-		do case
-			case Left(cCelula,3) == "C3"
-				cQry := "select A6_COD, A6_AGENCIA, A6_NUMCON, A6_NREDUZ, A6_CONTATO, A6_TEL, A6_CELULAR "
-				cQry += "from "+RetSqlName("SA6")+" "
-				cQry += "where A6_NUMCON = '"+cConta+"' and A6_BLOCKED <> '1' and A6_EXIBREL = 'S' and D_E_L_E_T_ <> '*'"
-				
-				tcquery cQry alias "TMP" new
-				
-				DbSelectArea("TMP")
-				
-				cRetorno := TMP->A6_NREDUZ
-				
-				TMP->(DbCloseArea())
-				
-				return AllTrim(cRetorno)
-			case Left(cCelula,3) == "C4"
-				return AllTrim(cRetorno)
-			case Left(cCelula,3) == "C5"
-				cQry := "select A6_COD, A6_AGENCIA, A6_NUMCON, A6_NREDUZ, A6_CONTATO, A6_TEL, A6_CELULAR "
-				cQry += "from "+RetSqlName("SA6")+" "
-				cQry += "where A6_NUMCON = '"+cConta+"' and A6_BLOCKED <> '1' and A6_EXIBREL = 'S' and D_E_L_E_T_ <> '*'"
-				
-				tcquery cQry alias "TMP" new
-				
-				DbSelectArea("TMP")
-				
-				cRetorno := TMP->A6_CONTATO
-				
-				TMP->(DbCloseArea())
-				
-				return AllTrim(cRetorno)
-			case Left(cCelula,3) == "C6"
-				cQry := "select A6_COD, A6_AGENCIA, A6_NUMCON, A6_NREDUZ, A6_CONTATO, A6_TEL, A6_CELULAR "
-				cQry += "from "+RetSqlName("SA6")+" "
-				cQry += "where A6_NUMCON = '"+cConta+"' and A6_BLOCKED <> '1' and A6_EXIBREL = 'S' and D_E_L_E_T_ <> '*'"
-				
-				tcquery cQry alias "TMP" new
-				
-				DbSelectArea("TMP")
-				
-				cRetorno := TMP->A6_TEL
-				
-				TMP->(DbCloseArea())
-				
-				return AllTrim(cRetorno)
-			case Left(cCelula,3) == "C7"
-				cQry := "select A6_COD, A6_AGENCIA, A6_NUMCON, A6_NREDUZ, A6_CONTATO, A6_TEL, A6_CELULAR "
-				cQry += "from "+RetSqlName("SA6")+" "
-				cQry += "where A6_NUMCON = '"+cConta+"' and A6_BLOCKED <> '1' and A6_EXIBREL = 'S' and D_E_L_E_T_ <> '*'"
-				
-				tcquery cQry alias "TMP" new
-				
-				DbSelectArea("TMP")
-				
-				cRetorno := TMP->A6_CELULAR
-				
-				TMP->(DbCloseArea())
-				
-				return AllTrim(cRetorno)
-		endcase
-	elseif cOpc == "LIM" .and. cConta $ cContas
-		do case
-			case Left(cCelula,3) $ "A11/A12"
-				return aLimite[nPos]
-			case Left(cCelula,3) $ "C11/E11/G11/I11/K11/M11"
-				cQry := "select ZQ_BANCO, ZQ_AGENCIA, ZQ_CONTA, ZQ_CREDITO, ZQ_VALOR, ZQ_TAXA, ZQ_TIPO "
-				cQry += "from "+RetSqlName("SZQ")+" "
-				cQry += "where ZQ_CONTA = '"+cConta+"' and ZQ_CREDITO = '"+aLimite[nPos]+"' and ZQ_TIPO = '1' and D_E_L_E_T_ <> '*' "
-				cQry += "order by ZQ_TIPO, ZQ_CREDITO"
-				
-				tcquery cQry alias "TMP" new
-				
-				DbSelectArea("TMP")
-				
-				cRetorno := Transf(TMP->ZQ_VALOR,"@E 9,999,999")
-				
-				TMP->(DbCloseArea())
-				
-				return AllTrim(cRetorno)
-			case Left(cCelula,3) $ "D11/F11/H11/J11/L11/N11"
-				cQry := "select ZQ_BANCO, ZQ_AGENCIA, ZQ_CONTA, ZQ_CREDITO, ZQ_VALOR, ZQ_TAXA, ZQ_TIPO "
-				cQry += "from "+RetSqlName("SZQ")+" "
-				cQry += "where ZQ_CONTA = '"+cConta+"' and ZQ_CREDITO = '"+aLimite[nPos]+"' and ZQ_TIPO = '1' and D_E_L_E_T_ <> '*' "
-				cQry += "order by ZQ_TIPO, ZQ_CREDITO"
-				
-				tcquery cQry alias "TMP" new
-				
-				DbSelectArea("TMP")
-				
-				cRetorno := Transf(TMP->ZQ_TAXA,"@E 99.99")
-				
-				TMP->(DbCloseArea())
-				
-				return AllTrim(cRetorno)
-		endcase
-	elseif cOpc == "APL" .and. cConta $ cContas
-		do case
-			case Left(cCelula,3) $ "A17"
-				return "CDB"
-			case Left(cCelula,3) $ "C17/E17/G17/I17/K17/M17"
-				cQry := "select ZQ_BANCO, ZQ_AGENCIA, ZQ_CONTA, ZQ_CREDITO, ZQ_VALOR, ZQ_TAXA, ZQ_TIPO "
-				cQry += "from "+RetSqlName("SZQ")+" "
-				cQry += "where ZQ_CONTA = '"+cConta+"' and ZQ_TIPO = '3' and D_E_L_E_T_ <> '*' "
-				cQry += "order by ZQ_TIPO, ZQ_CREDITO"
-				
-				tcquery cQry alias "TMP" new
-				
-				DbSelectArea("TMP")
-				
-				cRetorno := Transf(TMP->ZQ_VALOR,"@E 9,999,999")
-				
-				TMP->(DbCloseArea())
-				
-				return AllTrim(cRetorno)
-			case Left(cCelula,3) $ "D17/F17/H17/J17/L17/N17"
-				cQry := "select ZQ_BANCO, ZQ_AGENCIA, ZQ_CONTA, ZQ_CREDITO, ZQ_VALOR, ZQ_TAXA, ZQ_TIPO "
-				cQry += "from "+RetSqlName("SZQ")+" "
-				cQry += "where ZQ_CONTA = '"+cConta+"' and ZQ_TIPO = '3' and D_E_L_E_T_ <> '*' "
-				cQry += "order by ZQ_TIPO, ZQ_CREDITO"
-				
-				tcquery cQry alias "TMP" new
-				
-				DbSelectArea("TMP")
-				
-				cRetorno := Transf(TMP->ZQ_TAXA,"@E 99.99")
-				
-				TMP->(DbCloseArea())
-				
-				return AllTrim(cRetorno)
-		endcase
-	elseif cOpc == "SAL" .and. cConta $ cContas
-		cQry := "select ZP_BANCO, ZP_AGENCIA, ZP_CONTA, ZP_DTSALDO, ZP_SALATUA, ZP_PENDENT, day(ZP_DTSALDO) as DIA, datename(weekday,ZP_DTSALDO) as SEMANA "
-		cQry += "from "+RetSqlName("SZP")+" "
-		cQry += "where ZP_CONTA = '"+cConta+"' and ZP_DTSALDO = '"+cAno+cMes+cCelula+"' and D_E_L_E_T_ <> '*' "
-		cQry += "order by ZP_DTSALDO"
-		
-		tcquery cQry alias "TMP" new
-		
-		DbSelectArea("TMP")
-		
-		cRetorno := Transf(TMP->ZP_SALATUA,"@E 9,999,999")
-		
-		TMP->(DbCloseArea())
-		
-		return AllTrim(cRetorno)
-	endif*/
-	
 	local oButton1, oButton2
 	local oSay1, oSay2, oSay3
 	local oGroup1, oGroup2
@@ -430,8 +272,31 @@ static function GeraRel(aBancos,cMes,cAno)
 	ZAP
 	
 	for i := 1 to Len(aBancos)
-		if aBancos[i][2] == "033"
+/*		if aBancos[i][2] == "033"
 			aBancos[i][4] := "000000002"
+		endif*/
+		aSubConta := {}
+		
+		if aBancos[i][2] == "033"
+			cSubConta := "000000002"
+			
+			cQry := "select ZP_BANCO, ZP_AGENCIA, ZP_CONTA, ZP_DTSALDO, ZP_SALATUA, ZP_PENDENT, ZP_SALBLJU, day(ZP_DTSALDO) as DIA, datename(weekday,ZP_DTSALDO) as SEMANA "
+			cQry += "from "+RetSqlName("SZP")+" "
+			cQry += "where ZP_BANCO = '"+aBancos[i][2]+"' and ZP_AGENCIA = '"+aBancos[i][3]+"' and ZP_CONTA = '"+cSubConta+"' and month(ZP_DTSALDO) = "+cMes+" and year(ZP_DTSALDO) = "+cAno+" and D_E_L_E_T_ <> '*' "
+			cQry += "order by ZP_DTSALDO"
+			
+			tcquery cQry alias "TMP1" new
+			
+			DbSelectArea("TMP1")
+			TMP1->(DbGoTop())
+			
+			while !TMP1->(Eof())
+				AAdd(aSubConta,{TMP1->DIA,TMP1->ZP_SALATUA - TMP1->ZP_SALBLJU})
+				
+				TMP1->(DbSkip())
+			enddo
+			
+			TMP1->(DbCloseArea())
 		endif
 		
 		cQry := "select ZP_BANCO, ZP_AGENCIA, ZP_CONTA, ZP_DTSALDO, ZP_SALATUA, ZP_PENDENT, ZP_SALBLJU, day(ZP_DTSALDO) as DIA, datename(weekday,ZP_DTSALDO) as SEMANA "
@@ -456,8 +321,10 @@ static function GeraRel(aBancos,cMes,cAno)
 				TRB->SEMANA := _DIASEM[Dow(SToD(TMP->ZP_DTSALDO))]
 			endif
 			
+			nInd := AScan(aSubConta,{|x| x[1] == TMP->DIA})
+			
 //			TRB->&("SALDO"+Str(i,1)) := TMP->(ZP_SALATUA + ZP_PENDENT)
-			TRB->&("SALDO"+Str(i,1)) := TMP->ZP_SALATUA - TMP->ZP_SALBLJU
+			TRB->&("SALDO"+Str(i,1)) := (TMP->ZP_SALATUA - TMP->ZP_SALBLJU) + IIf(!Empty(nInd),aSubConta[nInd][2],0)
 			TRB->&("PENDT"+Str(i,1)) := TMP->ZP_PENDENT
 			nTotDias += TMP->ZP_SALATUA
 			nContDias++
