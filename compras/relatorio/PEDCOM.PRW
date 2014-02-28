@@ -120,7 +120,13 @@ static function Impr()
 			@nLin,014 psay TEMP->C7_UM
 			@nLin,019 psay MemoLine(cProd,_MAXTEXTO,1)
 			@nLin,082 psay Left(TEMP->C7_CLVL,6)
-			@nLin,091 psay Transf(TEMP->C7_PRECO,"@E 999,999.99")
+			
+			if TEMP->C7_PRECO < 0.01
+				@nLin,091 psay Transf(TEMP->C7_PRECO,"@E 999.999999")
+			else
+				@nLin,091 psay Transf(TEMP->C7_PRECO,"@E 999,999.99")
+			endif
+			
 			@nLin,104 psay Transf(TEMP->C7_TOTAL,"@E 9,999,999.99")
 			@nLin,119 psay Transf(TEMP->C7_PICM,"@E 999.9")
 			@nLin,127 psay Transf(TEMP->C7_IPI,"@E 999.9")

@@ -235,12 +235,12 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 			
 			if SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataDispo,.F.))
 //				if (SZP->ZP_SALATUA <> nSaldoAtual .and. !Empty(nSaldoAtual)) .or. (SZP->ZP_PENDENT <> nSaldoPendente .and. !Empty(nSaldoPendente))
-				if SZP->ZP_SALATUA <> nSaldoAtual .and. !Empty(nSaldoAtual)
+//				if SZP->ZP_SALATUA <> nSaldoAtual .and. !Empty(nSaldoAtual)
 					RecLock("SZP",.F.)
 						SZP->ZP_SALATUA := nSaldoAtual
 //						SZP->ZP_PENDENT := nSaldoPendente
 					MsUnLock()
-				endif
+//				endif
 			else
 				if RecLock("SZP",.T.)
 					SZP->ZP_FILIAL := xFilial("SZP")
@@ -255,6 +255,12 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 					MsUnLock()
 				endif
 			endif
+		else
+			if SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataDispo,.F.))
+				RecLock("SZP",.F.)
+					DbDelete()
+				MsUnLock()
+			endif
 		endif
 	enddo
 	
@@ -265,11 +271,11 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 		SZP->(DbGoTop())
 		
 		if SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataAte,.F.))
-			if SZP->ZP_PENDENT <> nSaldoPendente .and. !Empty(nSaldoPendente)
+//			if SZP->ZP_PENDENT <> nSaldoPendente .and. !Empty(nSaldoPendente)
 				RecLock("SZP",.F.)
 					SZP->ZP_PENDENT := nSaldoPendente
 				MsUnLock()
-			endif
+//			endif
 		endif
 	endif
 	
@@ -278,7 +284,7 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	while cDataIni <= cDataAte
 		SZP->(DbGoTop())
 		
-		if !SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataIni,.T.))
+		if SZP->(DbSeek(xFilial("SZP")+cBancoDe+cAgenciaDe+cContaDe+cDataIni,.T.))
 			SZP->(DbSkip(-1))
 			
 			nSaldoA := SZP->ZP_SALATUA

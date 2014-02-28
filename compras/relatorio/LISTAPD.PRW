@@ -10,7 +10,7 @@ user function LISTAPD()
 	private aOrd    := {"Data de Entrega","Pedido de Compra"}
 	private aReturn := {"Especial",1,"Administracao",1,2,1,"",1}
 	private cPerg   := "LISTPD"
-	private Cabec1  := "N.PC   | ENTREGA  |       QUANT | UM | DESCRICAO                                                   |     P.UNIT |        P.TOTAL"
+	private Cabec1  := "N.PC   | ENTREGA  |       QUANT | UM | DESCRICAO                                                   |     P.UNIT |        P.TOTAL | IPI"
 	private Cabec2  := ""
 	private cDesc1  := "PRODUTOS POR PROJETO"
 	private ContFun := 0
@@ -75,7 +75,7 @@ user function LISTAPD()
 return
 
 static function Impr()
-	cQry := "select C7_NUM, C7_DATPRF, C7_QUANT, C7_UM, C7_PRODUTO, C7_DESCRI, C7_PRECO, C7_TOTAL, C7_ITEM, C7_CLVL "
+	cQry := "select C7_NUM, C7_DATPRF, C7_QUANT, C7_UM, C7_PRODUTO, C7_DESCRI, C7_PRECO, C7_TOTAL, C7_ITEM, C7_CLVL, C7_IPI, C7_QUJE, C7_RESIDUO "
 	cQry += "from "+RetSqlName("SC7")+" "
 	cQry += "where (C7_CLVL between '"+cProjIni+"' and '"+cProjFin+"') and D_E_L_E_T_ <> '*' "
 	
@@ -94,10 +94,10 @@ static function Impr()
 	
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 	
-	//N.PC   | ENTREGA  |       QUANT | UM | DESCRICAO                                                   |     P.UNIT |        P.TOTAL
-	//999999   99/99/99   99999999.99   UN   999999 - AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   999,999.99   999,999,999.99
-	//0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
-	//          1         2         3         4         5         6         7         8         9        10        11        12
+//	N.PC   | ENTREGA  |       QUANT | UM | DESCRICAO                                                   |     P.UNIT |        P.TOTAL | IPI
+//	999999   99/99/99   99999999.99   UN   999999 - AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   999,999.99   999,999,999.99    99
+//	01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+//	          1         2         3         4         5         6         7         8         9        10        11        12        13
 	
 	nLin++
 	cProjeto := TEMP->C7_CLVL
@@ -125,22 +125,35 @@ static function Impr()
 		
 		U_SaltaFolha()
 		
+		if TEMP->C7_RESIDUO <> "S"
+			nQuant := TEMP->C7_QUANT
+			nTotal := TEMP->C7_TOTAL
+		else
+			if TEMP->C7_QUJE > 0
+				nQuant := TEMP->C7_QUJE
+				nTotal := TEMP->C7_QUJE * TEMP->C7_PRECO
+			else
+				loop
+			endif
+		endif
+		
 		@nLin,000 psay TEMP->C7_NUM
 		@nLin,009 psay U_ConvData(TEMP->C7_DATPRF,"yy")
-		@nLin,020 psay Transf(TEMP->C7_QUANT,"@E 99999999.99")
+		@nLin,020 psay Transf(nQuant,"@E 99999999.99")
 		@nLin,034 psay TEMP->C7_UM
 		@nLin,039 psay Left(TEMP->C7_PRODUTO,6)+" - "+Left(TEMP->C7_DESCRI,30)
 		@nLin,101 psay Transf(TEMP->C7_PRECO,"@E 999,999.99")
-		@nLin,114 psay Transf(TEMP->C7_TOTAL,"@E 999,999,999.99")
+		@nLin,114 psay Transf(nTotal,"@E 999,999,999.99")
+		@nLin,132 psay Transf(TEMP->C7_IPI,"@R 99")
 		
-		nTotQuant += TEMP->C7_QUANT
-		nTotValor += TEMP->C7_TOTAL
+		nTotQuant += nQuat
+		nTotValor += nTotal
 		
 		if (nInd := AScan(aUnidade,{|x| x[1] = TEMP->C7_UM})) == 0
-			AAdd(aUnidade,{TEMP->C7_UM,TEMP->C7_QUANT,TEMP->C7_TOTAL})
+			AAdd(aUnidade,{TEMP->C7_UM,nQuant,nTotal})
 		else
-			aUnidade[nInd][2] += TEMP->C7_QUANT
-			aUnidade[nInd][3] += TEMP->C7_TOTAL
+			aUnidade[nInd][2] += nQuant
+			aUnidade[nInd][3] += nTotal
 		endif
 		
 		IncProc()

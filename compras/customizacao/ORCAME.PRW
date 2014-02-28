@@ -159,6 +159,7 @@ user function ORCA01(cOpcao)
 	_nPosIncSist := AScan(aHeader,{|x| AllTrim(Upper(x[2])) == "Z4_INCSIST"})
 //	_nPosVlAcert := AScan(aHeader,{|x| AllTrim(Upper(x[2])) == "Z4_VLACERT"})
 //	_nPosVlAceRe := AScan(aHeader,{|x| AllTrim(Upper(x[2])) == "Z4_VLACREA"})
+	_nPosResiduo := AScan(aHeader,{|x| AllTrim(Upper(x[2])) == "Z4_RESIDUO"})
 	_nPosDel := Len(aHeader) + 1
 	
 	if Len(aCols) <= 0
@@ -275,6 +276,7 @@ static function IncluiBanco()
 	            SZ4->Z4_EMPENHA	:= aCols[nIt,_nPosVlEmpen]
 //	            SZ4->Z4_VLACERT	:= aCols[nIt,_nPosVlAcert]
 //	            SZ4->Z4_VLACREA	:= aCols[nIt,_nPosVlAceRe]
+				SZ4->Z4_RESIDUO	:= aCols[nIt,_nPosResiduo]
 	            SZ4->Z4_SALDO	:= aCols[nIt,_nPosSaldo]
 	            SZ4->Z4_HABREV	:= "N"
 	            SZ4->Z4_INCSIST	:= "N"
@@ -326,13 +328,13 @@ static function AlteraBanco()
 			if !DbSeek(xFilial()+M->(Z3_NUM+Z3_PROJETO+Z3_CLIENTE+Z3_LOJA)+aCols[nIt,_nPosItem])
 				RecLock("SZ4",.T.)
 					SZ4->Z4_FILIAL	:= xFilial()
-					SZ4->Z4_ITEM		:= aCols[nIt,_nPosItem]
+					SZ4->Z4_ITEM	:= aCols[nIt,_nPosItem]
 					SZ4->Z4_NUM		:= M->Z3_NUM
 					SZ4->Z4_CLIENTE	:= M->Z3_CLIENTE
-					SZ4->Z4_LOJA		:= M->Z3_LOJA
+					SZ4->Z4_LOJA	:= M->Z3_LOJA
 					SZ4->Z4_GGRUPO	:= aCols[nIt,_nPosGGrupo]
 					SZ4->Z4_DESCGGR	:= aCols[nIt,_nPosDesGGrp]
-					SZ4->Z4_GRUPO		:= aCols[nIt,_nPosGrupo]
+					SZ4->Z4_GRUPO	:= aCols[nIt,_nPosGrupo]
 					SZ4->Z4_DESCGRP	:= aCols[nIt,_nPosDescGrp]
 					SZ4->Z4_PROJETO	:= aCols[nIt,_nPosProjeto]
 					SZ4->Z4_DTORCAM	:= aCols[nIt,_nPosDtOrcam]
@@ -342,7 +344,8 @@ static function AlteraBanco()
 					SZ4->Z4_EMPENHA	:= aCols[nIt,_nPosVlEmpen]
 //					SZ4->Z4_VLACERT	:= aCols[nIt,_nPosVlAcert]
 //					SZ4->Z4_VLACREA	:= aCols[nIt,_nPosVlAceRe]
-					SZ4->Z4_SALDO		:= aCols[nIt,_nPosSaldo]
+					SZ4->Z4_RESIDUO	:= aCols[nIt,_nPosResiduo]
+					SZ4->Z4_SALDO	:= aCols[nIt,_nPosSaldo]
 					SZ4->Z4_HABREV	:= "N"
 					SZ4->Z4_INCSIST	:= "N"
 //					SZ4->Z4_HABREV	:= If(!Empty(aCols[nIt,_nPosVlOrcam]),"N","")
@@ -352,7 +355,7 @@ static function AlteraBanco()
 					SZ4->Z4_PROJETO	:= aCols[nIt,_nPosProjeto]
 	            	SZ4->Z4_GGRUPO	:= aCols[nIt,_nPosGGrupo]
 	            	SZ4->Z4_DESCGGR	:= aCols[nIt,_nPosDesGGrp]
-					SZ4->Z4_GRUPO		:= aCols[nIt,_nPosGrupo]
+					SZ4->Z4_GRUPO	:= aCols[nIt,_nPosGrupo]
 					SZ4->Z4_DESCGRP	:= aCols[nIt,_nPosDescGrp]
 					SZ4->Z4_DTORCAM	:= aCols[nIt,_nPosDtOrcam]
 					SZ4->Z4_VLORCAM	:= aCols[nIt,_nPosVlOrcam]
@@ -361,7 +364,8 @@ static function AlteraBanco()
 					SZ4->Z4_EMPENHA	:= aCols[nIt,_nPosVlEmpen]
 //					SZ4->Z4_VLACERT	:= aCols[nIt,_nPosVlAcert]
 //					SZ4->Z4_VLACREA	:= aCols[nIt,_nPosVlAceRe]
-					SZ4->Z4_SALDO		:= aCols[nIt,_nPosSaldo]
+					SZ4->Z4_RESIDUO	:= aCols[nIt,_nPosResiduo]
+					SZ4->Z4_SALDO	:= aCols[nIt,_nPosSaldo]
 					SZ4->Z4_HABREV	:= "N"
 					SZ4->Z4_INCSIST	:= IIf(Empty(aCols[nIt,_nPosIncSist]),"N",aCols[nIt,_nPosIncSist])
 				MsUnLock()
@@ -570,7 +574,7 @@ return
 
 static function Fechar()
 	for i := 1 to nLin
-		cUpd := "update "+RetSqlName("SZ4")+" set Z4_VLACERT = "+AllTrim(Str(aCols[i][nPosVlAcert]))+", Z4_VLACREA = "+AllTrim(Str(aCols[i][nPosVlAcrea]))+", Z4_SALDO = Z4_VLORCAM + Z4_VLREVIS - Z4_EMPENHA - Z4_VLACERT "
+		cUpd := "update "+RetSqlName("SZ4")+" set Z4_VLACERT = "+AllTrim(Str(aCols[i][nPosVlAcert]))+", Z4_VLACREA = "+AllTrim(Str(aCols[i][nPosVlAcrea]))+", Z4_SALDO = Z4_VLORCAM + Z4_VLREVIS - Z4_EMPENHA - Z4_VLACERT - Z4_RESIDUO "
 		cUpd += "where Z4_NUM = '"+cNum+"' and Z4_PROJETO = '"+cPro+"' and Z4_CLIENTE = '"+cCli+"' and Z4_LOJA = '"+cLoj+"' and Z4_ITEM = '"+aCols[i][nPosItem]+"'"
 		
 		nRet := TCSqlExec(cUpd)
@@ -672,7 +676,9 @@ user function ATUAORCA()
 				else
 					nInd := AScan(aGGrupo,{|x| x[1] = cCodGGrupo})
 					nInd1 := AScan(aGrupo,{|x| x[1] = cCodGrupo})
+					
 //					Alert("|"+aGGrupo[nInd][1]+"| = |"+cCodGrupo+"|")
+					
 					if nInd1 > 0
 						cEmpenha := AllTrim(Str(aGGrupo[nInd][2]))
 						cRealiza := AllTrim(Str(aGGrupo[nInd][3]))
@@ -688,7 +694,7 @@ user function ATUAORCA()
 				
 //				if nInd > 0
 					cUpd := "update "+RetSqlName("SZ4")+" "
-					cUpd += "set Z4_EMPENHA = "+cEmpenha+", Z4_VLREALI = "+cRealiza+", Z4_SALDO = (Z4_VLORCAM + Z4_VLREVIS - "+cEmpenha+") "
+					cUpd += "set Z4_EMPENHA = "+cEmpenha+", Z4_VLREALI = "+cRealiza+", Z4_SALDO = (Z4_VLORCAM + Z4_VLREVIS - "+cEmpenha+" - Z4_RESIDUO) "
 					cUpd += "where Z4_PROJETO = '"+cProjeto+"' and "+cCondicao+" and D_E_L_E_T_ <> '*'"
 					
 					nRet := TCSqlExec(cUpd)
@@ -717,7 +723,8 @@ user function ATUAORCA()
 						SZ4->Z4_DESCGGR := IIf(SX5->(DbSeek(xFilial("SX5")+"GG"+aGGrupo[i][1],.F.)),SX5->X5_DESCRI,"")
 						SZ4->Z4_INCSIST := "S"
 						SZ4->Z4_HABREV := "N"
-						SZ4->Z4_PROJETO := aSZ3[5] 
+						SZ4->Z4_PROJETO := aSZ3[5]
+						SZ4->Z4_RESIDUO	:= 0 
 						
 						MsUnLock()
 					endif

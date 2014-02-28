@@ -82,7 +82,7 @@ return
 static function Impr()
 	private aFornecedor := Array(5)
 	
-	cQry := "select C8_NUM, C8_FORNECE, C8_LOJA, C8_CONTATO, C8_PRECO, C8_QUANT, C8_TOTAL, C8_ALIIPI, C8_PICM, C8_UM, C8_PRODUTO, C1_DESCRI, C1_OBS, C1_USER, C1_SOLICIT, B5_CEME, B5_CEME1, B5_CEME2, B5_CEME3, B5_CEME4, B5_CEME5, B5_CEME6 "
+	cQry := "select C8_NUM, C8_FORNECE, C8_LOJA, C8_CONTATO, C8_PRECO, C8_QUANT, C8_TOTAL, C8_ALIIPI, C8_PICM, C8_UM, C8_PRODUTO, C1_DESCRI, C1_OBS, C8_OBS, C1_USER, C1_SOLICIT, B5_CEME, B5_CEME1, B5_CEME2, B5_CEME3, B5_CEME4, B5_CEME5, B5_CEME6 "
 	cQry += "from "+RetSqlName("SC8")+" SC8 inner join "+RetSqlName("SC1")+" SC1 on (C8_NUMSC = C1_NUM and C8_ITEMSC = C1_ITEM) "
 	cQry += "	inner join "+RetSqlName("SB1")+" SB1 on (B1_COD = C1_PRODUTO and B1_LOCPAD = C1_LOCAL) "
 	cQry += "	inner join "+RetSqlName("SB5")+" SB5 on (B5_COD = C8_PRODUTO) "
@@ -166,7 +166,7 @@ static function Impr()
 //			0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
 //			          1         2         3         4         5         6         7         8         9        10        11        12        13
 			
-			cDescricao := AllTrim(TEMP->C8_PRODUTO)+" - "+AllTrim(B5_CEME)+" "+AllTrim(B5_CEME1)+" "+AllTrim(B5_CEME2)+" "+AllTrim(B5_CEME3)+" "+	AllTrim(B5_CEME4)+" "+AllTrim(B5_CEME5)+" "+AllTrim(B5_CEME6)+Chr(13)+Chr(10)+"OBS.: "+AllTrim(TEMP->C1_OBS)
+			cDescricao := AllTrim(TEMP->C8_PRODUTO)+" - "+AllTrim(B5_CEME)+" "+AllTrim(B5_CEME1)+" "+AllTrim(B5_CEME2)+" "+AllTrim(B5_CEME3)+" "+	AllTrim(B5_CEME4)+" "+AllTrim(B5_CEME5)+" "+AllTrim(B5_CEME6)+Chr(13)+Chr(10)+"OBS.: "+AllTrim(TEMP->C8_OBS)
 			
 			nLin++
 			lVazio := IIf(Empty(TEMP->C8_PRECO),.T.,.F.)

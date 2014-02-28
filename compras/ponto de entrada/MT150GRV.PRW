@@ -6,5 +6,7 @@
 #include "rwmake.ch"
 
 user function MT150GRV()
-	U_FRETE("COTACAO",CA150NUM,CA150FORN,CA150LOJ,"SC8")
+	if SC8->C8_ITEM == "0001"
+		U_FRETE("COTACAO",CA150NUM,CA150FORN,CA150LOJ,"SC8")
+	endif
 return

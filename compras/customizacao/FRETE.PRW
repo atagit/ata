@@ -8,9 +8,16 @@
 user function FRETE(cTitulo,cCotacao,cFornece,cLojaForn,cTabela)
 	local nLinini := 10
 	
-	private cTransp := space(6)
+	private cTransp := Space(6)
 	private nVlFrete := 0
 	private oDlg
+	
+	DbSelectArea("SZ1")
+	
+	if SZ1->(DbSeek(xFilial("SZ1")+cCotacao+cFornece+cLojaForn,.F.))
+		cTransp := SZ1->Z1_TRANSP
+		nVlFrete := SZ1->Z1_VLFRETE
+	endif
 	
 	@010,010 to 160,260 dialog oDlg title "VALOR DO FRETE"
 		@005,020 to 020,110
@@ -25,18 +32,20 @@ user function FRETE(cTitulo,cCotacao,cFornece,cLojaForn,cTabela)
 		@nLinini-2,040 get nVlFrete picture "@E 999,999,999.99" size 40,07
 		
 		nLinini += 17
-		@nLinini,061 bmpbutton type 01 action Gravar(cCotacao,cFornece,cLojaForn,cTransp,nVlFrete,cTabela)
+		
+		@nLinini,031 bmpbutton type 01 action Gravar(cCotacao,cFornece,cLojaForn,cTransp,nVlFrete,cTabela)
+		@nLinini,061 bmpbutton type 03 action Excluir(cCotacao,cFornece,cLojaForn,cTransp,nVlFrete,cTabela)
 		@nLinini,091 bmpbutton type 02 action Close(oDlg)
 	activate dialog oDlg center
 return
 
 static function Gravar(cCotacao,cFornece,cLojaForn,cTransp,nVlFrete,cTabela)
-	dbselectarea("SZ1")
+	DbSelectArea("SZ1")
 	
-	if !empty(cTransp)
-		if !empty(nVlFrete)
-			if SZ1->(dbseek(xFilial("SZ1")+cCotacao+cFornece+cLojaForn,.F.))
-				if reclock("SZ1",.F.)
+	if !Empty(cTransp)
+		if !Empty(nVlFrete)
+			if SZ1->(DbSeek(xFilial("SZ1")+cCotacao+cFornece+cLojaForn,.F.))
+				if RecLock("SZ1",.F.)
 					replace SZ1->Z1_FILIAL with xFilial("SZ1"),;
 							SZ1->Z1_COTACAO with cCotacao,;
 							SZ1->Z1_FORNECE with cFornece,;
@@ -45,11 +54,11 @@ static function Gravar(cCotacao,cFornece,cLojaForn,cTransp,nVlFrete,cTabela)
 							SZ1->Z1_VLFRETE with nVlFrete,;
 							SZ1->Z1_TABELA with cTabela
 							
-					SZ1->(dbcommit())
-					SZ1->(msunlock())
+					SZ1->(DbCommit())
+					SZ1->(MsUnLock())
 				endif
 			else
-				SZ1->(dbappend())
+				SZ1->(DbAppend())
 				
 				replace SZ1->Z1_FILIAL with xFilial("SZ1"),;
 						SZ1->Z1_COTACAO with cCotacao,;
@@ -58,14 +67,29 @@ static function Gravar(cCotacao,cFornece,cLojaForn,cTransp,nVlFrete,cTabela)
 						SZ1->Z1_TRANSP with cTransp,;
 						SZ1->Z1_VLFRETE with nVlFrete,;
 						SZ1->Z1_TABELA with cTabela
+						
+				SZ1->(DbCommit())
 			endif
 		else
-			msgbox("Valor total do frete nao pode ser zerado!","Atencao","ALERT")
+			MsgBox("O valor total do frete nao pode ser zerado!","Atencao","ALERT")
 		endif
 	else
-		msgbox("Transportadora nao pode ser vazio!","Atencao","ALERT")
+		MsgBox("A transportadora nao pode ser vazio!","Atencao","ALERT")
 	endif
 	
-	SZ1->(dbclosearea())
-	close(oDlg)
+	SZ1->(DbCloseArea())
+	Close(oDlg)
+return
+
+static function Excluir(cCotacao,cFornece,cLojaForn,cTransp,nVlFrete,cTabela)
+	DbSelectArea("SZ1")
+	
+	if SZ1->(DbSeek(xFilial("SZ1")+cCotacao+cFornece+cLojaForn,.F.))
+		if RecLock("SZ1",.F.)
+			SZ1->(DbDelete())
+			SZ1->(MsUnLock())
+		endif
+	endif
+	
+	Close(oDlg)
 return

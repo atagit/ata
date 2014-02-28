@@ -151,7 +151,7 @@ static function Vendido()
 return
 
 static function Comprado()
-	cQry := "select C7_EMISSAO, sum(C7_TOTAL + C7_VALIPI) as C7_TOTAL "
+	cQry := "select C7_EMISSAO, sum(C7_TOTAL + C7_VALIPI - C7_VLDESC) as C7_TOTAL "
 	cQry += "from "+RetSqlName("SC7")+" "
 	cQry += "where (C7_EMISSAO between '"+cDataIni+"' and '"+cDataFin+"') and D_E_L_E_T_ <> '*' "
 	cQry += "group by C7_EMISSAO"

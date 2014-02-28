@@ -329,10 +329,15 @@ return
 // Impressao de duplicatas em aberto ou vencidas                \\
 //**************************************************************\\
 static function Impr2()
+	if Select("TEMP") <> 0
+		TEMP->(DbCloseArea())
+	endif
+	
 	if nContas == 1
-		cQry := "select E2_VENCREA as VENC, E2_NUM as NUM, E2_PREFIXO as PREF, E2_PARCELA as PARC, E2_EMISSAO as EMISSAO, E2_TIPO as TIPO, E2_CR as CR, E2_BCOPAG as BCOPAG, E2_VALOR as VALOR, E2_BANCO as BCOCOB, E2_FORNECE as FORCLI, E2_LOJA as LOJA "
+		cQry := "select E2_VENCREA as VENC, E2_NUM as NUM, E2_PREFIXO as PREF, E2_PARCELA as PARC, E2_EMISSAO as EMISSAO, E2_TIPO as TIPO, E2_CR as CR, E2_BCOPAG as BCOPAG, E2_SALDO as VALOR, E2_BANCO as BCOCOB, E2_FORNECE as FORCLI, E2_LOJA as LOJA "
 		cQry += "from "+RetSqlName("SE2")+" "
-		cQry += "where "+IIf(nTipo == 1,"E2_FORNECE = '"+cForIni+"' and E2_LOJA = '"+cLojIni+"' and ","")+"E2_BAIXA = ''"+IIf(nTipoDupli == 2," and E2_VENCREA <= '"+DToS(dDataBase)+"'","")+" and E2_VALOR > 0 and D_E_L_E_T_ <> '*' "
+//		cQry += "where "+IIf(nTipo == 1,"E2_FORNECE = '"+cForIni+"' and E2_LOJA = '"+cLojIni+"' and ","")+"E2_BAIXA = ''"+IIf(nTipoDupli == 2," and E2_VENCREA <= '"+DToS(dDataBase)+"'","")+" and E2_VALOR > 0 and D_E_L_E_T_ <> '*' "
+		cQry += "where "+IIf(nTipo == 1,"E2_FORNECE = '"+cForIni+"' and E2_LOJA = '"+cLojIni+"' and ","")+"E2_BAIXA = '' and (E2_VENCREA between '"+cVenIni+"' and '"+cVenFin+"') and E2_VALOR > 0 and D_E_L_E_T_ <> '*' "
 		cQry += "order by E2_VENCREA, E2_NUM, E2_PREFIXO, E2_PARCELA"
 		
 		if nTipoDupli == 1
@@ -341,9 +346,9 @@ static function Impr2()
 			cDesc1 := "DUPLICATAS VENCIDAS - PAGAR"
 		endif
 	else
-		cQry := "select E1_VENCREA as VENC, E1_NUM as NUM, E1_PREFIXO as PREF, E1_PARCELA as PARC, E1_EMISSAO as EMISSAO, E1_TIPO as TIPO, '' as CR, '' as BCOPAG, E1_VALOR as VALOR, '' as BCOCOB, E1_CLIENTE as FORCLI, E1_LOJA as LOJA "
+		cQry := "select E1_VENCREA as VENC, E1_NUM as NUM, E1_PREFIXO as PREF, E1_PARCELA as PARC, E1_EMISSAO as EMISSAO, E1_TIPO as TIPO, '' as CR, '' as BCOPAG, E1_SALDO as VALOR, '' as BCOCOB, E1_CLIENTE as FORCLI, E1_LOJA as LOJA "
 		cQry += "from "+RetSqlName("SE1")+" "
-		cQry += "where "+IIf(nTipo == 1,"E1_CLIENTE = '"+cCliIni+"' and E1_LOJA = '"+cLojIni+"' and ","")+"E1_BAIXA = ''"+IIf(nTipoDupli == 2," and E1_VENCREA <= '"+DToS(dDataBase)+"'","")+" and E1_VALOR > 0 and D_E_L_E_T_ <> '*' "
+		cQry += "where "+IIf(nTipo == 1,"E1_CLIENTE = '"+cCliIni+"' and E1_LOJA = '"+cLojIni+"' and ","")+"(E1_VENCREA between '"+cVenIni+"' and '"+cVenFin+"') and E1_SALDO > 0 and D_E_L_E_T_ <> '*' "
 		cQry += "order by E1_VENCREA, E1_NUM, E1_PREFIXO, E1_PARCELA"
 		
 		if nTipoDupli == 1
@@ -359,56 +364,146 @@ static function Impr2()
 	ProcRegua(TEMP->(RecCount()))
 	TEMP->(DbGoTop())
 	
+	if Empty(TEMP->(FORCLI+LOJA))
+		return
+	endif
+	
 	if nTipo == 1
-		if nContas == 1
-			Cabec1 := "FORNECEDOR: "+IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(FORCLI+LOJA),.F.)),AllTrim(SA2->A2_NREDUZ),"")+" ("+TEMP->FORCLI+"-"+TEMP->LOJA+")"
-		else
-			Cabec1 := "CLIENTE: "+IIf(SA1->(DbSeek(xFilial("SA1")+TEMP->(FORCLI+LOJA),.F.)),AllTrim(SA1->A1_NREDUZ),"")+" ("+TEMP->FORCLI+"-"+TEMP->LOJA+")"
-		endif
-		
-		Cabec2 := "VENCTO   NOTA FISCAL   PARC EMISSAO  TIP PROT.   BCO           VALOR ATRASO"
+		Cabec1 := PadC("Periodo de "+U_ConvData(cVenIni,"yy")+" a "+U_ConvData(cVenFin),132)
+		Cabec2 := ""
 		
 		U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 		
 		nLin++
-		nTotal := 0 ; nCont := 0
+		
+//		FORNECEDOR: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (999999-99)                    TIPO FORNECIMENTO: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  PP: 99
+//		CONTATO...: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                             TEL.: 999 99999-9999    CEL.: 999 99999-9999
+//		E-MAIL....: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+//		OBS.......: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+//		0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
+//		          1         2         3         4         5         6         7         8         9        10        11        12        13
+		
+		if nContas == 1
+			if SA2->(DbSeek(xFilial("SA2")+TEMP->(FORCLI+LOJA),.F.))
+				@nLin,000 psay "FORNECEDOR: "+AllTrim(SA2->A2_NREDUZ)+" ("+TEMP->FORCLI+"-"+TEMP->LOJA+")"
+				@nLin,074 psay "TIPO FORNECIMENTO: "+IIf(SX5->(DbSeek(xFilial("SX5")+"Z6"+SA2->A2_TIPFORN,.F.)),Left(SX5->X5_DESCRI,30)," ")
+				@nLin,125 psay "PP:"+SA2->A2_PRIOPAG
+				@++nLin,000 psay "CONTATO...: "+AllTrim(SA2->A2_NOMRESP)
+				@nLin,087 psay "TEL.: "+AllTrim(SA2->A2_DDD1)+" "+AllTrim(SA2->A2_FONE1)
+				@nLin,111 psay "CEL.: "+IIf(!Empty(SA2->A2_FONE2),AllTrim(SA2->A2_DDD2)+" "+AllTrim(SA2->A2_FONE2),"")
+				
+//				if !Empty(SA2->A2_EMAIL1)
+					@++nLin,000 psay "E-MAIL....: "+AllTrim(SA2->A2_EMAIL1)
+//				endif
+				
+				cObs := AllTrim(SA2->A2_OBSFIN)
+				
+//				if !Empty(cObs)
+					@++nLin,000 psay "OBS.......: "+MemoLine(cObs,120,1)
+					
+					for k := 2 to MlCount(cObs,120)
+						@++nLin,012 psay MemoLine(cObs,120,k)
+					next
+//				endif
+			endif
+		else
+			if SA1->(DbSeek(xFilial("SA1")+TEMP->(FORCLI+LOJA),.F.))
+				@nLin,000 psay "CLIENTE...: "+AllTrim(SA1->A1_NREDUZ)+" ("+TEMP->FORCLI+"-"+TEMP->LOJA+")"
+				@++nLin,000 psay "CONTATO...: "+AllTrim(SA1->A1_NOMRESP)
+				@nLin,087 psay "TEL.: "+AllTrim(SA1->A1_DDD1)+" "+AllTrim(SA1->A1_FONE1)
+				@nLin,111 psay "CEL.: "+IIf(!Empty(SA1->A1_FONE2),AllTrim(SA1->A1_DDD2)+" "+AllTrim(SA1->A1_FONE2),"")
+				
+//				if !Empty(SA1->A1_EMAIL)
+					@++nLin,000 psay "E-MAIL....: "+AllTrim(SA1->A1_EMAIL1)
+//				endif
+				
+				cObs := AllTrim(SA1->A1_OBSFIN)
+				
+//				if !Empty(cObs)
+					@++nLin,000 psay "OBS.......: "+MemoLine(cObs,120,1)
+					
+					for k := 2 to MlCount(cObs,120)
+						@++nLin,012 psay MemoLine(cObs,120,k)
+					next
+//				endif
+			endif
+		endif
+		
+		nLin++
+		
+		@nLin,000 psay Replicate("=",132)
+		@++nLin,000 psay "VENCIMENTO     NOTA FISCAL    PARC   EMISSAO    TIPO   PROTOCOLO   BANCO                      VALOR   ATRASO"
+		@++nLin,000 psay Replicate("-",132)
+		
+		nLin++
+		nTotal := 0 ; nCont := 0 ; nTotVenc := 0 ; nTotAVen := 0
 		
 		while !TEMP->(Eof())
 //			VENCTO   NOTA FISCAL   PARC EMISSAO  TIP PROT.   BCO           VALOR ATRASO
-//			99/99/99 999999999-999 999  99/99/99 AAA 9999999 AAAA 999,999,999.99 9999
+//			VENCIMENTO     NOTA FISCAL    PARC   EMISSAO    TIPO   PROTOCOLO   BANCO                      VALOR   ATRASO
+//			99/99/99       999999999-999  999    99/99/99   AAA    9999999     AAAA              999,999,999.99   9999
 //			01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //			          1         2         3         4         5         6         7         8         9        10        11        12        13
+			nDias := dDataBase - SToD(TEMP->VENC)
+			nValor := IIf(TEMP->TIPO $ "PA /RA ",0,TEMP->VALOR)
 			
 			@nLin,000 psay U_ConvData(TEMP->VENC,"yy")
-			@nLin,009 psay TEMP->NUM+"-"+TEMP->PREF
-			@nLin,023 psay TEMP->PARC
-			@nLin,028 psay U_ConvData(TEMP->EMISSAO,"yy")
-			@nLin,037 psay TEMP->TIPO
-			@nLin,041 psay Left(TEMP->CR,7)
-			@nLin,049 psay IIf(SA6->(DbSeek(xFilial("SA6")+Left(TEMP->BCOCOB,3),.F.)),SA6->A6_SIGLA," ")
-			@nLin,054 psay Transf(TEMP->VALOR,"@E 999,999,999.99")
-			@nLin,069 psay Transf(dDataBase - SToD(TEMP->VENC),"@R 9999")
+			@nLin,015 psay TEMP->NUM+"-"+TEMP->PREF
+			@nLin,030 psay TEMP->PARC
+			@nLin,037 psay U_ConvData(TEMP->EMISSAO,"yy")
+			@nLin,048 psay TEMP->TIPO
+			@nLin,055 psay Left(TEMP->CR,7)
+			@nLin,067 psay IIf(SA6->(DbSeek(xFilial("SA6")+Left(TEMP->BCOCOB,3),.F.)),SA6->A6_SIGLA," ")
+			@nLin,085 psay Transf(IIf(TEMP->TIPO $ "PA /RA ",TEMP->VALOR * -1,TEMP->VALOR),"@E 999,999,999.99")
+			@nLin,102 psay Transf(nDias,"@R 9999")
 			
 			nLin++
 			nCont++
-			nTotal += TEMP->VALOR
+			nTotal += nValor
 			
-			U_SaltaFolha()
+			if nDias > 0
+				nTotVenc += nValor
+			else
+				nTotAVen += nValor
+			endif
+			
+			if U_SaltaFolha()
+				Cabec2 := "VENCIMENTO     NOTA FISCAL    PARC   EMISSAO    TIPO   PROTOCOLO   BANCO                      VALOR   ATRASO"
+			endif
+			
 			IncProc()
 			TEMP->(DbSkip())
 		enddo
 		
+		nLin++
+		
+		if U_SaltaFolha()
+			Cabec2 := "VENCIMENTO     NOTA FISCAL    PARC   EMISSAO    TIPO   PROTOCOLO   BANCO                      VALOR   ATRASO"
+		endif
+		
 		@nLin,000 psay "REGISTROS --> "+AllTrim(Transf(nCont,"@R 999999"))
-		@nLin,041 psay "T O T A L"
-		@nLin,054 psay Transf(nTotal,"@E 999,999,999.99")
+		@nLin,055 psay "T O T A L"
+		@nLin,085 psay Transf(nTotal,"@E 999,999,999.99")
+		@++nLin,000 psay Replicate("-",132)
+		
+		nLin++
+		
+		U_SaltaFolha()
+		
+		@nLin,055 psay "VENCIDAS: "
+		@nLin,085 psay Transf(nTotVenc,"@E 999,999,999.99")
+		@++nLin,055 psay "A VENCER: "
+		@nLin,085 psay Transf(nTotAVen,"@E 999,999,999.99")
+		@++nLin,055 psay "TOTAL...: "
+		@nLin,085 psay Transf(nTotVenc + nTotAVen,"@E 999,999,999.99")
 		
 		U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 	else
 //		while !TEMP->(Eof())
 			if nContas == 1
-				Cabec1 := "VENCTO   FORNECEDOR                     NOTA FISCAL   PARC EMISSAO  TIP PROT.   BCO              VALOR ATRASO"
+				Cabec1 := "VENCIMENTO   FORNECEDOR                          NOTA FISCAL    PARC   EMISSAO   TIPO  PROTOCOLO  BCO             VALOR   ATRASO"
 			else
-				Cabec1 := "VENCTO   CLIENTE                        NOTA FISCAL   PARC EMISSAO  TIP PROT.   BCO              VALOR ATRASO"
+				Cabec1 := "VENCIMENTO   CLIENTE                             NOTA FISCAL    PARC   EMISSAO   TIPO  PROTOCOLO  BCO             VALOR   ATRASO"
 			endif
 			
 			Cabec2 := ""
@@ -417,49 +512,71 @@ static function Impr2()
 			
 			nLin++
 //			cFornCli := TEMP->(FORCLI+LOJA)
-			nTotal := 0 ; nCont := 0
+			nTotal := 0 ; nCont := 0 ; nTotVenc := 0 ; nTotAVen := 0
 			
 //			U_SaltaFolha()
 			
 //			while !TEMP->(Eof()) .and. TEMP->(FORCLI+LOJA) == cFornCli
 			while !TEMP->(Eof())
-//				VENCTO   FORNECEDOR                     NOTA FISCAL   PARC EMISSAO  TIP PROT.   BCO              VALOR ATRASO
-//				99/99/99 999999 AAAAAAAAAAAAAAAAAAAA    999999999-999 999  99/99/99 AAA 9999999 AAAA 99,999,999,999.99 9999
+//				VENCIMENTO   FORNECEDOR                          NOTA FISCAL    PARC   EMISSAO   TIPO  PROTOCOLO  BCO             VALOR   ATRASO
+//				99/99/99     AAAAAAAAAAAAAAAAAAAA (999999-99)    999999999-999  999    99/99/99  AAA   9999999    AAAA   999,999,999.99   9999
 //				01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //				          1         2         3         4         5         6         7         8         9        10        11        12        13
 				
+				nDias := dDataBase - SToD(TEMP->VENC)
+				
 				@nLin,000 psay U_ConvData(TEMP->VENC,"yy")
-				@nLin,009 psay TEMP->FORCLI
 				
 				if nContas == 1
 //					@nLin,010 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(FORCLI+LOJA),.F.)),SA2->A2_NREDUZ," ")
-					@nLin,016 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(FORCLI+LOJA),.F.)),SA2->A2_NREDUZ," ")
+					@nLin,013 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(FORCLI+LOJA),.F.)),AllTrim(SA2->A2_NREDUZ)," ")+" ("+TEMP->FORCLI+")"
 				else
 //					@nLin,010 psay IIf(SA1->(DbSeek(xFilial("SA1")+TEMP->(FORCLI+LOJA),.F.)),SA1->A1_NREDUZ," ")
-					@nLin,016 psay IIf(SA1->(DbSeek(xFilial("SA1")+TEMP->(FORCLI+LOJA),.F.)),SA1->A1_NREDUZ," ")
+					@nLin,013 psay IIf(SA1->(DbSeek(xFilial("SA1")+TEMP->(FORCLI+LOJA),.F.)),AllTrim(SA1->A1_NREDUZ)," ")+" ("+TEMP->FORCLI+")"
 				endif
 				
-				@nLin,040 psay TEMP->NUM+"-"+TEMP->PREF
-				@nLin,054 psay TEMP->PARC
-				@nLin,059 psay U_ConvData(TEMP->EMISSAO,"yy")
-				@nLin,068 psay TEMP->TIPO
-				@nLin,072 psay Left(TEMP->CR,7)
-				@nLin,080 psay IIf(SA6->(DbSeek(xFilial("SA6")+Left(TEMP->BCOCOB,3),.F.)),SA6->A6_SIGLA," ")
-				@nLin,085 psay Transf(TEMP->VALOR,"@E 99,999,999,999.99")
-				@nLin,103 psay Transf(dDataBase - SToD(TEMP->VENC),"@R 9999")
+				@nLin,049 psay TEMP->NUM+"-"+TEMP->PREF
+				@nLin,064 psay TEMP->PARC
+				@nLin,071 psay U_ConvData(TEMP->EMISSAO,"yy")
+				@nLin,081 psay TEMP->TIPO
+				@nLin,087 psay Left(TEMP->CR,7)
+				@nLin,098 psay IIf(SA6->(DbSeek(xFilial("SA6")+Left(TEMP->BCOCOB,3),.F.)),SA6->A6_SIGLA," ")
+				@nLin,105 psay Transf(TEMP->VALOR,"@E 999,999,999.99")
+				@nLin,122 psay Transf(nDias,"@R 9999")
 				
 				nLin++
 				nCont++
 				nTotal += TEMP->VALOR
+				
+				if nDias > 0
+					nTotVenc += TEMP->VALOR
+				else
+					nTotAVen += TEMP->VALOR
+				endif
 				
 				U_SaltaFolha()
 				IncProc()
 				TEMP->(DbSkip())
 			enddo
 			
+			nLin++
+			
+			U_SaltaFolha()
+			
 			@nLin,000 psay "REGISTROS --> "+AllTrim(Transf(nCont,"@R 999999"))
-			@nLin,072 psay "T O T A L"
-			@nLin,085 psay Transf(nTotal,"@E 99,999,999,999.99")
+			@nLin,087 psay "T O T A L"
+			@nLin,105 psay Transf(nTotal,"@E 999,999,999.99")
+			
+			nLin += 2
+			
+			U_SaltaFolha()
+			
+			@nLin,087 psay "VENCIDAS: "
+			@nLin,105 psay Transf(nTotVenc,"@E 999,999,999.99")
+			@++nLin,087 psay "A VENCER: "
+			@nLin,105 psay Transf(nTotAVen,"@E 999,999,999.99")
+			@++nLin,087 psay "TOTAL...: "
+			@nLin,105 psay Transf(nTotVenc + nTotAVen,"@E 999,999,999.99")
 			
 			U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 //		enddo

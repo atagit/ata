@@ -101,7 +101,7 @@ static function Impr()
 	TEMP->(DbGoTop())
 	
 	Cabec1 := PadC("Referencia: "+U_ConvData(cDtIni)+" a "+U_ConvData(cDtFin),132)
-	Cabec2 := "NOTA FISCAL   | PARC | EMISSAO  | VENCTO   | BAIXA    | PROT.   | DOCUMEN  | BCO  |          VALOR |      JUROS |    DESCONT | ATRSO"
+//	Cabec2 := "NOTA FISCAL   | PARC | EMISSAO  | VENCTO   | BAIXA    | PROT.   | DOCUMEN  | BCO  |          VALOR |      JUROS |    DESCONT | ATRSO"
 	
 //	NOTA FISCAL   | PARC | EMISSAO  | VENCTO   | BAIXA    | PROT.   | DOCUMEN  | BCO  |          VALOR |      JUROS |    DESCONT | ATRSO
 //	999999999-999   999    99/99/99   99/99/99   99/99/99   9999999   AA999999   AAAA   999,999,999.99   999,999.99   999,999.99   9999
@@ -109,22 +109,47 @@ static function Impr()
 //	          1         2         3         4         5         6         7         8         9        10        11        12        13
 	
 	while !TEMP->(Eof())
+		Cabec2 := ""
+		
 		U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 		
 		nLin++
 		
 //		FORNECEDOR: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA (999999-99)                    TIPO FORNECIMENTO: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  PP: 99
-//		CONTATO...: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                                 TEL.: 99 99999-9999  CEL.: 99 99999-9999
+//		CONTATO...: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                             TEL.: 999 99999-9999    CEL.: 999 99999-9999
 //		E-MAIL....: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-//		OBS.......: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+//		OBS.......: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 //		0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
 //		          1         2         3         4         5         6         7         8         9        10        11        12        13
 		
-		@nLin,000 psay "FORNECEDOR: "+IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(E2_FORNECE+E2_LOJA),.F.)),AllTrim(SA2->A2_NREDUZ),"")+" ("+TEMP->E2_FORNECE+"-"+TEMP->E2_LOJA+")"
+		if SA2->(DbSeek(xFilial("SA2")+TEMP->(E2_FORNECE+E2_LOJA),.F.))
+			@nLin,000 psay "FORNECEDOR: "+AllTrim(SA2->A2_NREDUZ)+" ("+TEMP->E2_FORNECE+"-"+TEMP->E2_LOJA+")"
+			@nLin,074 psay "TIPO FORNECIMENTO: "+SA2->A2_TIPFORN
+			@nLin,125 psay "PP:"+SA2->A2_PRIOPAG
+			@++nLin,000 psay "CONTATO...: "+AllTrim(SA2->A2_CONTATO)
+			@nLin,087 psay "TEL.: "+AllTrim(SA2->A2_DDD)+" "+AllTrim(SA2->A2_TEL)
+			@nLin,111 psay "CEL.: "+IIf(!Empty(SA2->A2_CEL),AllTrim(SA2->A2_DDD)+" "+AllTrim(SA2->A2_CEL),"")
+			
+//			if !Empty(SA2->A2_EMAIL)
+				@++nLin,000 psay "E-MAIL....: "+AllTrim(SA2->A2_EMAIL)
+//			endif
+			
+			cObs := AllTrim(SA2->A2_OBSERVA)
+			
+//			if !Empty(cObs)
+				@++nLin,000 psay "OBS.......: "+MemoLine(cObs,120,1)
+				
+				for k := 2 to MlCount(cObs,120)
+					@++nLin,012 psay MemoLine(cObs,120,k)
+				next
+//			endif
+		endif
 		
 		nLin++
 		
-		@nLin,000 psay Replicate("-",132)
+		@nLin,000 psay Replicate("=",132)
+		@++nLin,000 psay "NOTA FISCAL   | PARC | EMISSAO  | VENCTO   | BAIXA    | PROT.   | DOCUMEN  | BCO  |          VALOR |      JUROS |    DESCONT | ATRSO"
+		@++nLin,000 psay Replicate("-",132)
 		
 		nLin++
 		nCont := 0 ; nTotValor := 0 ; nTotMulta := 0 ; nTotDesco := 0
@@ -190,7 +215,14 @@ static function Impr()
 				nContPago++
 			endif
 			
-			U_SaltaFolha()
+			if U_SaltaFolha()
+				@nLin,000 psay Replicate("=",132)
+				@++nLin,000 psay "NOTA FISCAL   | PARC | EMISSAO  | VENCTO   | BAIXA    | PROT.   | DOCUMEN  | BCO  |          VALOR |      JUROS |    DESCONT | ATRSO"
+				@++nLin,000 psay Replicate("-",132)
+				
+				nLin++
+			endif
+			
 			IncRegua()
 			TEMP->(DbSkip())
 		enddo

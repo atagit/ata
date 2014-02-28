@@ -115,7 +115,8 @@ user function MT160WF()
 //				cTo := alltrim(U_FUsuario(left(cDescAprov,15)))
 				
 				if !empty(cTo)
-					U_EnvEmail(.T.,.T.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
+//					U_EnvEmail(.T.,.T.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
+					Processa({|| U_EnvMail(cTo,"","",cSubject,,cMensagem,.T.)},"Enviando e-mail...")
 				else
 					alert("Email não cadastrado para o funcinário "+alltrim(cDescAprov)+"!")
 				endif
