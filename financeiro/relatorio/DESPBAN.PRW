@@ -85,7 +85,7 @@ static function Impr()
 	local nTotValor := 0
 	local aNatureza := {}
 	
-	cQry := "select E5_DTDISPO, E5_DTDIGIT, E5_VALOR, E5_NATUREZ, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_NUMCHEQ, E5_DOCUMEN, E5_RECPAG, E5_HISTOR, E5_BENEF, E5_NATUREZ "
+	cQry := "select E5_DTDISPO, E5_DTDIGIT, E5_VALOR, E5_NATUREZ, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_NUMCHEQ, E5_NUMTED, E5_RECPAG, E5_HISTOR, E5_BENEF, E5_NATUREZ "
 	cQry += "from "+RetSqlName("SE5")+" "
 	cQry += "where (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and left(E5_NATUREZ,3) in ('206','212') and D_E_L_E_T_ <> '*' "
 	cQry += "order by E5_DTDISPO"
@@ -113,7 +113,7 @@ static function Impr()
 		@nLin,015 psay U_ConvData(TEMP->E5_DTDIGIT,"yy")
 		@nLin,025 psay Left(IIf(Empty(TEMP->E5_HISTOR),TEMP->E5_BENEF,TEMP->E5_HISTOR),40)
 		@nLin,067 psay Left(TEMP->E5_NATUREZ,6)
-		@nLin,076 psay Left(IIf(Empty(TEMP->E5_NUMCHEQ),TEMP->E5_DOCUMEN,TEMP->E5_NUMCHEQ),20)
+		@nLin,076 psay Left(IIf(Empty(TEMP->E5_NUMCHEQ),TEMP->E5_NUMTED,TEMP->E5_NUMCHEQ),20)
 		@nLin,098 psay Transf(TEMP->E5_VALOR,"@E 9,999,999,999.99")
 		
 		if (nInd := AScan(aNatureza,{|x| x[1] = TEMP->E5_NATUREZ})) == 0

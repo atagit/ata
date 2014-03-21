@@ -89,6 +89,7 @@ static function Impr()
 	local nTotItem := 1
 	local nValor := 0
 	local nTotValor := 0
+	local aTed := {}
 	
 /*	cQry := "select E5_DTDISPO, E5_DOCUMEN, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E2_NUM, E2_PREFIXO, E2_PARCELA, E2_EMISSAO, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_VALLIQ "
 	cQry += "from "+RetSqlName("SE5")+" SE5 inner join "+RetSqlName("SE2")+" SE2 on (E5_NUMERO = E2_FATURA and E5_PREFIXO = E2_FATPREF) "
@@ -97,10 +98,11 @@ static function Impr()
 	
 	cCondicBco := IIf(Empty(cBancoDe+cAgenciaDe+cContaDe),"","and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' ")
 	
-	cQry := "select E5_DTDISPO, E5_DOCUMEN = case when E5_DOCUMEN <> '' then E5_DOCUMEN else E5_NUMCHEQ end, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E5_RECONC, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_NUMCHEQ, E5_TIPO "
+	cQry := "select E5_TIPODOC, E5_DTDISPO, E5_NUMTED = case when E5_NUMTED <> '' then 'TED'+E5_NUMTED else E5_NUMCHEQ end, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E5_RECONC, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_NUMCHEQ, E5_TIPO "
 	cQry += "from "+RetSqlName("SE5")+" "
-	cQry += "where (((E5_DOCUMEN between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_NATUREZ = '40103') or ((E5_NUMCHEQ between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_TIPO = 'PA ')) and (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') "+cCondicBco+"and D_E_L_E_T_ <> '*' "
-	cQry += "order by E5_DOCUMEN"
+//	cQry += "where (((E5_NUMTED between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_NATUREZ = '40103') or ((E5_NUMCHEQ between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_TIPO = 'PA ')) and (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') "+cCondicBco+"and D_E_L_E_T_ <> '*' "
+	cQry += "where (((E5_NUMTED between '"+cTedIni+"' and '"+cTedFin+"') and E5_NATUREZ = '40103') or ((E5_NUMCHEQ between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_TIPO = 'PA ')) and (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') "+cCondicBco+"and D_E_L_E_T_ <> '*' "
+	cQry += "order by R_E_C_N_O_, E5_NUMTED"
 	
 	tcquery cQry new alias "TEMP"
 	
@@ -108,22 +110,59 @@ static function Impr()
 	ProcRegua(TEMP->(RecCount()))
 	TEMP->(DbGoTop())
 	
+	while !TEMP->(Eof())
+		cTed := AllTrim(TEMP->E5_NUMTED)
+		
+		if TEMP->E5_TIPODOC $ "EC/ES"
+			if (nInd := AScan(aTed,{|x| x[1] = cTed})) > 0
+				aTed[nInd][1] := "9999"
+			endif
+		else
+			AAdd(aTed,{cTed,TEMP->(E5_CLIFOR+E5_LOJA),TEMP->(E5_BANCO+E5_AGENCIA+E5_CONTA),TEMP->E5_DTDISPO,TEMP->E5_DATA,TEMP->E5_NUMERO,TEMP->E5_PREFIXO,TEMP->E5_PARCELA,TEMP->E5_VALOR})
+		endif
+		
+		IncProc()
+		TEMP->(DbSkip())
+	enddo
+	
 	Cabec1 := PadC("Periodo de "+U_ConvData(cDataIni)+" a "+U_ConvData(cDataFin),132)
 	
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 	
 	nLin++
 	
-	while !TEMP->(Eof())
+	for k := 1 to Len(aTed)
+		if aTed[k][1] <> "9999"
+			@nLin,000 psay StrZero(nTotItem,3)
+			@nLin,005 psay aTed[k][1]
+			@nLin,016 psay IIf(SA2->(DbSeek(xFilial("SA2")+aTed[k][2],.F.)),SA2->A2_NREDUZ," ")
+			@nLin,040 psay IIf(SA6->(DbSeek(xFilial("SA6")+aTed[k][3],.F.)),SA6->A6_NREDUZ," ")
+			@nLin,062 psay U_ConvData(aTed[k][4],"yy")
+			@nLin,072 psay U_ConvData(aTed[k][5],"yy")
+			@nLin,082 psay aTed[k][6]+"-"+aTed[k][7]
+			@nLin,097 psay aTed[k][8]
+			@nLin,105 psay Transf(aTed[k][9],"@E 9,999,999,999.99")
+			
+			nLin++
+			nTotItem++
+			nTotValor += aTed[k][9]
+			
+			U_SaltaFolha()
+		endif
+		
+		IncProc()
+	next
+	
+/*	while !TEMP->(Eof())
 //		ITM  DOCUMENTO  FORNECEDOR              BANCO                 PREVISAO  EMISSAO   TITULO         PARC               VALOR
 //		999  AAA999999  AAAAAAAAAAAAAAAAAAAA    AAAAAAAAAAAAAAAAAAAA  99/99/99  99/99/99  999999999-999  999     9,999,999,999.99
 //		01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //		          1         2         3         4         5         6         7         8         9        10        11        12        13
 		
-		cTed := AllTrim(TEMP->E5_DOCUMEN)
+		cTed := AllTrim(TEMP->E5_NUMTED)
 		nValor := 0
 		
-		while !TEMP->(Eof()) .and. AllTrim(TEMP->E5_DOCUMEN) == cTed
+		while !TEMP->(Eof()) .and. AllTrim(TEMP->E5_NUMTED) == cTed
 			@nLin,000 psay StrZero(nTotItem,3)
 			@nLin,005 psay cTed
 			@nLin,016 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(E5_CLIFOR+E5_LOJA),.F.)),SA2->A2_NREDUZ," ")
@@ -156,7 +195,7 @@ static function Impr()
 		nLin++
 		
 		U_SaltaFolha()
-	enddo
+	enddo*/
 	
 	nLin += 2
 	

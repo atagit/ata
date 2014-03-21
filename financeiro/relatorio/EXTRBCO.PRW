@@ -138,7 +138,7 @@ static function Impr()
 	AAdd(aTempStru,{"E5_DTDISPO","C",08,0})
 	AAdd(aTempStru,{"E5_DATA","C",08,0})
 	AAdd(aTempStru,{"E5_HISTOR","C",40,0})
-	AAdd(aTempStru,{"E5_DOCUMEN","C",50,0})
+	AAdd(aTempStru,{"E5_NUMTED","C",06,0})		//C(50)
 	AAdd(aTempStru,{"E5_NUMCHEQ","C",15,0})
 	AAdd(aTempStru,{"E5_PREFIXO","C",03,0})
 	AAdd(aTempStru,{"E5_NUMERO","C",09,0})
@@ -163,7 +163,7 @@ static function Impr()
 	DbUseArea(.T.,,cArqTrab1,"TEMP",.F.,.F.)
 //	index on E5_DTDISPO+E5_BANCO+E5_AGENCIA+E5_CONTA+E5_NUMCHEQ to ITEMP
 	
-	cQry := "select E5_DTDISPO, E5_DATA, E5_HISTOR, E5_DOCUMEN, E5_NUMCHEQ, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_VALOR, E5_RECPAG, E5_RECONC, E5_TIPODOC, E5_DTDIGIT, E5_TIPO, E5_BENEF, E5_CLIFOR, E5_LOJA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_MOTBX, R_E_C_N_O_ as RECNO "
+	cQry := "select E5_DTDISPO, E5_DATA, E5_HISTOR, E5_NUMTED, E5_NUMCHEQ, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_VALOR, E5_RECPAG, E5_RECONC, E5_TIPODOC, E5_DTDIGIT, E5_TIPO, E5_BENEF, E5_CLIFOR, E5_LOJA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_MOTBX, R_E_C_N_O_ as RECNO "
 	cQry += "from "+RetSqlName("SE5")+" "
 //	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and ((E5_TIPODOC not in ('MT','BA','CH','EC','PA','ES','DC','JR')) or (E5_TIPODOC in ('CH','EC') and E5_RECONC = 'x')) and D_E_L_E_T_ <> '*' "
 //	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and ((E5_TIPODOC not in ('MT','BA','CH','EC','PA','ES','DC','JR')) or (E5_TIPODOC in ('CH','EC','PA','ES') and E5_RECONC = 'x')) and D_E_L_E_T_ <> '*' "
@@ -213,7 +213,7 @@ static function Impr()
 			replace TEMP->E5_DTDISPO with QTRB->E5_DTDISPO,;
 					TEMP->E5_DATA with QTRB->E5_DATA,;
 					TEMP->E5_HISTOR with QTRB->E5_HISTOR,;
-					TEMP->E5_DOCUMEN with QTRB->E5_DOCUMEN,;
+					TEMP->E5_NUMTED with QTRB->E5_NUMTED,;
 					TEMP->E5_NUMCHEQ with QTRB->E5_NUMCHEQ,;
 					TEMP->E5_PREFIXO with QTRB->E5_PREFIXO,;
 					TEMP->E5_NUMERO with QTRB->E5_NUMERO,;
@@ -379,7 +379,8 @@ static function Impr()
 	
 	while !TEMP->(Eof())
 //		if TEMP->E5_TIPODOC == "VL" .and. AllTrim(TEMP->E5_TIPO) == "NF" .and. TEMP->E5_MOTBX == "DEB" .and. Left(TEMP->E5_DOCUMEN,3) == "TED"
-		if TEMP->E5_TIPODOC == "VL" .and. TEMP->E5_MOTBX == "DEB" .and. Left(TEMP->E5_DOCUMEN,3) == "TED"
+//		if TEMP->E5_TIPODOC == "VL" .and. TEMP->E5_MOTBX == "DEB" .and. Left(TEMP->E5_DOCUMEN,3) == "TED"
+		if TEMP->E5_TIPODOC == "VL" .and. TEMP->E5_MOTBX == "DEB" .and. !Empty(TEMP->E5_NUMTED)
 			cTipoDoc := TEMP->E5_TIPODOC
 			cTipo := TEMP->E5_TIPO
 			cBenef := TEMP->E5_BENEF
@@ -387,10 +388,11 @@ static function Impr()
 			cLoja := TEMP->E5_LOJA
 			cDtDispo := TEMP->E5_DTDISPO
 			cMotBx := TEMP->E5_MOTBX
-			cTed := TEMP->E5_DOCUMEN
+			cTed := TEMP->E5_NUMTED
 			
 //			while !TEMP->(Eof()) .and. TEMP->E5_DTDISPO == cDtDispo .and. TEMP->E5_TIPODOC == cTipoDoc .and. TEMP->E5_TIPO == cTipo .and. TEMP->E5_BENEF == cBenef .and. TEMP->E5_CLIFOR == cCliFor .and. TEMP->E5_LOJA == cLoja .and. TEMP->E5_MOTBX == cMotBx .and. Left(TEMP->E5_DOCUMEN,3) == "TED"
-			while !TEMP->(Eof()) .and. TEMP->E5_DTDISPO == cDtDispo .and. TEMP->E5_TIPODOC == cTipoDoc .and. TEMP->E5_BENEF == cBenef .and. TEMP->E5_CLIFOR == cCliFor .and. TEMP->E5_LOJA == cLoja .and. TEMP->E5_MOTBX == cMotBx .and. Left(TEMP->E5_DOCUMEN,3) == "TED" .and. TEMP->E5_DOCUMEN == cTed
+//			while !TEMP->(Eof()) .and. TEMP->E5_DTDISPO == cDtDispo .and. TEMP->E5_TIPODOC == cTipoDoc .and. TEMP->E5_BENEF == cBenef .and. TEMP->E5_CLIFOR == cCliFor .and. TEMP->E5_LOJA == cLoja .and. TEMP->E5_MOTBX == cMotBx .and. Left(TEMP->E5_DOCUMEN,3) == "TED" .and. TEMP->E5_DOCUMEN == cTed
+			while !TEMP->(Eof()) .and. TEMP->E5_DTDISPO == cDtDispo .and. TEMP->E5_TIPODOC == cTipoDoc .and. TEMP->E5_BENEF == cBenef .and. TEMP->E5_CLIFOR == cCliFor .and. TEMP->E5_LOJA == cLoja .and. TEMP->E5_MOTBX == cMotBx .and. TEMP->E5_NUMTED == cTed
 				nValorNF += TEMP->E5_VALOR
 				
 				TEMP->(DbSkip())
@@ -428,7 +430,7 @@ static function Impr()
 		
 		@nLin,000 psay U_ConvData(TEMP->E5_DTDISPO,"yy")
 		@nLin,009 psay Left(IIf(Empty(cBenef),TEMP->E5_HISTOR,cBenef),40)
-		@nLin,050 psay Left(IIf(Empty(TEMP->E5_DOCUMEN),TEMP->E5_NUMCHEQ,TEMP->E5_DOCUMEN),15)
+		@nLin,050 psay Left(IIf(Empty(TEMP->E5_NUMTED),TEMP->E5_NUMCHEQ,TEMP->E5_NUMTED),15)
 		
 		if TEMP->E5_TIPODOC == "CH"
 			if Select("TMP") <> 0
@@ -1291,7 +1293,7 @@ static function Aplicacao(cBco,cAgc,cCta,cDtDe,cDtAte)
 	AAdd(aTempStru,{"E5_DTDISPO","C",08,0})
 	AAdd(aTempStru,{"E5_DATA","C",08,0})
 	AAdd(aTempStru,{"E5_HISTOR","C",40,0})
-	AAdd(aTempStru,{"E5_DOCUMEN","C",50,0})
+	AAdd(aTempStru,{"E5_NUMTED","C",06,0})		//C(50)
 	AAdd(aTempStru,{"E5_NUMCHEQ","C",15,0})
 	AAdd(aTempStru,{"E5_PREFIXO","C",03,0})
 	AAdd(aTempStru,{"E5_NUMERO","C",09,0})
@@ -1315,7 +1317,7 @@ static function Aplicacao(cBco,cAgc,cCta,cDtDe,cDtAte)
 	
 	DbUseArea(.T.,,cArqTrab1,"TEMP1",.F.,.F.)
 	
-	cQry := "select E5_DTDISPO, E5_DATA, E5_HISTOR, E5_DOCUMEN, E5_NUMCHEQ, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_VALOR, E5_RECPAG, E5_RECONC, E5_TIPODOC, E5_DTDIGIT, E5_TIPO, E5_BENEF, E5_CLIFOR, E5_LOJA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_MOTBX, R_E_C_N_O_ as RECNO "
+	cQry := "select E5_DTDISPO, E5_DATA, E5_HISTOR, E5_NUMTED, E5_NUMCHEQ, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_VALOR, E5_RECPAG, E5_RECONC, E5_TIPODOC, E5_DTDIGIT, E5_TIPO, E5_BENEF, E5_CLIFOR, E5_LOJA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_MOTBX, R_E_C_N_O_ as RECNO "
 	cQry += "from "+RetSqlName("SE5")+" "
 //	cQry += "where (E5_DTDISPO between '"+cDataDe+"' and '"+cDataAte+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and ((E5_TIPODOC not in ('MT','BA','CH','EC','PA','ES','DC','JR')) or (E5_TIPODOC in ('CH','EC','PA','ES') and E5_RECONC = 'x')) and D_E_L_E_T_ <> '*' "
 	cQry += "where (E5_DTDISPO between '"+cDtDe+"' and '"+cDtAte+"') and E5_BANCO = '"+cBco+"' and E5_AGENCIA = '"+cAgc+"' and E5_CONTA = '"+cCta+"' and E5_SITUACA not in ('C','E','X') and E5_TIPODOC <> 'FAT' and E5_RECONC = 'x' and E5_TIPODOC not in ('MT','BA','DC','JR') and D_E_L_E_T_ <> '*' "
@@ -1353,7 +1355,7 @@ static function Aplicacao(cBco,cAgc,cCta,cDtDe,cDtAte)
 			replace TEMP1->E5_DTDISPO with QTRB1->E5_DTDISPO,;
 					TEMP1->E5_DATA with QTRB1->E5_DATA,;
 					TEMP1->E5_HISTOR with QTRB1->E5_HISTOR,;
-					TEMP1->E5_DOCUMEN with QTRB1->E5_DOCUMEN,;
+					TEMP1->E5_NUMTED with QTRB1->E5_NUMTED,;
 					TEMP1->E5_NUMCHEQ with QTRB1->E5_NUMCHEQ,;
 					TEMP1->E5_PREFIXO with QTRB1->E5_PREFIXO,;
 					TEMP1->E5_NUMERO with QTRB1->E5_NUMERO,;
@@ -1388,7 +1390,8 @@ static function Aplicacao(cBco,cAgc,cCta,cDtDe,cDtAte)
 		lGrava := .F.
 		
 		while TEMP1->E5_DTDISPO == cDataDispo
-			if TEMP1->E5_TIPODOC == "VL" .and. TEMP1->E5_MOTBX == "DEB" .and. Left(TEMP1->E5_DOCUMEN,3) == "TED"
+//			if TEMP1->E5_TIPODOC == "VL" .and. TEMP1->E5_MOTBX == "DEB" .and. Left(TEMP1->E5_DOCUMEN,3) == "TED"
+			if TEMP1->E5_TIPODOC == "VL" .and. TEMP1->E5_MOTBX == "DEB" .and. !Empty(TEMP1->E5_NUMTED)
 				cTipoDoc := TEMP1->E5_TIPODOC
 				cTipo := TEMP1->E5_TIPO
 				cBenef := TEMP1->E5_BENEF
@@ -1397,7 +1400,8 @@ static function Aplicacao(cBco,cAgc,cCta,cDtDe,cDtAte)
 				cDtDispo := TEMP1->E5_DTDISPO
 				cMotBx := TEMP1->E5_MOTBX
 				
-				while !TEMP1->(Eof()) .and. TEMP1->E5_DTDISPO == cDtDispo .and. TEMP1->E5_TIPODOC == cTipoDoc .and. TEMP1->E5_BENEF == cBenef .and. TEMP1->E5_CLIFOR == cCliFor .and. TEMP1->E5_LOJA == cLoja .and. TEMP1->E5_MOTBX == cMotBx .and. Left(TEMP1->E5_DOCUMEN,3) == "TED"
+//				while !TEMP1->(Eof()) .and. TEMP1->E5_DTDISPO == cDtDispo .and. TEMP1->E5_TIPODOC == cTipoDoc .and. TEMP1->E5_BENEF == cBenef .and. TEMP1->E5_CLIFOR == cCliFor .and. TEMP1->E5_LOJA == cLoja .and. TEMP1->E5_MOTBX == cMotBx .and. Left(TEMP1->E5_DOCUMEN,3) == "TED"
+				while !TEMP1->(Eof()) .and. TEMP1->E5_DTDISPO == cDtDispo .and. TEMP1->E5_TIPODOC == cTipoDoc .and. TEMP1->E5_BENEF == cBenef .and. TEMP1->E5_CLIFOR == cCliFor .and. TEMP1->E5_LOJA == cLoja .and. TEMP1->E5_MOTBX == cMotBx .and. !Empty(TEMP1->E5_NUMTED)
 					nValorNF += TEMP1->E5_VALOR
 					
 					TEMP1->(DbSkip())

@@ -9,7 +9,7 @@
 #define _MES {"JANEIRO","FEVEREIRO","MARCO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"}
 
 user function RELNF()
-	private aOrd    := {"Nota Fiscal"}
+	private aOrd    := {"Nota Fiscal","C.R."}
 	private aReturn := {"Especial",1,"Administracao",1,2,1,"",1}
 	private cPerg   := "RELNF"
 	private Cabec1  := ""
@@ -66,7 +66,7 @@ user function RELNF()
 	
 	if nNotas == 1		//Entrada
 		Processa({|| ImprEntrada()},"","Aguarde processando...",lAborta)
-	else					//Saida
+	else				//Saida
 		Processa({|| ImprSaida()},"","Aguarde processando...",lAborta)
 	endif
 	
@@ -106,7 +106,12 @@ static function ImprEntrada()
 	cQry += "	inner join "+RetSqlName("SF4")+" SF4 on (SD1.D1_TES = SF4.F4_CODIGO) "
 	cQry += "	inner join "+RetSqlName("CTH")+" CTH on (SD1.D1_CLVL = CTH.CTH_CLVL) "
 	cQry += "where (D1_DTDIGIT between '"+cDtIni+"' and '"+cDtFin+"') and (D1_FORNECE between '"+cCliForIni+"' and '"+cCliForFin+"') and F1_ESPECIE <> 'FAT' and SD1.D_E_L_E_T_ <> '*' and SB1.D_E_L_E_T_ <> '*' and SF4.D_E_L_E_T_ <> '*' and SF1.D_E_L_E_T_ <> '*' and CTH.D_E_L_E_T_ <> '*' "
-	cQry += "order by D1_DTDIGIT, D1_DOC, D1_SERIE, D1_FORNECE, D1_LOJA, D1_CF"
+	
+	if nOrdem == 1
+		cQry += "order by D1_DTDIGIT, D1_DOC, D1_SERIE, D1_FORNECE, D1_LOJA, D1_CF"
+	else
+		cQry += "order by D1_DTDIGIT, D1_CR, D1_DOC, D1_SERIE, D1_FORNECE, D1_LOJA, D1_CF"
+	endif
 	
 	tcquery cQry new alias "TEMP"
 	
