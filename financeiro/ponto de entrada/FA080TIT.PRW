@@ -7,9 +7,10 @@
 #include "protheus.ch"
 
 user function FA080TIT()
+	local aAreaAnt := GetArea()
 	local lRet := .T.
 	
-	public _NumTED := ""
+	public __NumTED := ""
 	
 	if AllTrim(CMOTBX) == "DEBITO CC"
 		if MsgYesNo("Gerar um TED para essa baixa?","TED")
@@ -20,15 +21,17 @@ user function FA080TIT()
 					lRet := .F.
 				else
 					if Left(SA6->A6_NUMTED,2) == Right(Str(Year(dDataBase),4),2)
-						_NumTED := SA6->A6_NUMTED
+						__NumTED := SA6->A6_NUMTED
 						
 						RecLock("SA6",.F.)
-							SA6->A6_NUMTED := StrZero(Val(_NumTED) + 1,6)
+							SA6->A6_NUMTED := StrZero(Val(__NumTED) + 1,6)
 						MsUnLock()
 						
-						_NumTED := SE2->(E2_NUM+E2_PREFIXO+E2_PARCELA+E2_FORNECE+E2_LOJA)+_NumTED
+						__NumTED := SE2->(E2_NUM+E2_PREFIXO+E2_PARCELA+E2_FORNECE+E2_LOJA)+__NumTED
 						
-						MsgInfo("O numero do TED e: "+"TED"+Right(_NumTED,6))
+						MsgInfo("O numero do TED e: "+"TED"+Right(__NumTED,6))
+						
+						lRet := .T.
 					else
 						MsgAlert("O ano na numeracao do TED esta diferente.")
 						
@@ -59,4 +62,6 @@ user function FA080TIT()
 			lRet := U_VALCHQ(CBANCO+CAGENCIA+CCONTA,CCHEQUE)
 		endif
 	endif
+	
+	RestArea(aAreaAnt)
 return lRet

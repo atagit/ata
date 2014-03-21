@@ -40,6 +40,7 @@ user function DUPLIC()
 	private cLojIni		:= ""
 	private cForIni		:= ""
 	private nTipoDupli	:= 0
+	private aForCli		:= {}
 	
 	//旼컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴커
 	//� Parametros utilizados pelo programa                          �
@@ -280,6 +281,12 @@ static function Impr1()
 				@nLin,063 psay StrZero(TEMP->DIFF,3)
 				@nLin,087 psay Transf(nValor,"@E 9,999,999,999.99")
 				
+				if (nInd := AScan(aForCli,{|x| x[1] = TEMP->(CLIFOR+LOJA)})) == 0
+					AAdd(aForCli,{TEMP->(CLIFOR+LOJA),TEMP->NOMCLIFOR,TEMP->VALOR})
+				else
+					aForCli[nInd][3] += TEMP->VALOR
+				endif
+				
 				nLin++
 				nSubTotVenc += nValor
 				nSubTotGeral += nValor
@@ -321,6 +328,8 @@ static function Impr1()
 	@nLin,052 psay Transf(nSubQtdGeral,"@R 9999")
 	@nLin,085 psay Transf(nSubTotGeral,"@E 9,999,999,999.99")
 	
+	Resumo()
+	
 	U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 	TEMP->(DbCloseArea())
 return
@@ -333,7 +342,7 @@ static function Impr2()
 		TEMP->(DbCloseArea())
 	endif
 	
-	if nContas == 1
+	if nContas == 1		//Pagar
 		cQry := "select E2_VENCREA as VENC, E2_NUM as NUM, E2_PREFIXO as PREF, E2_PARCELA as PARC, E2_EMISSAO as EMISSAO, E2_TIPO as TIPO, E2_CR as CR, E2_BCOPAG as BCOPAG, E2_SALDO as VALOR, E2_BANCO as BCOCOB, E2_FORNECE as FORCLI, E2_LOJA as LOJA "
 		cQry += "from "+RetSqlName("SE2")+" "
 //		cQry += "where "+IIf(nTipo == 1,"E2_FORNECE = '"+cForIni+"' and E2_LOJA = '"+cLojIni+"' and ","")+"E2_BAIXA = ''"+IIf(nTipoDupli == 2," and E2_VENCREA <= '"+DToS(dDataBase)+"'","")+" and E2_VALOR > 0 and D_E_L_E_T_ <> '*' "
@@ -345,7 +354,7 @@ static function Impr2()
 		elseif nTipoDupli == 2
 			cDesc1 := "DUPLICATAS VENCIDAS - PAGAR"
 		endif
-	else
+	else				//Receber
 		cQry := "select E1_VENCREA as VENC, E1_NUM as NUM, E1_PREFIXO as PREF, E1_PARCELA as PARC, E1_EMISSAO as EMISSAO, E1_TIPO as TIPO, '' as CR, '' as BCOPAG, E1_SALDO as VALOR, '' as BCOCOB, E1_CLIENTE as FORCLI, E1_LOJA as LOJA "
 		cQry += "from "+RetSqlName("SE1")+" "
 		cQry += "where "+IIf(nTipo == 1,"E1_CLIENTE = '"+cCliIni+"' and E1_LOJA = '"+cLojIni+"' and ","")+"(E1_VENCREA between '"+cVenIni+"' and '"+cVenFin+"') and E1_SALDO > 0 and D_E_L_E_T_ <> '*' "
@@ -368,7 +377,7 @@ static function Impr2()
 		return
 	endif
 	
-	if nTipo == 1
+	if nTipo == 1		//Especifico SIM
 		Cabec1 := PadC("Periodo de "+U_ConvData(cVenIni,"yy")+" a "+U_ConvData(cVenFin),132)
 		Cabec2 := ""
 		
@@ -498,7 +507,7 @@ static function Impr2()
 		@nLin,085 psay Transf(nTotVenc + nTotAVen,"@E 999,999,999.99")
 		
 		U_Rdp(nRdpPag,cRdpLeg,Tamanho)
-	else
+	else		//Especifico NAO
 //		while !TEMP->(Eof())
 			if nContas == 1
 				Cabec1 := "VENCIMENTO   FORNECEDOR                          NOTA FISCAL    PARC   EMISSAO   TIPO  PROTOCOLO  BCO             VALOR   ATRASO"
@@ -524,17 +533,23 @@ static function Impr2()
 //				          1         2         3         4         5         6         7         8         9        10        11        12        13
 				
 				nDias := dDataBase - SToD(TEMP->VENC)
+				cForCli := " "
 				
 				@nLin,000 psay U_ConvData(TEMP->VENC,"yy")
 				
 				if nContas == 1
-//					@nLin,010 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(FORCLI+LOJA),.F.)),SA2->A2_NREDUZ," ")
-					@nLin,013 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(FORCLI+LOJA),.F.)),AllTrim(SA2->A2_NREDUZ)," ")+" ("+TEMP->FORCLI+")"
+					if SA2->(DbSeek(xFilial("SA2")+TEMP->(FORCLI+LOJA),.F.))
+						cForCli := AllTrim(SA2->A2_NREDUZ)
+					endif
 				else
-//					@nLin,010 psay IIf(SA1->(DbSeek(xFilial("SA1")+TEMP->(FORCLI+LOJA),.F.)),SA1->A1_NREDUZ," ")
-					@nLin,013 psay IIf(SA1->(DbSeek(xFilial("SA1")+TEMP->(FORCLI+LOJA),.F.)),AllTrim(SA1->A1_NREDUZ)," ")+" ("+TEMP->FORCLI+")"
+					if SA1->(DbSeek(xFilial("SA1")+TEMP->(FORCLI+LOJA),.F.))
+						cForCli := AllTrim(SA1->A1_NREDUZ)
+					endif
 				endif
 				
+//				@nLin,010 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(FORCLI+LOJA),.F.)),SA2->A2_NREDUZ," ")
+//				@nLin,013 psay IIf(SA2->(DbSeek(xFilial("SA2")+TEMP->(FORCLI+LOJA),.F.)),AllTrim(SA2->A2_NREDUZ)," ")+" ("+TEMP->FORCLI+")"
+				@nLin,013 psay cForCli
 				@nLin,049 psay TEMP->NUM+"-"+TEMP->PREF
 				@nLin,064 psay TEMP->PARC
 				@nLin,071 psay U_ConvData(TEMP->EMISSAO,"yy")
@@ -543,6 +558,12 @@ static function Impr2()
 				@nLin,098 psay IIf(SA6->(DbSeek(xFilial("SA6")+Left(TEMP->BCOCOB,3),.F.)),SA6->A6_SIGLA," ")
 				@nLin,105 psay Transf(TEMP->VALOR,"@E 999,999,999.99")
 				@nLin,122 psay Transf(nDias,"@R 9999")
+				
+				if (nInd := AScan(aForCli,{|x| x[1] = TEMP->(FORCLI+LOJA)})) == 0
+					AAdd(aForCli,{TEMP->(FORCLI+LOJA),cForCli,TEMP->VALOR})
+				else
+					aForCli[nInd][3] += TEMP->VALOR
+				endif
 				
 				nLin++
 				nCont++
@@ -578,9 +599,65 @@ static function Impr2()
 			@++nLin,087 psay "TOTAL...: "
 			@nLin,105 psay Transf(nTotVenc + nTotAVen,"@E 999,999,999.99")
 			
+			Resumo()
+			
 			U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 //		enddo
 	endif
 	
 	TEMP->(DbCloseArea())
+return
+
+static function Resumo()
+	ASort(aForCli,,,{|x,y| x[2] > y[2]})
+	
+	nLin += 3
+	
+	U_SaltaFolha()
+	
+	if nContas == 1
+		@nLin,000 psay PadC("*********  R E S U M O   F O R N E C E D O R  *********",57)
+		
+		nLin++
+		
+		U_SaltaFolha()
+		
+		@nLin,000 psay "FORNECEDOR                                           VALOR"
+	else
+		@nLin,000 psay PadC("*********  R E S U M O   C L I E N T E  *********",57)
+		
+		nLin++
+		
+		U_SaltaFolha()
+		
+		@nLin,000 psay "CLIENTE                                              VALOR"
+	endif
+	
+	nLin++
+	nTotal := 0
+	
+	U_SaltaFolha()
+	
+	for i := 1 to Len(aForCli)
+//		FORNECEDOR                                           VALOR
+//		AAAAAAAAAAAAAAAAAAAA (999999-99)        999,999,999,999.99
+//		01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+//		          1         2         3         4         5         6         7         8         9        10        11        12        13
+		
+		@nLin,000 psay aForCli[i][2]
+		@nLin,021 psay "("+Transf(aForCli[i][1],"@R 999999-99")+")"
+		@nLin,040 psay Transf(aForCli[i][3],"@E 999,999,999,999.99")
+		
+		nLin++
+		nTotal += aForCli[i][3]
+		
+		U_SaltaFolha()
+	next
+	
+	nLin++
+	
+	U_SaltaFolha()
+	
+	@nLin,000 psay "T O T A L"
+	@nLin,040 psay Transf(nTotal,"@E 999,999,999,999.99")
 return

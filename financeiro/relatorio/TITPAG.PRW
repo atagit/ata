@@ -116,17 +116,19 @@ static function Impr()
 	local aBanco := {}
 	local aDocumento := {}
 	
-	cQry := "select E2_BAIXA, E2_VENCREA, E2_FORNECE, E2_LOJA, E2_NOMFOR, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_NATUREZ, E2_EMISSAO, E2_CR, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_SALDO, datediff(day, E2_VENCTO, getdate()) as DIFF, E2_BANCO, E2_BORDERO, PRIORID = case when E2_PRIORID <> '' then E2_PRIORID else '99' end, E2_NUMBCO, E2_BCOPAG, E2_FATPREF, E2_FATURA "
+	cQry := "select E2_BAIXA, E2_VENCREA, E2_FORNECE, E2_LOJA, E2_NOMFOR, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_NATUREZ, E2_EMISSAO, E2_CR, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_SALDO, datediff(day, E2_VENCTO, getdate()) as DIFF, E2_BANCO, E2_BORDERO, PRIORID = case when E2_PRIORID <> '' then E2_PRIORID else '99' end, E2_NUMBCO, E2_BCOPAG, E2_FATPREF, E2_FATURA, E2_VALLIQ "
 	cQry += "from "+RetSqlName("SE2")+" "
 	
 	if nBaixados == 2
 		cQry += "where (E2_BAIXA between '"+cBaixaIni+"' and '"+cBaixaFin+"') and (E2_FORNECE between '"+cForIni+"' and '"+cForFin+"') and (E2_BORDERO between '"+cBorIni+"' and '"+cBorFin+"') and (E2_PRIORID between '"+cPerIni+"' and '"+cPerFin+"') and (E2_BANCO between '"+cBanIni+"' and '"+cBanFin+"') and D_E_L_E_T_ <> '*' "
 		cDesc1 := "TITULOS PAGOS"
-		Cabec2 := "VENCTO   BR PR FORNECEDOR           PRF NFISCAL   PARC TIP NATUR EMISSAO  PROTOCOLO  DOCUMTO           BCO                 VALOR  DD"
+		Cabec2 := "VENCTO   BR PR FORNECEDOR           PRF NFISCAL   PARC TIP NATUR EMISSAO  PROTOCOLO  DOCUMTO           BCO                VALOR   DD"
+		cCampoValor := "E2_VALLIQ"
 	else
 		cQry += "where (E2_VENCREA between '"+cVenIni+"' and '"+cVenFin+"') and (E2_FORNECE between '"+cForIni+"' and '"+cForFin+"') and (E2_BORDERO between '"+cBorIni+"' and '"+cBorFin+"') and (E2_PRIORID between '"+cPerIni+"' and '"+cPerFin+"') and (E2_BANCO between '"+cBanIni+"' and '"+cBanFin+"') and E2_TIPO <> 'PR' and (E2_BAIXA = '' or (E2_BAIXA <> '' and E2_SALDO > 0)) and D_E_L_E_T_ <> '*' "
 		cDesc1 := "TITULOS A PAGAR"
-		Cabec2 := "VENCTO   BR PR FORNECEDOR           PRF NFISCAL   PARC TIP NATUR EMISSAO  PROTOCOLO BANCO                                   VALOR DD"
+		Cabec2 := "VENCTO   BR PR FORNECEDOR           PRF NFISCAL   PARC TIP NATUR EMISSAO  PROTOCOLO BANCO                                 VALOR   DD"
+		cCampoValor := "E2_VALOR"
 	endif
 	
 	if nOrdem == 1
@@ -151,9 +153,9 @@ static function Impr()
 	
 	nLin++
 	
-//	VENCTO   BR PR FORNECEDOR           PRF NFISCAL   PARC TIP NATUR EMISSAO  PROTOCOLO BANCO                                  VALOR  DD
-//	VENCTO   BR PR FORNECEDOR           PRF NFISCAL   PARC TIP NATUR EMISSAO  PROTOCOLO  DOCUMTO           BCO                 VALOR  DD
-//	99/99/99 99 99 AAAAAAAAAAAAAAAAAAAA AAA 999999999 999  AAA 99999 99/99/99 9999999    999999999999999   AAA      9,999,999,999.99  99
+//	VENCTO   BR PR FORNECEDOR           PRF NFISCAL   PARC TIP NATUR EMISSAO  PROTOCOLO BANCO                                 VALOR   DD
+//	VENCTO   BR PR FORNECEDOR           PRF NFISCAL   PARC TIP NATUR EMISSAO  PROTOCOLO  DOCUMTO           BCO                VALOR   DD
+//	99/99/99 99 99 AAAAAAAAAAAAAAAAAAAA AAA 999999999 999  AAA 99999 99/99/99 9999999    999999999999999   AAA     9,999,999,999.99  999
 //	0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
 //	          1         2         3         4         5         6         7         8         9        10        11        12        13
 	
@@ -164,15 +166,16 @@ static function Impr()
 		
 		if nBaixados == 2
 			if TEMP->E2_TIPO == "NDF"
-				nValor := IIf(Empty(TEMP->E2_SALDO),TEMP->E2_VALOR,TEMP->E2_VALOR - TEMP->E2_SALDO) * -1
+				nValor := IIf(Empty(TEMP->E2_SALDO),TEMP->&(cCampoValor),TEMP->&(cCampoValor) - TEMP->E2_SALDO) * -1
 			else
-				nValor := IIf(Empty(TEMP->E2_SALDO),TEMP->E2_VALOR,TEMP->E2_VALOR - TEMP->E2_SALDO)
+//				nValor := IIf(Empty(TEMP->E2_SALDO),TEMP->E2_VALLIQ,TEMP->E2_VALLIQ - TEMP->E2_SALDO)
+				nValor := TEMP->&(cCampoValor)
 			endif
 		else
 			if TEMP->E2_TIPO == "NDF"
-				nValor := IIf(Empty(TEMP->E2_BAIXA),TEMP->E2_VALOR,TEMP->E2_SALDO) * -1
+				nValor := IIf(Empty(TEMP->E2_BAIXA),TEMP->&(cCampoValor),TEMP->E2_SALDO) * -1
 			else
-				nValor := IIf(Empty(TEMP->E2_BAIXA),TEMP->E2_VALOR,TEMP->E2_SALDO)
+				nValor := IIf(Empty(TEMP->E2_BAIXA),TEMP->&(cCampoValor),TEMP->E2_SALDO)
 			endif
 		endif
 		
@@ -197,18 +200,19 @@ static function Impr()
 		if nBaixados == 2
 			if Empty(TEMP->E2_NUMBCO)
 				if Empty(TEMP->E2_FATURA)
-					cQry := "select E5_DOCUMEN from "+RetSqlName("SE5")+" where E5_NUMERO = '"+TEMP->E2_NUM+"' and E5_PREFIXO = '"+TEMP->E2_PREFIXO+"' and D_E_L_E_T_ <> '*' "
+					cQry := "select E5_NUMTED from "+RetSqlName("SE5")+" where E5_NUMERO = '"+TEMP->E2_NUM+"' and E5_PREFIXO = '"+TEMP->E2_PREFIXO+"' and D_E_L_E_T_ <> '*' "
 				else
-					cQry := "select E5_DOCUMEN from "+RetSqlName("SE5")+" where E5_NUMERO = '"+TEMP->E2_FATURA+"' and E5_PREFIXO = '"+E2_FATPREF+"' and D_E_L_E_T_ <> '*' "
+					cQry := "select E5_NUMTED from "+RetSqlName("SE5")+" where E5_NUMERO = '"+TEMP->E2_FATURA+"' and E5_PREFIXO = '"+E2_FATPREF+"' and D_E_L_E_T_ <> '*' "
 				endif
 				
 				tcquery cQry new alias "CON1"
 				
 				DbSelectArea("CON1")
 				
-				@nLin,085 psay Left(CON1->E5_DOCUMEN,15)
+//				cTed := Left(CON1->E5_DOCUMEN,15)
+				cTed := CON1->E5_NUMTED
 				
-				cTed := Left(CON1->E5_DOCUMEN,15)
+				@nLin,085 psay cTed
 				
 				CON1->(DbCloseArea())
 				DbSelectArea("TEMP")
@@ -221,10 +225,10 @@ static function Impr()
 			@nLin,084 psay Left(cBanco,10)
 		endif
 		
-		@nLin,113 psay Transf(nValor,"@E 9,999,999,999.99")
+		@nLin,111 psay Transf(nValor,"@E 9,999,999,999.99")
 		
 		if nBaixados <> 2
-			@nLin,130 psay Transf(TEMP->DIFF,"@E 99")
+			@nLin,129 psay Transf(TEMP->DIFF,"@E 999")
 		endif
 		
 /*		if (nInd := AScan(aBordero,{|x| x[1] = TEMP->E2_BORDERO})) == 0
@@ -269,7 +273,7 @@ static function Impr()
 	U_SaltaFolha()
 	
 	@nLin,000 psay "T O T A L  G E R A L -----> ("+AllTrim(Str(nTotItem))+" MOVIMENTACOES)"
-	@nLin,113 psay Transf(nTotValor,"@E 9,999,999,999.99")
+	@nLin,111 psay Transf(nTotValor,"@E 9,999,999,999.99")
 	
 	nLin++
 	

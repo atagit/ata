@@ -176,7 +176,7 @@ static function Impr()
 					cNum := IIf(Empty(TEMP->E2_FATURA),TEMP->E2_NUM,TEMP->E2_FATURA)
 					cPref := IIf(Empty(TEMP->E2_FATURA),TEMP->E2_PREFIXO,TEMP->E2_FATPREF)
 //					cQry := "select E2_BCOPAG from "+RetSqlName("SE2")+" where E2_NUM = '"+TEMP->E2_FATURA+"' and E2_PREFIXO = '"+TEMP->E2_FATPREF+"' and E2_FATURA = 'NOTFAT' and D_E_L_E_T_ <> '*'"
-					cQry := "select E5_BANCO, E5_DOCUMEN from "+RetSqlName("SE5")+" where E5_NUMERO = '"+cNum+"' and E5_PREFIXO = '"+cPref+"' and E5_CLIFOR = '"+TEMP->E2_FORNECE+"' and E5_LOJA = '"+TEMP->E2_LOJA+"' and E5_MOTBX = 'DEB' and D_E_L_E_T_ <> '*'"
+					cQry := "select E5_BANCO, E5_NUMTED from "+RetSqlName("SE5")+" where E5_NUMERO = '"+cNum+"' and E5_PREFIXO = '"+cPref+"' and E5_CLIFOR = '"+TEMP->E2_FORNECE+"' and E5_LOJA = '"+TEMP->E2_LOJA+"' and E5_MOTBX = 'DEB' and D_E_L_E_T_ <> '*'"
 					
 					tcquery cQry new alias "CON"
 					
@@ -187,7 +187,7 @@ static function Impr()
 					if !Empty(CON->E5_BANCO)
 						cBcoPag := CON->E5_BANCO
 						
-						@nLin,066 psay "TD"+Right(AllTrim(CON->E5_DOCUMEN),6)
+						@nLin,066 psay "TD"+Right(AllTrim(CON->E5_NUMTED),6)
 					endif
 					
 					CON->(DbCloseArea())

@@ -1,7 +1,7 @@
 /*______________________________________________________________________
    ¦Autor     ¦ Breno Ferreira                      ¦ Data ¦ 07/12/11 ¦
    +----------+-------------------------------------------------------¦
-   ¦Descrição ¦ Importar funcionários do MFOLHA                       ¦
+   ¦Descrição ¦ Relatorio importado do MFOLHA                         ¦
   ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*/
 #include "rwmake.ch"
 #include "protheus.ch"
@@ -18,7 +18,7 @@
 #define _IFCOES "\\atfsrv001\mastermaq$\MFOLHA\FCOES.IDX"
 #define _EMPDEF "01"
 
-user function MFOLHA()
+user function FOPAG()
 	local oButton1, oButton2
 	local oSay1, oSay2
 	local oComboBo1
