@@ -10,7 +10,7 @@ user function LISTAPD()
 	private aOrd    := {"Data de Entrega","Pedido de Compra"}
 	private aReturn := {"Especial",1,"Administracao",1,2,1,"",1}
 	private cPerg   := "LISTPD"
-	private Cabec1  := "N.PC   | ENTREGA  |       QUANT | UM | DESCRICAO                                                   |     P.UNIT |        P.TOTAL | IPI"
+	private Cabec1  := "N.PC   | ENTREGA  |       QUANT | UN | DESCRICAO                                                 |     P.UNIT |        P.TOTAL | IPI"
 	private Cabec2  := ""
 	private cDesc1  := "PRODUTOS POR PROJETO"
 	private ContFun := 0
@@ -94,8 +94,8 @@ static function Impr()
 	
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 	
-//	N.PC   | ENTREGA  |       QUANT | UM | DESCRICAO                                                   |     P.UNIT |        P.TOTAL | IPI
-//	999999   99/99/99   99999999.99   UN   999999 - AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   999,999.99   999,999,999.99    99
+//	N.PC   | ENTREGA  |       QUANT | UN | DESCRICAO                                                 |     P.UNIT |        P.TOTAL | IPI
+//	999999   99/99/99   99999999.99   UN   999999 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   999,999.99   999,999,999.99    99
 //	01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
 //	          1         2         3         4         5         6         7         8         9        10        11        12        13
 	
@@ -125,28 +125,24 @@ static function Impr()
 		
 		U_SaltaFolha()
 		
-		if TEMP->C7_RESIDUO <> "S"
-			nQuant := TEMP->C7_QUANT
-			nTotal := TEMP->C7_TOTAL
-		else
-			if TEMP->C7_QUJE > 0
-				nQuant := TEMP->C7_QUJE
-				nTotal := TEMP->C7_QUJE * TEMP->C7_PRECO
-			else
-				loop
-			endif
+		nQuant := TEMP->C7_QUANT
+		nTotal := TEMP->C7_TOTAL
+		
+		if TEMP->C7_RESIDUO == "S" .and. TEMP->C7_QUJE > 0
+			nQuant := TEMP->C7_QUJE
+			nTotal := TEMP->C7_QUJE * TEMP->C7_PRECO
 		endif
 		
 		@nLin,000 psay TEMP->C7_NUM
 		@nLin,009 psay U_ConvData(TEMP->C7_DATPRF,"yy")
 		@nLin,020 psay Transf(nQuant,"@E 99999999.99")
 		@nLin,034 psay TEMP->C7_UM
-		@nLin,039 psay Left(TEMP->C7_PRODUTO,6)+" - "+Left(TEMP->C7_DESCRI,30)
-		@nLin,101 psay Transf(TEMP->C7_PRECO,"@E 999,999.99")
-		@nLin,114 psay Transf(nTotal,"@E 999,999,999.99")
-		@nLin,132 psay Transf(TEMP->C7_IPI,"@R 99")
+		@nLin,039 psay Left(TEMP->C7_PRODUTO,6)+" "+Left(TEMP->C7_DESCRI,30)
+		@nLin,099 psay Transf(TEMP->C7_PRECO,"@E 999,999.99")
+		@nLin,112 psay Transf(nTotal,"@E 999,999,999.99")
+		@nLin,130 psay Transf(TEMP->C7_IPI,"@R 99")
 		
-		nTotQuant += nQuat
+		nTotQuant += nQuant
 		nTotValor += nTotal
 		
 		if (nInd := AScan(aUnidade,{|x| x[1] = TEMP->C7_UM})) == 0
@@ -160,6 +156,13 @@ static function Impr()
 		TEMP->(DbSkip())
 	enddo
 	
+	U_SaltaFolha()
+	
+	nLin += 2
+	
+	@nLin,093 psay "TOTAL"
+	@nLin,112 psay Transf(nTotValor,"@E 999,999,999.99")
+	
 	TotalUnidade()
 	
 	U_Rdp(nRdpPag,cRdpLeg,Tamanho)
@@ -167,13 +170,6 @@ static function Impr()
 return
 
 static function TotalUnidade()
-	U_SaltaFolha()
-	
-	nLin += 2
-	
-	@nLin,095 psay "TOTAL"
-	@nLin,114 psay Transf(nTotValor,"@E 999,999,999.99")
-	
 	nLin += 2
 	
 	U_SaltaFolha()
