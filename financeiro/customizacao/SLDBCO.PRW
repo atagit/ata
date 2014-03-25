@@ -276,7 +276,7 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	
 	Pendentes()
 	
-//	if lGrava
+	if lGrava
 		DbSelectArea("SZP")
 		SZP->(DbGoTop())
 		
@@ -287,7 +287,7 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 				MsUnLock()
 //			endif
 		endif
-//	endif
+	endif
 	
 	cDataIni := cDataDe
 	
