@@ -54,6 +54,11 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 		TEMP->(DbCloseArea())
 	endif
 	
+	cUpd := "update "+RetSqlName("SZP")+" "
+	cUpd += "set D_E_L_E_T_ = '*' "
+	cUpd += "where (ZP_DTSALDO between '"+cDataDe+"' and '"+cDataAte+"') and ZP_BANCO = '"+cBancoDe+"' and ZP_AGENCIA = '"+cAgenciaDe+"' and ZP_CONTA = '"+cContaDe+"' and D_E_L_E_T_ <> '*'"
+	nRet := TCSqlExec(cUpd)
+	
 	if SA6->(DbSeek(xFilial("SA6")+cBancoDe+cAgenciaDe+cContaDe,.F.))
 		nBlqJudic := SA6->A6_VLBLJUD
 	endif
@@ -64,12 +69,6 @@ static function Gravar(cBancoDe,cAgenciaDe,cContaDe,cDataDe,cDataAte)
 	SZP->(DbSkip(-1))
 	
 	nSaldoAtual := SZP->ZP_SALATUA
-	
-/*	cUpd := "update "+RetSqlName("SZP")+" "
-	cUpd += "set D_E_L_E_T_ = '*' "
-	cUpd += "where (ZP_DTSALDO between '"+cDataDe+"' and '"+cDataAte+"') and ZP_BANCO = '"+cBancoDe+"' and ZP_AGENCIA = '"+cAgenciaDe+"' and ZP_CONTA = '"+cContaDe+"' and D_E_L_E_T_ <> '*'"
-	
-	nRet := TCSqlExec(cUpd)*/
 	
 	AAdd(aTempStru,{"E5_DTDISPO","C",08,0})
 	AAdd(aTempStru,{"E5_DATA","C",08,0})
