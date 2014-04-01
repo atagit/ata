@@ -129,10 +129,10 @@ static function ImprPago()
 	
 //	cQry := "select E2_BAIXA, E2_VENCREA, E2_FORNECE, E2_LOJA, E2_NOMFOR, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_NATUREZ, E2_EMISSAO, E2_CR, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_SALDO, datediff(day, E2_VENCTO, getdate()) as DIFF, E2_BANCO, E2_BORDERO, PRIORID = case when E2_PRIORID <> '' then E2_PRIORID else '99' end, E2_NUMBCO, E2_BCOPAG, E2_FATPREF, E2_FATURA, E2_VALLIQ "
 //	cQry += "from "+RetSqlName("SE2")+" "
-	cQry := "select E2_BAIXA, E2_VENCREA, E2_FORNECE, E2_LOJA, E2_NOMFOR, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_NATUREZ, E2_EMISSAO, E2_CR, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_SALDO, datediff(day, E2_VENCTO, getdate()) as DIFF, E2_BANCO, E2_BORDERO, PRIORID = case when E2_PRIORID <> '' then E2_PRIORID else '99' end, E2_NUMBCO, E2_BCOPAG, E2_FATPREF, E2_FATURA, E2_VALLIQ, E5_VALOR, E5_NUMTED, E5_DATA, E5_NUMCHEQ "
+	cQry := "select E2_BAIXA, E2_VENCREA, E2_FORNECE, E2_LOJA, E2_NOMFOR, E2_PREFIXO, E2_NUM, E2_PARCELA, E2_TIPO, E2_NATUREZ, E2_EMISSAO, E2_CR, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_SALDO, datediff(day, E2_VENCTO, getdate()) as DIFF, E2_BANCO, E2_BORDERO, PRIORID = case when E2_PRIORID <> '' then E2_PRIORID else '99' end, E2_NUMBCO, E2_BCOPAG, E2_FATPREF, E2_FATURA, E2_VALLIQ, E5_VALOR, E5_NUMTED, E5_DATA, E5_NUMCHEQ, E5_TIPODOC, E5_DOCUMEN "
 	cQry += "from "+RetSqlName("SE5")+" SE5 inner join "+RetSqlName("SE2")+" SE2 on (E5_NUMERO = E2_NUM and E5_PREFIXO = E2_PREFIXO and E5_PARCELA = E2_PARCELA and E5_FORNECE = E2_FORNECE and E5_LOJA = E2_LOJA) "
 //	cQry += "where (E2_BAIXA between '"+cBaixaIni+"' and '"+cBaixaFin+"') and (E2_FORNECE between '"+cForIni+"' and '"+cForFin+"') and (E2_BORDERO between '"+cBorIni+"' and '"+cBorFin+"') and (E2_PRIORID between '"+cPerIni+"' and '"+cPerFin+"') and (E2_BANCO between '"+cBanIni+"' and '"+cBanFin+"') and D_E_L_E_T_ <> '*' "
-	cQry += "where (E2_BAIXA between '"+cBaixaIni+"' and '"+cBaixaFin+"') and (E2_FORNECE between '"+cForIni+"' and '"+cForFin+"') and (E2_BORDERO between '"+cBorIni+"' and '"+cBorFin+"') and (E2_PRIORID between '"+cPerIni+"' and '"+cPerFin+"') and (E2_BANCO between '"+cBanIni+"' and '"+cBanFin+"') and E5_TIPODOC in ('BA','VL') and E5_TIPO <> '' and E2_FATFOR = '' and SE5.D_E_L_E_T_ <> '*' and SE2.D_E_L_E_T_ <> '*' "
+	cQry += "where (E2_BAIXA between '"+cBaixaIni+"' and '"+cBaixaFin+"') and (E2_FORNECE between '"+cForIni+"' and '"+cForFin+"') and (E2_BORDERO between '"+cBorIni+"' and '"+cBorFin+"') and (E2_PRIORID between '"+cPerIni+"' and '"+cPerFin+"') and (E2_BANCO between '"+cBanIni+"' and '"+cBanFin+"') and E5_TIPODOC in ('BA','VL','CP') and E5_TIPO not in ('','PA') and E2_FATFOR = '' and SE5.D_E_L_E_T_ <> '*' and SE2.D_E_L_E_T_ <> '*' "
 	
 	if nOrdem == 1
 		cQry += "order by E2_VENCREA, PRIORID, E2_FORNECE, E2_LOJA, E2_PREFIXO, E2_NUM, E2_PARCELA"
@@ -213,14 +213,43 @@ static function ImprPago()
 			@nLin,085 psay Left(TEMP->E2_NUMBCO,15)
 		endif*/
 		
-		if !Empty(TEMP->E5_NUMCHEQ)
-			@nLin,085 psay "CH"+Left(TEMP->E5_NUMCHEQ,13)
-		elseif !Empty(TEMP->E5_NUMTED)
+/*		if !Empty(TEMP->E5_NUMTED)
 			@nLin,085 psay "TD"+TEMP->E5_NUMTED
+		elseif !Empty(TEMP->E5_NUMCHEQ)
+			@nLin,085 psay "CH"+Left(TEMP->E5_NUMCHEQ,13)
 		else
 			@nLin,085 psay " "
+		endif*/
+		
+		if TEMP->E5_TIPODOC == "CP"
+			if Select("CON") <> 0
+				CON->(DbCloseArea())
+			endif
+			
+			cQry := "select E5_NUMTED, E5_NUMCHEQ, E5_BANCO "
+			cQry += "from "+RetSqlName("SE5")+" "
+			cQry += "where E5_PREFIXO+E5_NUMERO+E5_PARCELA+E5_TIPO+E5_CLIFOR+E5_LOJA = '"+RTrim(TEMP->E5_DOCUMEN)+"' and E5_TIPODOC = 'PA' and D_E_L_E_T_ <> '*' "
+			
+			tcquery cQry new alias "CON"
+			
+			DbSelectArea("CON")
+			
+			cNumDoc := IIf(!Empty(CON->E5_NUMTED),"TD"+CON->E5_NUMTED,Left("CH"+CON->E5_NUMCHEQ,15))
+			cSigla := CON->E5_BANCO
+		elseif TEMP->E2_TIPO == "NDF"
+			cNumDoc := "DEVOLUCAO"
+			cSigla := "  "
+		else
+			if !Empty(TEMP->E5_NUMTED)
+				cNumDoc := "TD"+TEMP->E5_NUMTED
+			elseif !Empty(TEMP->E5_NUMCHEQ)
+				cNumDoc := Left("CH"+TEMP->E5_NUMCHEQ,15)
+			else
+				cNumDoc := "  "
+			endif
 		endif
 		
+		@nLin,085 psay cNumDoc
 		@nLin,103 psay cSigla
 		@nLin,111 psay Transf(nValor,"@E 9,999,999,999.99")
 		
@@ -244,19 +273,6 @@ static function ImprPago()
 			aBanco[nInd][2] += 1
 			aBanco[nInd][3] += nValor
 		endif*/
-		
-		if TEMP->E2_TIPO == "NDF"
-			cNumDoc := "DEVOLUCAO"
-			cSigla := "  "
-		else
-			if !Empty(TEMP->E5_NUMTED)
-				cNumDoc := "TD"+TEMP->E5_NUMTED
-			elseif !Empty(TEMP->E5_NUMCHEQ)
-				cNumDoc := Left("CH"+TEMP->E5_NUMCHEQ,15)
-			else
-				cNumDoc := "  "
-			endif
-		endif
 		
 //		if !Empty(cNumDoc)
 			if (nInd := AScan(aDocumento,{|x| x[1] = cNumDoc .and. x[2] = cSigla})) == 0
@@ -389,6 +405,10 @@ static function ImprPago()
 	
 	U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 	TEMP->(DbCloseArea())
+	
+	if Select("CON")
+		CON->(DbCloseArea())
+	endif
 return
 
 static function ImprAPagar()

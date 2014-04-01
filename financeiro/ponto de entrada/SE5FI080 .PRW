@@ -17,6 +17,10 @@ user function SE5FI080()
 		MsUnLock()
 		
 		__NumTED := ""
+	elseif SE5->E5_TIPODOC == "PA" .and. SE5->E5_MOTBX == "NOR" .and. Left(SE5->E5_NUMCHEQ,3) == "TED"
+		RecLock("SE5",.F.)
+			SE5->E5_NUMTED := Right(AllTrim(SE5->E5_NUMCHEQ),6)
+		MsUnLock()
 	endif
 	
 	RestArea(aAreaAnt)
