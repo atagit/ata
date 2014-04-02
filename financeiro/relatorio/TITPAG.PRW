@@ -175,7 +175,8 @@ static function ImprPago()
 		endif
 		
 //		cBanco := IIf(SA6->(DbSeek(xFilial("SA6")+TEMP->E2_BANCO,.F.)),AllTrim(SA6->A6_NREDUZ)," ")
-		cSigla := IIf(SA6->(DbSeek(xFilial("SA6")+TEMP->E2_BCOPAG,.F.)),SA6->A6_SIGLA," ")
+//		cSigla := IIf(SA6->(DbSeek(xFilial("SA6")+TEMP->E2_BCOPAG,.F.)),SA6->A6_SIGLA," ")
+		cSigla := TEMP->E2_BCOPAG
 		cPrioridade := IIf(TEMP->PRIORID == "99"," ",TEMP->PRIORID)
 //		cTed := ""
 		
@@ -236,6 +237,9 @@ static function ImprPago()
 			
 			cNumDoc := IIf(!Empty(CON->E5_NUMTED),"TD"+CON->E5_NUMTED,Left("CH"+CON->E5_NUMCHEQ,15))
 			cSigla := CON->E5_BANCO
+			
+			CON->(DbCloseArea())
+			DbSelectArea("TEMP")
 		elseif TEMP->E2_TIPO == "NDF"
 			cNumDoc := "DEVOLUCAO"
 			cSigla := "  "
@@ -248,6 +252,8 @@ static function ImprPago()
 				cNumDoc := "  "
 			endif
 		endif
+		
+		cSigla := IIf(SA6->(DbSeek(xFilial("SA6")+cSigla,.F.)),SA6->A6_SIGLA," ")
 		
 		@nLin,085 psay cNumDoc
 		@nLin,103 psay cSigla
@@ -405,10 +411,6 @@ static function ImprPago()
 	
 	U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 	TEMP->(DbCloseArea())
-	
-	if Select("CON")
-		CON->(DbCloseArea())
-	endif
 return
 
 static function ImprAPagar()
