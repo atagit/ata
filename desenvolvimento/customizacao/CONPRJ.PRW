@@ -64,10 +64,10 @@ static function fPedCompras(nDialog)
 	DbSelectArea("SE4")
 	SE4->(DbSetOrder(1))
 	
-	cQry := "select C7_NUM, C7_EMISSAO, C7_DATPRF, C7_NUMSC, C7_NUMCOT, C7_COND, C7_USER, sum(C7_TOTAL) as C7_TOTAL, sum(C7_VALIPI) as C7_VALIPI "
-	cQry += "from "+RetSqlName("SC7")+" "
-	cQry += "where C7_CLVL = '"+CTH->CTH_CLVL+"' and C7_RESIDUO = '' and D_E_L_E_T_ <> '*' "
-	cQry += "group by C7_NUM, C7_EMISSAO, C7_DATPRF, C7_NUMSC, C7_NUMCOT, C7_COND, C7_USER "
+	cQry := "select C7_NUM, C7_EMISSAO, C7_DATPRF, A2_NREDUZ, C7_NUMSC, C7_NUMCOT, C7_COND, C7_USER, sum(C7_TOTAL) as C7_TOTAL, sum(C7_VALIPI) as C7_VALIPI "
+	cQry += "from "+RetSqlName("SC7")+" SC7 inner join "+RetSqlName("SA2")+" SA2 on (C7_FORNECE = A2_COD and C7_LOJA = A2_LOJA) "
+	cQry += "where C7_CLVL = '"+CTH->CTH_CLVL+"' and C7_RESIDUO = '' and SC7.D_E_L_E_T_ <> '*' and SA2.D_E_L_E_T_ <> '*' "
+	cQry += "group by C7_NUM, C7_EMISSAO, C7_DATPRF, A2_NREDUZ, C7_NUMSC, C7_NUMCOT, C7_COND, C7_USER "
 	cQry += "order by C7_NUM"
 	
 	tcquery cQry new alias "TEMP"
@@ -86,7 +86,7 @@ static function fPedCompras(nDialog)
 		cComprador := IIf(SY1->(DbSeek(xFilial("SY1")+TEMP->C7_USER,.F.)),AllTrim(SY1->Y1_NOME)," ")
 		cCondicao := IIf(SE4->(DbSeek(xFilial("SE4")+TEMP->C7_COND,.F.)),AllTrim(SE4->E4_DESCRI)," ")
 		
-		AAdd(aWBrowse1,{C7_NUM,U_ConvData(C7_EMISSAO),U_ConvData(C7_DATPRF),C7_NUMSC,C7_NUMCOT,cCondicao,Space(nTamTot)+Transf(C7_TOTAL,"@E 999,999,999.99"),Space(nTamIpi)+Transf(C7_VALIPI,"@E 999,999,999.99"),cComprador})
+		AAdd(aWBrowse1,{C7_NUM,AllTrim(A2_NREDUZ),U_ConvData(C7_EMISSAO),U_ConvData(C7_DATPRF),C7_NUMSC,C7_NUMCOT,cCondicao,Space(nTamTot)+Transf(C7_TOTAL,"@E 999,999,999.99"),Space(nTamIpi)+Transf(C7_VALIPI,"@E 999,999,999.99"),cComprador})
 		
 		nCont++
 		nTotal += TEMP->C7_TOTAL
@@ -96,12 +96,12 @@ static function fPedCompras(nDialog)
 	enddo
 	
 	if Len(aWBrowse1) <= 0
-		AAdd(aWBrowse1,{"","","","","","","","",""})
+		AAdd(aWBrowse1,{"","","","","","","","","",""})
 	endif
 	
-	@001,001 listbox oWBrowse1 fields header "PEDIDO","EMISSAO","ENTREGA","SOLICITACAO","COTACAO","COND. PAGTO","TOTAL","IPI","COMPRADOR" size 544,156 of oFolder1:aDialogs[nDialog] pixel colsizes 050,030
+	@001,001 listbox oWBrowse1 fields header "PEDIDO","FORNECEDOR","EMISSAO","ENTREGA","SOLICITACAO","COTACAO","COND. PAGTO","TOTAL","IPI","COMPRADOR" size 544,156 of oFolder1:aDialogs[nDialog] pixel colsizes 050,030
 		oWBrowse1:SetArray(aWBrowse1)
-		oWBrowse1:bLine := {|| {aWBrowse1[oWBrowse1:nAt,1],aWBrowse1[oWBrowse1:nAt,2],aWBrowse1[oWBrowse1:nAt,3],aWBrowse1[oWBrowse1:nAt,4],aWBrowse1[oWBrowse1:nAt,5],aWBrowse1[oWBrowse1:nAt,6],aWBrowse1[oWBrowse1:nAt,7],aWBrowse1[oWBrowse1:nAt,8],aWBrowse1[oWBrowse1:nAt,9]}}
+		oWBrowse1:bLine := {|| {aWBrowse1[oWBrowse1:nAt,1],aWBrowse1[oWBrowse1:nAt,2],aWBrowse1[oWBrowse1:nAt,3],aWBrowse1[oWBrowse1:nAt,4],aWBrowse1[oWBrowse1:nAt,5],aWBrowse1[oWBrowse1:nAt,6],aWBrowse1[oWBrowse1:nAt,7],aWBrowse1[oWBrowse1:nAt,8],aWBrowse1[oWBrowse1:nAt,9],aWBrowse1[oWBrowse1:nAt,10]}}
 //		DoubleClick event
 //		oWBrowse1:bLDblClick := {|| aWBrowse1[oWBrowse1:nAt,1] := !aWBrowse1[oWBrowse1:nAt,1],oWBrowse1:DrawSelect()}
 	@161,001 button oButton1 prompt "Visualizar" size 037,012 of oFolder1:aDialogs[nDialog] action Abrir() pixel
