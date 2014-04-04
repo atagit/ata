@@ -346,7 +346,8 @@ static function Impr2()
 		cQry := "select E2_VENCREA as VENC, E2_NUM as NUM, E2_PREFIXO as PREF, E2_PARCELA as PARC, E2_EMISSAO as EMISSAO, E2_TIPO as TIPO, E2_CR as CR, E2_BCOPAG as BCOPAG, E2_SALDO as VALOR, E2_BANCO as BCOCOB, E2_FORNECE as FORCLI, E2_LOJA as LOJA "
 		cQry += "from "+RetSqlName("SE2")+" "
 //		cQry += "where "+IIf(nTipo == 1,"E2_FORNECE = '"+cForIni+"' and E2_LOJA = '"+cLojIni+"' and ","")+"E2_BAIXA = ''"+IIf(nTipoDupli == 2," and E2_VENCREA <= '"+DToS(dDataBase)+"'","")+" and E2_VALOR > 0 and D_E_L_E_T_ <> '*' "
-		cQry += "where "+IIf(nTipo == 1,"E2_FORNECE = '"+cForIni+"' and E2_LOJA = '"+cLojIni+"' and ","")+"E2_BAIXA = '' and (E2_VENCREA between '"+cVenIni+"' and '"+cVenFin+"') and E2_VALOR > 0 and D_E_L_E_T_ <> '*' "
+//		cQry += "where "+IIf(nTipo == 1,"E2_FORNECE = '"+cForIni+"' and E2_LOJA = '"+cLojIni+"' and ","")+"E2_BAIXA = '' and (E2_VENCREA between '"+cVenIni+"' and '"+cVenFin+"') and E2_VALOR > 0 and D_E_L_E_T_ <> '*' "
+		cQry += "where "+IIf(nTipo == 1,"E2_FORNECE = '"+cForIni+"' and E2_LOJA = '"+cLojIni+"' and ","")+"(E2_VENCREA between '"+cVenIni+"' and '"+cVenFin+"') and E2_TIPO <> 'PR' and (E2_BAIXA = '' or (E2_BAIXA <> '' and E2_SALDO > 0)) and D_E_L_E_T_ <> '*' "
 		cQry += "order by E2_VENCREA, E2_NUM, E2_PREFIXO, E2_PARCELA"
 		
 		if nTipoDupli == 1
@@ -357,7 +358,8 @@ static function Impr2()
 	else				//Receber
 		cQry := "select E1_VENCREA as VENC, E1_NUM as NUM, E1_PREFIXO as PREF, E1_PARCELA as PARC, E1_EMISSAO as EMISSAO, E1_TIPO as TIPO, '' as CR, '' as BCOPAG, E1_SALDO as VALOR, '' as BCOCOB, E1_CLIENTE as FORCLI, E1_LOJA as LOJA "
 		cQry += "from "+RetSqlName("SE1")+" "
-		cQry += "where "+IIf(nTipo == 1,"E1_CLIENTE = '"+cCliIni+"' and E1_LOJA = '"+cLojIni+"' and ","")+"(E1_VENCREA between '"+cVenIni+"' and '"+cVenFin+"') and E1_SALDO > 0 and D_E_L_E_T_ <> '*' "
+//		cQry += "where "+IIf(nTipo == 1,"E1_CLIENTE = '"+cCliIni+"' and E1_LOJA = '"+cLojIni+"' and ","")+"(E1_VENCREA between '"+cVenIni+"' and '"+cVenFin+"') and E1_SALDO > 0 and D_E_L_E_T_ <> '*' "
+		cQry += "where "+IIf(nTipo == 1,"E1_CLIENTE = '"+cCliIni+"' and E1_LOJA = '"+cLojIni+"' and ","")+"(E1_VENCREA between '"+cVenIni+"' and '"+cVenFin+"') and E1_TIPO <> 'PR' and (E1_BAIXA = '' or (E1_BAIXA <> '' and E1_SALDO > 0)) and D_E_L_E_T_ <> '*' "
 		cQry += "order by E1_VENCREA, E1_NUM, E1_PREFIXO, E1_PARCELA"
 		
 		if nTipoDupli == 1
