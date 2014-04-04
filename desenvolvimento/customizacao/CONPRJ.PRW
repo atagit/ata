@@ -77,8 +77,8 @@ static function fPedCompras(nDialog)
 	nCont := 0; nTotal := 0 ; nIpi := 0
 	
 	while !TEMP->(Eof())
-		nTamTot := 14 - Len(AllTrim(Transf(C7_TOTAL,"@E 999,999,999.99")))
-		nTamIpi := 14 - Len(AllTrim(Transf(C7_VALIPI,"@E 999,999,999.99")))
+		nTamTot := 14 - Len(AllTrim(Transf(TEMP->C7_TOTAL,"@E 999,999,999.99")))
+		nTamIpi := 14 - Len(AllTrim(Transf(TEMP->C7_VALIPI,"@E 999,999,999.99")))
 		
 		SY1->(DbGoTop())
 		SE4->(DbGoTop())
@@ -86,7 +86,7 @@ static function fPedCompras(nDialog)
 		cComprador := IIf(SY1->(DbSeek(xFilial("SY1")+TEMP->C7_USER,.F.)),AllTrim(SY1->Y1_NOME)," ")
 		cCondicao := IIf(SE4->(DbSeek(xFilial("SE4")+TEMP->C7_COND,.F.)),AllTrim(SE4->E4_DESCRI)," ")
 		
-		AAdd(aWBrowse1,{C7_NUM,AllTrim(A2_NREDUZ),U_ConvData(C7_EMISSAO),U_ConvData(C7_DATPRF),C7_NUMSC,C7_NUMCOT,cCondicao,Space(nTamTot)+Transf(C7_TOTAL,"@E 999,999,999.99"),Space(nTamIpi)+Transf(C7_VALIPI,"@E 999,999,999.99"),cComprador})
+		AAdd(aWBrowse1,{TEMP->C7_NUM,AllTrim(TEMP->A2_NREDUZ),U_ConvData(TEMP->C7_EMISSAO),U_ConvData(TEMP->C7_DATPRF),TEMP->C7_NUMSC,TEMP->C7_NUMCOT,cCondicao,Space(nTamTot)+Transf(TEMP->C7_TOTAL,"@E 999,999,999.99"),Space(nTamIpi)+Transf(TEMP->C7_VALIPI,"@E 999,999,999.99"),cComprador})
 		
 		nCont++
 		nTotal += TEMP->C7_TOTAL
