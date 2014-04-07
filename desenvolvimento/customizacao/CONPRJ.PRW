@@ -42,13 +42,14 @@ user function CONPRJ1()
 		EnchoiceBar(oDlg,{||Close(oDlg)},{||Close(oDlg)},,aButtons)
 		
 		@016,003 group oGroup1 to 061,550 of oDlg color 0,16777215 pixel
-		@063,003 folder oFolder1 size 547,190 of oDlg items "Orçamento","Pedidos de Compra","N.F. de Compra","N.F. de Fatura","Titulos Abertos","Titulos Pagos","Produtos Usados","Projetos Relacionados" colors 0,16777215 pixel
+		@063,003 folder oFolder1 size 547,190 of oDlg items "Orçamento","Pedidos de Compra","N.F. de Compra","N.F. de Fatura","Titulos Abertos","Titulos Pagos","Produtos Usados","Projetos Relacionado" colors 0,16777215 pixel
 		
-		fPedCompras(2)
+		fPedCompra(2)
+		fProjRelacionado(8)
 	activate msdialog oDlg
 return
 
-static function fPedCompras(nDialog)
+static function fPedCompra(nDialog)
 	local oWBrowse1
 	local aWBrowse1 := {}
 	local oSay1,oSay2,oSay3,oSay4
@@ -78,7 +79,19 @@ static function fPedCompras(nDialog)
 	
 	while !TEMP->(Eof())
 		nTamTot := 14 - Len(AllTrim(Transf(TEMP->C7_TOTAL,"@E 999,999,999.99")))
-		nTamIpi := 14 - Len(AllTrim(Transf(TEMP->C7_VALIPI,"@E 999,999,999.99")))
+		nTamIpi := 10 - Len(AllTrim(Transf(TEMP->C7_VALIPI,"@E 999,999.99")))
+		
+		do case
+			case TEMP->C7_TOTAL > 10000
+				nTamTot++
+			case TEMP->C7_TOTAL > 1000
+				nTamTot++
+		endcase
+		
+		do case
+			case TEMP->C7_VALIPI > 1000
+				nTamIpi++
+		endcase
 		
 		SY1->(DbGoTop())
 		SE4->(DbGoTop())
@@ -86,7 +99,7 @@ static function fPedCompras(nDialog)
 		cComprador := IIf(SY1->(DbSeek(xFilial("SY1")+TEMP->C7_USER,.F.)),AllTrim(SY1->Y1_NOME)," ")
 		cCondicao := IIf(SE4->(DbSeek(xFilial("SE4")+TEMP->C7_COND,.F.)),AllTrim(SE4->E4_DESCRI)," ")
 		
-		AAdd(aWBrowse1,{TEMP->C7_NUM,AllTrim(TEMP->A2_NREDUZ),U_ConvData(TEMP->C7_EMISSAO),U_ConvData(TEMP->C7_DATPRF),TEMP->C7_NUMSC,TEMP->C7_NUMCOT,cCondicao,Space(nTamTot)+Transf(TEMP->C7_TOTAL,"@E 999,999,999.99"),Space(nTamIpi)+Transf(TEMP->C7_VALIPI,"@E 999,999,999.99"),cComprador})
+		AAdd(aWBrowse1,{TEMP->C7_NUM,TEMP->A2_NREDUZ,U_ConvData(TEMP->C7_EMISSAO),U_ConvData(TEMP->C7_DATPRF),TEMP->C7_NUMSC,TEMP->C7_NUMCOT,cCondicao,Space(nTamTot)+Transf(TEMP->C7_TOTAL,"@E 999,999,999.99"),Space(nTamIpi)+Transf(TEMP->C7_VALIPI,"@E 999,999.99"),cComprador})
 		
 		nCont++
 		nTotal += TEMP->C7_TOTAL
@@ -99,16 +112,78 @@ static function fPedCompras(nDialog)
 		AAdd(aWBrowse1,{"","","","","","","","","",""})
 	endif
 	
-	@001,001 listbox oWBrowse1 fields header "PEDIDO","FORNECEDOR","EMISSAO","ENTREGA","SOLICITACAO","COTACAO","COND. PAGTO","TOTAL","IPI","COMPRADOR" size 544,156 of oFolder1:aDialogs[nDialog] pixel colsizes 050,030
+	@001,001 listbox oWBrowse1 fields header "PEDIDO","FORNECEDOR","EMISSAO","ENTREGA","SOLICITACAO","COTACAO","COND. PAGTO","TOTAL","IPI","COMPRADOR" size 544,156 of oFolder1:aDialogs[nDialog] pixel
 		oWBrowse1:SetArray(aWBrowse1)
 		oWBrowse1:bLine := {|| {aWBrowse1[oWBrowse1:nAt,1],aWBrowse1[oWBrowse1:nAt,2],aWBrowse1[oWBrowse1:nAt,3],aWBrowse1[oWBrowse1:nAt,4],aWBrowse1[oWBrowse1:nAt,5],aWBrowse1[oWBrowse1:nAt,6],aWBrowse1[oWBrowse1:nAt,7],aWBrowse1[oWBrowse1:nAt,8],aWBrowse1[oWBrowse1:nAt,9],aWBrowse1[oWBrowse1:nAt,10]}}
 //		DoubleClick event
 //		oWBrowse1:bLDblClick := {|| aWBrowse1[oWBrowse1:nAt,1] := !aWBrowse1[oWBrowse1:nAt,1],oWBrowse1:DrawSelect()}
-	@161,001 button oButton1 prompt "Visualizar" size 037,012 of oFolder1:aDialogs[nDialog] action Abrir() pixel
+	@161,001 button oButton1 prompt "Visualizar" size 037,012 of oFolder1:aDialogs[nDialog] action Abrir(nDialog) pixel
     @165,083 say oSay1 prompt "REGISTROS:" size 037,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
     @165,121 say oSay2 prompt Transf(nCont,"999999") size 025,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
     @165,212 say oSay3 prompt "VALOR TOTAL:" size 044,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
     @165,277 say oSay4 prompt Transf(nTotal,"@E 999,999,999.99") size 080,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
     @165,371 say oSay5 prompt "VALOR IPI:" size 044,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
-    @165,403 say oSay6 prompt Transf(nIpi,"@E 999,999,999.99") size 080,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
+    @165,413 say oSay6 prompt Transf(nIpi,"@E 999,999.99") size 080,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
+return
+
+static function fProjRelacionado(nDialog)
+	local oWBrowse1
+	local aWBrowse1 := {}
+	local oSay1,oSay2,oSay3,oSay4
+	local nCont,nTotal,nPeso
+	
+	if Select("TEMP") <> 0
+		TEMP->(DbCloseArea())
+	endif
+	
+	cQry := "select CTH_CLVL, CTH_DESC01, CTH_DTEXIS, CTH_DTENTR, CTH_PESAF, CTH_VLAF, CTH_GESTOR "
+	cQry += "from "+RetSqlName("CTH")+" "
+	cQry += "where CTH_AF = '"+CTH->CTH_AF+"' and CTH_CLVL <> '"+CTH->CTH_CLVL+"' and D_E_L_E_T_ <> '*' "
+	cQry += "order by CTH_CLVL"
+	
+	tcquery cQry new alias "TEMP"
+	
+	DbSelectArea("TEMP")
+	
+	nCont := 0; nTotal := 0 ; nPeso := 0
+	
+	while !TEMP->(Eof())
+		AAdd(aWBrowse1,{TEMP->CTH_CLVL,TEMP->CTH_DESC01,U_ConvData(TEMP->CTH_DTEXIS),U_ConvData(TEMP->CTH_DTENTR),Transf(TEMP->CTH_PESAF,"@E 999,999,999.999"),Transf(TEMP->CTH_VLAF,"@E 999,999,999,999.9999"),Transf(TEMP->CTH_PESAF * TEMP->CTH_VLAF,"@E 999,999,999,999.9999"),TEMP->CTH_GESTOR})
+		
+		nCont++
+		nPeso += TEMP->CTH_PESAF
+		nTotal += TEMP->CTH_PESAF * TEMP->CTH_VLAF
+		
+		TEMP->(DbSkip())
+	enddo
+	
+	if Len(aWBrowse1) <= 0
+		AAdd(aWBrowse1,{"","","","","","","",""})
+	endif
+	
+	@001,001 listbox oWBrowse1 fields header "PROJETO","DESCRICAO","EMISSAO","ENTREGA","PESO","VL. PESO","VL. TOTAL","GESTOR" size 544,156 of oFolder1:aDialogs[nDialog] pixel
+		oWBrowse1:SetArray(aWBrowse1)
+		oWBrowse1:bLine := {|| {aWBrowse1[oWBrowse1:nAt,1],aWBrowse1[oWBrowse1:nAt,2],aWBrowse1[oWBrowse1:nAt,3],aWBrowse1[oWBrowse1:nAt,4],aWBrowse1[oWBrowse1:nAt,5],aWBrowse1[oWBrowse1:nAt,6],aWBrowse1[oWBrowse1:nAt,7],aWBrowse1[oWBrowse1:nAt,8]}}
+//		DoubleClick event
+//		oWBrowse1:bLDblClick := {|| aWBrowse1[oWBrowse1:nAt,1] := !aWBrowse1[oWBrowse1:nAt,1],oWBrowse1:DrawSelect()}
+	@161,001 button oButton1 prompt "Visualizar" size 037,012 of oFolder1:aDialogs[nDialog] action Abrir(nDialog) pixel
+    @165,083 say oSay1 prompt "REGISTROS:" size 037,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
+    @165,121 say oSay2 prompt Transf(nCont,"999999") size 025,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
+    @165,212 say oSay3 prompt "PESO TOTAL:" size 044,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
+    @165,277 say oSay4 prompt Transf(nPeso,"@E 999,999,999.999") size 080,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
+    @165,371 say oSay5 prompt "VALOR TOTAL:" size 044,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
+    @165,443 say oSay6 prompt Transf(nTotal,"@E 999,999,999,999.9999") size 080,007 of oFolder1:aDialogs[nDialog] colors 0,16777215 pixel
+return
+
+static function Abrir(nOpcao)
+	do case
+		case nOpcao == 1		//
+		case nOpcao == 2		// Pedidos de Compra
+		case nOpcao == 3		//
+		case nOpcao == 4		//
+		case nOpcao == 5		//
+		case nOpcao == 6		//
+		case nOpcao == 7		//
+		case nOpcao == 8		// Projetos Relacionado
+	endcase
 return
