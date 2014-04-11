@@ -591,7 +591,8 @@ user function ATUAORCA()
 	
 	if MsgNoYes("Os valores do projeto "+AllTrim(cProjeto)+" podera ser alterado, tem certeza que deseja atualizar?"," Confirmar ")
 		//*** EMPENHADO ***\\
-		cQry := "select BM_ORCGRP, B1_GRUPO, (C7_TOTAL + C7_VALIPI) as C7_TOTAL "
+		cQry := "select BM_ORCGRP, B1_GRUPO, ((C7_QUANT - C7_QUJE) * C7_PRECO) + (((((C7_QUANT - C7_QUJE) * C7_PRECO)) * C7_IPI) / 100) as C7_TOTAL "
+//		cQry := "select BM_ORCGRP, B1_GRUPO, (C7_TOTAL + C7_VALIPI) as C7_TOTAL "
 		cQry += "from "+RetSqlName("SC7")+" SC7 inner join "+RetSqlName("SB1")+" SB1 on (C7_PRODUTO = B1_COD and C7_LOCAL = B1_LOCPAD) "
 		cQry += "	inner join "+RetSqlName("SBM")+" SBM on (B1_GRUPO = BM_GRUPO) "
 		cQry += "where C7_CLVL = '"+cProjeto+"' and BM_ORCGRP <> '999' and SC7.D_E_L_E_T_ <> '*' and SB1.D_E_L_E_T_ <> '*' and SBM.D_E_L_E_T_ <> '*' "

@@ -159,7 +159,7 @@ static function Impr()
 		else
 			cQry := "select E2_NUM, E2_PREFIXO, E2_PARCELA, E2_EMISSAO, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_BALGER, E2_NOMFOR, E2_VALLIQ "
 			cQry += "from "+RetSqlName("SE2")+" "
-			cQry += "where E2_NUM = '"+TEMP->E5_NUMERO+"' and E2_PREFIXO = '"+TEMP->E5_PREFIXO+"' and E2_PARCELA = '"+TEMP->E5_PARCELA+"' and E2_FORNECE = '"+TEMP->E5_CLIFOR+"' and D_E_L_E_T_ <> '*' "
+			cQry += "where E2_NUM = '"+TEMP->E5_NUMERO+"' and E2_PREFIXO = '"+TEMP->E5_PREFIXO+"' and E2_PARCELA = '"+TEMP->E5_PARCELA+"' and E2_FORNECE = '"+TEMP->E5_CLIFOR+"' and E2_LOJA = '"+TEMP->E5_LOJA+"' and E2_BCOPAG = '"+TEMP->E5_BANCO+"' and D_E_L_E_T_ <> '*' "
 		endif
 		
 		tcquery cQry new alias "CON1"
@@ -167,6 +167,8 @@ static function Impr()
 		DbSelectArea("CON1")
 		ProcRegua(CON1->(RecCount()))
 		CON1->(DbGoTop())
+		
+		nTotItem := 1
 		
 		while !CON1->(Eof())
 			nValPA := IIf(TEMP->E5_TIPO == "PA ",CON1->E2_VALOR,CON1->E2_VALLIQ)
