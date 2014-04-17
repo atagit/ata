@@ -96,39 +96,26 @@ static function Impr()
 	
 	cQry := "select * "
 	cQry += "from "+RetSqlName("SEF")+" "
-	cQry += "where (EF_NUM between '"+cChqIni+"' and '"+cChqFin+"') and EF_BANCO = '"+cBancoDe+"' and EF_AGENCIA = '"+cAgenciaDe+"' and EF_CONTA = '"+cContaDe+"' and D_E_L_E_T_ <> '*' "
+	cQry += "where (EF_NUM between '"+cChqIni+"' and '"+cChqFin+"') and EF_BANCO = '"+cBancoDe+"' and EF_AGENCIA = '"+cAgenciaDe+"' and EF_CONTA = '"+cContaDe+"' and EF_TITULO = '' and D_E_L_E_T_ <> '*' "
 	cQry += "order by EF_NUM, EF_BANCO, EF_AGENCIA, EF_CONTA, EF_TITULO"
 	
 	tcquery cQry new alias "TEMP"
+	
 	DbSelectArea("TEMP")
-	DbGoTop()
+	TEMP->(DbGoTop())
 	
 	while !TEMP->(Eof())
 		cNum := TEMP->EF_NUM
-//		cBanco := TEMP->EF_BANCO
-//		cAG := TEMP->EF_AGENCIA
-//		cCT := TEMP->EF_CONTA
+		lPredat := TEMP->EF_PREDATA
+		cHistor := AllTrim(TEMP->EF_HIST)
 		nTotChq := TEMP->EF_VALOR
 		cOrigem := TEMP->EF_ORIGEM
-//		cBenef := If(cOrigem == "FINA390AVU",TEMP->EF_BENEF,TEMP->EF_HIST)
-//		dData := SToD(TEMP->E5_DTDIGIT)
+		dEmiss := SToD(TEMP->EF_DATA)
 		
-		SE5->(DbSetOrder(11))
-		SE5->(DbGoTop())
-		
-		if SE5->(DbSeek(xFilial("SE5")+cBancoDe+cAgenciaDe+cContaDe+cNum,.F.)) .and. TEMP->EF_PREDATA == "T"
-			while !SE5->(Eof()) .and. SE5->E5_BANCO == cBancoDe .and. SE5->E5_AGENCIA == cAgenciaDe .and. SE5->E5_CONTA == cContaDe .and. SE5->E5_NUMCHEQ == cNum
-				if SE5->E5_TIPODOC == "CH"
-//					dData := SE5->E5_DTDIGIT
-					dData := SE5->E5_DTDISPO
-					dEmiss := SE5->E5_DTDIGIT
-				endif
-				
-				SE5->(DbSkip())
-			enddo
+		if TEMP->EF_PREDATA == "T"
+			dData := SToD(TEMP->EF_DTPREDA)
 		else
 			dData := SToD(TEMP->EF_DATA)
-			dEmiss := SToD(TEMP->EF_DATA)
 		endif
 		
 		lFirst := .T.
@@ -143,49 +130,58 @@ static function Impr()
 		@nLin  ,021 psay IIf(SA6->(DbSeek(xFilial("SA6")+cBancoDe+cAgenciaDe+cContaDe,.F.)),AllTrim(SA6->A6_AGENCIA)+" / "+SA6->A6_NUMCON," ")
 		@nLin  ,042 psay Transf(nTotChq,"@E 999,999,999.99")
 		@nLin  ,059 psay cNum
-//		@nLin  ,077 psay U_ConvData(DToS(dData))
 		@nLin  ,077 psay U_ConvData(DToS(dEmiss))
-		@nLin  ,090 psay IIf(TEMP->EF_PREDATA == "F","AVISTA","PREDATADO")
-		@nLin  ,102 psay U_ConvData(IIf(TEMP->EF_PREDATA == "F",TEMP->EF_DATA,DToS(dData)))
-//		@nLin  ,090 psay IIf(!Empty(TEMP->EF_DTPREDA),U_ConvData(TEMP->EF_DTPREDA)," ")
-		@++nLin,003 psay "HISTORICO: "+AllTrim(TEMP->EF_HIST)
+		@nLin  ,090 psay IIf(lPredat == "F","AVISTA","PREDATADO")
+		@nLin  ,102 psay U_ConvData(DToS(dData))
+//		@nLin  ,102 psay U_ConvData(IIf(TEMP->EF_PREDATA == "F",TEMP->EF_DATA,DToS(dData)))
+		@++nLin,003 psay "HISTORICO: "+cHistor
 		@++nLin,002 psay Replicate("=",132)
 		
 		if cOrigem <> "FINA390AVU"
-//			@++nLin,003 psay "IT | FORNECEDOR                                         | PREF | TITULO    | PARC | DT VENCTO  |          VALOR"
-			
 //			   IT | FORNECEDOR                               | PREF | TITULO    | PARC | NATUREZA                           |          VALOR
 //			   99   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   AAA    999999999   999    999 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   999,999,999.99
 //			012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //			          1         2         3         4         5         6         7         8         9        10        11        12        13
 			
+			if Select("CON") <> 0
+				CON->(DbCloseArea())
+			endif
+			
 			@++nLin,003 psay "IT | FORNECEDOR                               | PREF | TITULO    | PARC | NATUREZA                           |          VALOR"
 			@++nLin,002 psay Replicate("-",132)
 			
-			while cNum == TEMP->EF_NUM .and. cBancoDe == TEMP->EF_BANCO .and. cAgenciaDe == TEMP->EF_AGENCIA .and. cContaDe == TEMP->EF_CONTA
-				if Empty(TEMP->EF_TITULO) ; TEMP->(DbSkip()) ; loop ; endif
-				
+			cQry := "select * "
+			cQry += "from "+RetSqlName("SE5")+" "
+			cQry += "where E5_NUMCHEQ = '"+cNum+"' and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_TIPODOC <> 'CH' and D_E_L_E_T_ <> '*' "
+			cQry += "order by E5_NUMCHEQ"
+			
+			tcquery cQry new alias "CON"
+			
+			DbSelectArea("CON")
+			CON->(DbGoTop())
+			
+			nItem := 1
+			
+			while !CON->(Eof())
 				@nLin+1,003 psay StrZero(nItem,2)
-//				@nLin+1,008 psay TEMP->EF_FORNECE+"-"+TEMP->EF_LOJA+" "+TEMP->EF_BENEF
-				@nLin+1,008 psay TEMP->EF_BENEF
-				@nLin+1,051 psay TEMP->EF_PREFIXO
-				@nLin+1,058 psay TEMP->EF_TITULO
-				@nLin+1,070 psay TEMP->EF_PARCELA
-//				@nLin+1,087 psay U_ConvData(TEMP->EF_DATA)
+				@nLin+1,008 psay CON->E5_BENEF
+				@nLin+1,051 psay CON->E5_PREFIXO
+				@nLin+1,058 psay CON->E5_NUMERO
+				@nLin+1,070 psay CON->E5_PARCELA
 				
-				if SE2->(DbSeek(xFilial("SE2")+TEMP->(EF_PREFIXO+EF_TITULO+EF_PARCELA),.F.))
+				if SE2->(DbSeek(xFilial("SE2")+CON->(E5_PREFIXO+E5_NUMERO+E5_PARCELA+E5_TIPO+E5_CLIFOR+E5_LOJA),.F.))
 					cNatureza := IIf(SZ5->(DbSeek(xFilial("SZ5")+SE2->E2_BALGER,.F.)),SZ5->Z5_NOME," ")
 					
 					@nLin+1,077 psay SE2->E2_BALGER+" "+cNatureza
 					
 					if (nInd := AScan(aNatureza,{|x| x[1] = SE2->E2_BALGER})) == 0
-						AAdd(aNatureza,{SE2->E2_BALGER,cNatureza,TEMP->EF_VALOR})
+						AAdd(aNatureza,{SE2->E2_BALGER,cNatureza,CON->E5_VALOR})
 					else
-						aNatureza[nInd][3] += TEMP->EF_VALOR
+						aNatureza[nInd][3] += CON->E5_VALOR
 					endif
 				endif
 				
-				@nLin+1,114 psay Transf(TEMP->EF_VALOR,"@E 999,999,999.99")
+				@nLin+1,114 psay Transf(CON->E5_VALOR,"@E 999,999,999.99")
 				
 				nLin++
 				nItem++
@@ -204,16 +200,16 @@ static function Impr()
 					@nLin  ,021 psay IIf(SA6->(DbSeek(xFilial("SA6")+cBancoDe+cAgenciaDe+cContaDe,.F.)),AllTrim(SA6->A6_AGENCIA)+" / "+SA6->A6_NUMCON," ")
 					@nLin  ,042 psay Transf(nTotChq,"@E 999,999,999.99")
 					@nLin  ,059 psay cNum
-					@nLin  ,077 psay U_ConvData(DToS(dData))
-					@nLin  ,090 psay IIf(TEMP->EF_PREDATA == "F","AVISTA","PREDATADO")
-					@nLin  ,102 psay IIf(TEMP->EF_PREDATA == "F",U_ConvData(DToS(dData)),U_ConvData(TEMP->EF_DATA))
-					@++nLin,003 psay "HISTORICO: "+AllTrim(TEMP->EF_HIST)
+					@nLin  ,077 psay U_ConvData(DToS(dEmiss))
+					@nLin  ,090 psay IIf(lPredat == "F","AVISTA","PREDATADO")
+					@nLin  ,102 psay U_ConvData(DToS(dData))
+					@++nLin,003 psay "HISTORICO: "+cHistor
 					@++nLin,002 psay Replicate("=",132)
 					@++nLin,003 psay "IT | FORNECEDOR                               | PREF | TITULO    | PARC | NATUREZA                           |          VALOR"
 					@++nLin,002 psay Replicate("-",132)
 				endif
 				
-				TEMP->(DbSkip())
+				CON->(DbSkip())
 			enddo
 			
 			@++nLin,002 psay Replicate("-",132)
@@ -228,10 +224,13 @@ static function Impr()
 		Assinatura()
 		Rdp()
 		
-		if cOrigem == "FINA390AVU"
+//		if cOrigem == "FINA390AVU"
 			TEMP->(DbSkip())
-		endif
+//		endif
 	enddo
+	
+	CON->(DbCloseArea())
+	TEMP->(DbCloseArea())
 return
 
 static function Cbc(nPosLin)

@@ -3,11 +3,9 @@
    +----------+-------------------------------------------------------¦
    ¦Descrição ¦ PE para adicionar um botão no pedido de venda         ¦
   ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*/
-
 #include "rwmake.ch"
 
 user function MT410BRW()
-//	AAdd(aRotina,{"Consulta NF","U_ChamarNF()",0,3})
 	AAdd(aRotina,{"Imprimir NF","U_ChamarNF()",0,3})
 return
 

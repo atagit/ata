@@ -591,28 +591,47 @@ user function ATUAORCA()
 	
 	if MsgNoYes("Os valores do projeto "+AllTrim(cProjeto)+" podera ser alterado, tem certeza que deseja atualizar?"," Confirmar ")
 		//*** EMPENHADO ***\\
-		cQry := "select BM_ORCGRP, B1_GRUPO, ((C7_QUANT - C7_QUJE) * C7_PRECO) + (((((C7_QUANT - C7_QUJE) * C7_PRECO)) * C7_IPI) / 100) as C7_TOTAL "
+/*		cQry := "select BM_ORCGRP, B1_GRUPO, ((C7_QUANT - C7_QUJE) * C7_PRECO) + (((((C7_QUANT - C7_QUJE) * C7_PRECO)) * C7_IPI) / 100) as C7_TOTAL "
 //		cQry := "select BM_ORCGRP, B1_GRUPO, (C7_TOTAL + C7_VALIPI) as C7_TOTAL "
 		cQry += "from "+RetSqlName("SC7")+" SC7 inner join "+RetSqlName("SB1")+" SB1 on (C7_PRODUTO = B1_COD and C7_LOCAL = B1_LOCPAD) "
 		cQry += "	inner join "+RetSqlName("SBM")+" SBM on (B1_GRUPO = BM_GRUPO) "
 		cQry += "where C7_CLVL = '"+cProjeto+"' and BM_ORCGRP <> '999' and SC7.D_E_L_E_T_ <> '*' and SB1.D_E_L_E_T_ <> '*' and SBM.D_E_L_E_T_ <> '*' "
-		cQry += "order by BM_ORCGRP, B1_GRUPO, C7_TOTAL "
+		cQry += "order by BM_ORCGRP, B1_GRUPO, C7_TOTAL "*/
+		
+		cQry := "select B1_GRUPO, BM_ORCGRP, C7_PRODUTO, C7_QUANT, C7_QUJE, C7_PRECO, C7_TOTAL, C7_RESIDUO, C7_ENCER, C7_IPI, C7_VALIPI "
+		cQry += "from "+RetSqlName("SC7")+" SC7 inner join "+RetSqlName("SB1")+" SB1 on (C7_PRODUTO = B1_COD) "
+		cQry += "	inner join "+RetSqlName("SBM")+" SBM on (B1_GRUPO = BM_GRUPO) "
+		cQry += "where C7_CLVL = '"+cProjeto+"' and BM_ORCGRP <> '999' and SC7.D_E_L_E_T_ <> '*' and SB1.D_E_L_E_T_ <> '*' and SBM.D_E_L_E_T_ <> '*' "
+		cQry += "order by BM_ORCGRP, B1_GRUPO"
 		
 		tcquery cQry new alias "TEMP"
+		
 		DbSelectArea("TEMP")
 		TEMP->(DbGoTop())
 		
+		nValor := 0
+		
 		while !TEMP->(Eof())
-			if (nInd := AScan(aGrupo,{|x| x[1] = TEMP->B1_GRUPO})) == 0
-				AAdd(aGrupo,{TEMP->B1_GRUPO,TEMP->C7_TOTAL,0,"N",TEMP->BM_ORCGRP})
+			if Empty(TEMP->C7_RESIDUO)
+				nValor := TEMP->C7_TOTAL
 			else
-				aGrupo[nInd][2] += TEMP->C7_TOTAL 
+				if !Empty(TEMP->C7_QUJE)
+					nValor := C7_QUJE * C7_PRECO
+				else
+					nValor := 0
+				endif
+			endif
+			
+			if (nInd := AScan(aGrupo,{|x| x[1] = TEMP->B1_GRUPO})) == 0
+				AAdd(aGrupo,{TEMP->B1_GRUPO,nValor,0,"N",TEMP->BM_ORCGRP})
+			else
+				aGrupo[nInd][2] += nValor
 			endif
 			
 			if (nInd := AScan(aGGrupo,{|x| x[1] = TEMP->BM_ORCGRP})) == 0
-				AAdd(aGGrupo,{TEMP->BM_ORCGRP,TEMP->C7_TOTAL,0,"N"})
+				AAdd(aGGrupo,{TEMP->BM_ORCGRP,nValor,0,"N"})
 			else
-				aGGrupo[nInd][2] += TEMP->C7_TOTAL 
+				aGGrupo[nInd][2] += nValor
 			endif
 			
 			TEMP->(DbSkip())
@@ -628,6 +647,7 @@ user function ATUAORCA()
 		cQry += "order by BM_ORCGRP, B1_GRUPO, D1_TOTAL "
 		
 		tcquery cQry new alias "TEMP"
+		
 		DbSelectArea("TEMP")
 		TEMP->(DbGoTop())
 		
