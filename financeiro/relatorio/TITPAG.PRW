@@ -45,6 +45,7 @@ user function TITPAG()
 	private nBaixados := 0
 	private cBaixaIni := ""
 	private cBaixaFin := ""
+	private nArmaz10 := 1
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Parametros utilizados pelo programa                          ³
@@ -61,6 +62,7 @@ user function TITPAG()
 	//³ mv_par11 - Titulos Baixados (1-Nao/2-Sim)                    ³
 	//³ mv_par12 - Baixa de                                          ³
 	//³ mv_par13 - Baixa ate                                         ³
+	//³ mv_par14 - Armazem 10 (1-Nao/2-Sim/3-Todos)                  ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	
 	Pergunte(cPerg,.F.)
@@ -85,6 +87,7 @@ user function TITPAG()
 	nBaixados := mv_par11
 	cBaixaIni := DToS(mv_par12)
 	cBaixaFin := DToS(mv_par13)
+	nArmaz10 := mv_par14
 	
 	if nBaixados == 2
 		Processa({|| ImprPago()},"","Aguarde processando...",lAborta)
@@ -160,8 +163,12 @@ static function ImprPago()
 //	          1         2         3         4         5         6         7         8         9        10        11        12        13
 	
 	while !TEMP->(Eof())
-		if TEMP->E2_TIPO == "NF " .and. SD1->(DbSeek(xFilial("SD1")+TEMP->(E2_NUM+E2_PREFIXO+E2_FORNECE+E2_LOJA),.F.))
-			if SD1->D1_LOCAL == "10" ; TEMP->(DbSkip()) ; loop ; endif
+		if TEMP->E2_TIPO == "NF " .and. SD1->(DbSeek(xFilial("SD1")+TEMP->(E2_NUM+E2_PREFIXO+E2_FORNECE+E2_LOJA),.F.)) .and. nArmaz10 < 3
+			if nArmaz10 == 1
+				if SD1->D1_LOCAL == "10" ; TEMP->(DbSkip()) ; loop ; endif
+			else
+				if SD1->D1_LOCAL <> "10" ; TEMP->(DbSkip()) ; loop ; endif
+			endif
 		endif
 		
 		if TEMP->E2_TIPO == "NDF"
@@ -463,8 +470,12 @@ static function ImprAPagar()
 //	          1         2         3         4         5         6         7         8         9        10        11        12        13
 	
 	while !TEMP->(Eof())
-		if TEMP->E2_TIPO == "NF " .and. SD1->(DbSeek(xFilial("SD1")+TEMP->(E2_NUM+E2_PREFIXO+E2_FORNECE+E2_LOJA),.F.))
-			if SD1->D1_LOCAL == "10" ; TEMP->(DbSkip()) ; loop ; endif
+		if TEMP->E2_TIPO == "NF " .and. SD1->(DbSeek(xFilial("SD1")+TEMP->(E2_NUM+E2_PREFIXO+E2_FORNECE+E2_LOJA),.F.)) .and. nArmaz10 < 3
+			if nArmaz10 == 1
+				if SD1->D1_LOCAL == "10" ; TEMP->(DbSkip()) ; loop ; endif
+			else
+				if SD1->D1_LOCAL <> "10" ; TEMP->(DbSkip()) ; loop ; endif
+			endif
 		endif
 		
 		do case

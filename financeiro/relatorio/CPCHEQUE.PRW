@@ -94,9 +94,9 @@ static function Impr()
 	cQry += "where (EF_NUM between '"+cChqIni+"' and '"+cChqFin+"') and E5_TIPODOC = 'CH' and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
 	cQry += "order by EF_NUM, EF_BANCO, EF_AGENCIA, EF_CONTA, EF_TITULO"*/
 	
-	cQry := "select * "
-	cQry += "from "+RetSqlName("SEF")+" "
-	cQry += "where (EF_NUM between '"+cChqIni+"' and '"+cChqFin+"') and EF_BANCO = '"+cBancoDe+"' and EF_AGENCIA = '"+cAgenciaDe+"' and EF_CONTA = '"+cContaDe+"' and EF_TITULO = '' and D_E_L_E_T_ <> '*' "
+	cQry := "select E5_DTDIGIT, SEF.* "
+	cQry += "from "+RetSqlName("SEF")+" SEF inner join "+RetSqlName("SE5")+" SE5 on (EF_NUM = E5_NUMCHEQ and EF_BANCO = E5_BANCO and EF_AGENCIA = E5_AGENCIA and EF_CONTA = E5_CONTA and EF_VALOR = E5_VALOR) "
+	cQry += "where (EF_NUM between '"+cChqIni+"' and '"+cChqFin+"') and EF_BANCO = '"+cBancoDe+"' and EF_AGENCIA = '"+cAgenciaDe+"' and EF_CONTA = '"+cContaDe+"' and EF_TITULO = '' and E5_TIPODOC = 'CH' and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
 	cQry += "order by EF_NUM, EF_BANCO, EF_AGENCIA, EF_CONTA, EF_TITULO"
 	
 	tcquery cQry new alias "TEMP"
@@ -110,15 +110,15 @@ static function Impr()
 		cHistor := AllTrim(TEMP->EF_HIST)
 		nTotChq := TEMP->EF_VALOR
 		cOrigem := TEMP->EF_ORIGEM
-		dEmiss := SToD(TEMP->EF_DATA)
+//		dEmiss := SToD(TEMP->EF_DATA)
+		dEmiss := SToD(TEMP->E5_DTDIGIT)
+		lFirst := .T.
 		
 		if TEMP->EF_PREDATA == "T"
 			dData := SToD(TEMP->EF_DTPREDA)
 		else
 			dData := SToD(TEMP->EF_DATA)
 		endif
-		
-		lFirst := .T.
 		
 		U_Cheque(cBancoDe,cAgenciaDe,cContaDe,cNum,nTotChq,TEMP->EF_BENEF,dData)
 		Cbc(15)

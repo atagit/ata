@@ -221,7 +221,7 @@ static function MErro(lMsErroAuto,nValProd,nValProj,aErro,cRetorno)
 	cQry := "update [DADOSATF].dbo.TBLAPI set erro = 'S' where empresa = '"+aErro[1][4]+"' and id = "+AllTrim(Str(aErro[1][3]))
 	nRet := TCSqlExec(cQry)
 	
-	if nRet > 0
+	if nRet < 0
 		cMsgErro += _ENTER+"O campo ERRO do ID "+AllTrim(Str(aErro[1][3]))+" nao foi gravado! Empresa: "+aErro[1][4]
 	endif
 	
@@ -231,7 +231,7 @@ static function MErro(lMsErroAuto,nValProd,nValProj,aErro,cRetorno)
 	
 	if cRetorno == "E"			//via e-mail
 //		U_EnvEmail(.T.,.F.,cServer,cAccount,cPassword,cTo,,cSubject,cMensagem)
-		Processa({|| U_EnvMail("informatica@ata.ind.br","","","Erro na importacao da baixa pela API",,cMensagem,.T.)},"Enviando e-mail...")
+//		Processa({|| U_EnvMail("informatica@ata.ind.br","","","Erro na importacao da baixa pela API",,cMensagem,.T.)},"Enviando e-mail...")
 	elseif cRetorno == "D"		//em disco
 		//
 	elseif cRetorno == "A"		//ambos
