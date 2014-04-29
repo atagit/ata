@@ -41,6 +41,8 @@ user function RELCHQ()
 	private cChequeDe := ""
 	private cChequeAte := ""
 	private nStPredatado := 0
+	private cVencDe := ""
+	private cVencAte := ""
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Parametros utilizados pelo programa                          ³
@@ -53,6 +55,8 @@ user function RELCHQ()
 	//³ mv_par07 - Cheque de                                         ³
 	//³ mv_par08 - Cheque ate                                        ³
 	//³ mv_par09 - Status Predatado (1-Ambos/2-Conciliados/3-N Conci)³
+	//³ mv_par10 - Predatado de                                      ³
+	//³ mv_par11 - Predatado ate                                     ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	
 	Pergunte(cPerg,.F.)
@@ -73,6 +77,8 @@ user function RELCHQ()
 	cChequeDe := mv_par07
 	cChequeAte := mv_par08
 	nStPredatado := mv_par09
+	cVencDe := DToS(mv_par10)
+	cVencAte := DToS(mv_par11)
 	
 	if nNatureza <> 3				//Avista ou Ambos
 		Processa({|| Impr()},"","Aguarde processando...",lAborta)
@@ -111,7 +117,7 @@ static function Impr()
 	
 	cQry := "select EF_DATA, EF_NUM, E5_DTDIGIT, EF_BANCO, EF_AGENCIA, EF_CONTA, EF_HIST, EF_VALOR, EF_PREDATA, EF_DTPREDA, EF_IMPRESS, EF_NATUR, E5_DTDISPO, E5_RECONC "
 	cQry += "from "+RetSqlName("SEF")+" SEF inner join "+RetSqlName("SE5")+" SE5 on (EF_NUM = E5_NUMCHEQ and EF_BANCO = E5_BANCO and EF_AGENCIA = E5_AGENCIA and EF_CONTA = E5_CONTA and EF_VALOR = E5_VALOR) "
-	cQry += "where (E5_DTDIGIT between '"+cDataDe+"' and '"+cDataAte+"') and (EF_NUM between '"+cChequeDe+"' and '"+cChequeAte+"') "+cCondicao+"and EF_TIPO = '' and EF_IMPRESS <> 'C' and E5_TIPODOC in ('CH','EC') and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
+	cQry += "where (E5_DTDIGIT between '"+cDataDe+"' and '"+cDataAte+"') and (EF_NUM between '"+cChequeDe+"' and '"+cChequeAte+"') "+cCondicao+"and (((EF_DTPREDA between '"+cVencDe+"' and '"+cVencAte+"') and EF_PREDATA = 'T') or EF_PREDATA = 'F') and EF_TIPO = '' and EF_IMPRESS <> 'C' and E5_TIPODOC in ('CH','EC') and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
 	
 	if nNatureza <> 3
 		cDesc1  := "RELACAO DE CHEQUES EMITIDO"
@@ -380,7 +386,7 @@ static function Impr1()
 	
 	cQry := "select EF_DATA, EF_NUM, E5_DTDIGIT, EF_BANCO, EF_AGENCIA, EF_CONTA, EF_HIST, EF_VALOR, EF_PREDATA, EF_DTPREDA, EF_IMPRESS, EF_NATUR, E5_DTDISPO, E5_RECONC, E5_TIPODOC "
 	cQry += "from "+RetSqlName("SEF")+" SEF inner join "+RetSqlName("SE5")+" SE5 on (EF_NUM = E5_NUMCHEQ and EF_BANCO = E5_BANCO and EF_AGENCIA = E5_AGENCIA and EF_CONTA = E5_CONTA and EF_VALOR = E5_VALOR) "
-	cQry += "where (EF_NUM between '"+cChequeDe+"' and '"+cChequeAte+"') "+cCondicao+cCondicao1+"and EF_TIPO = '' and EF_IMPRESS <> 'C' and E5_TIPODOC in ('CH','EC') and EF_PREDATA = 'T' and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
+	cQry += "where (EF_NUM between '"+cChequeDe+"' and '"+cChequeAte+"') "+cCondicao+cCondicao1+"and (EF_DTPREDA between '"+cVencDe+"' and '"+cVencAte+"') and EF_TIPO = '' and EF_IMPRESS <> 'C' and E5_TIPODOC in ('CH','EC') and EF_PREDATA = 'T' and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
 	cQry += "order by SE5.R_E_C_N_O_"
 	
 	tcquery cQry new alias "QTRB"

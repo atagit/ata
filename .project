@@ -18,5 +18,6 @@
 	</buildSpec>
 	<natures>
 		<nature>com.totvs.tds.sdk.advpl.totvsnature</nature>
+		<nature>com.totvs.tds.sdk.advpl.totvsnature</nature>
 	</natures>
 </projectDescription>

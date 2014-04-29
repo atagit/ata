@@ -163,11 +163,23 @@ static function ImprPago()
 //	          1         2         3         4         5         6         7         8         9        10        11        12        13
 	
 	while !TEMP->(Eof())
-		if TEMP->E2_TIPO == "NF " .and. SD1->(DbSeek(xFilial("SD1")+TEMP->(E2_NUM+E2_PREFIXO+E2_FORNECE+E2_LOJA),.F.)) .and. nArmaz10 < 3
+/*		if TEMP->E2_TIPO == "NF " .and. SD1->(DbSeek(xFilial("SD1")+TEMP->(E2_NUM+E2_PREFIXO+E2_FORNECE+E2_LOJA),.F.)) .and. nArmaz10 < 3
 			if nArmaz10 == 1
 				if SD1->D1_LOCAL == "10" ; TEMP->(DbSkip()) ; loop ; endif
 			else
 				if SD1->D1_LOCAL <> "10" ; TEMP->(DbSkip()) ; loop ; endif
+			endif
+		endif*/
+		
+		if TEMP->E2_TIPO == "NF " .and. nArmaz10 < 3
+			if SD1->(DbSeek(xFilial("SD1")+TEMP->(E2_NUM+E2_PREFIXO+E2_FORNECE+E2_LOJA),.F.))
+				if SD1->D1_TIPO <> "C"
+					if nArmaz10 == 1
+						if SD1->D1_LOCAL == "10" ; TEMP->(DbSkip()) ; loop ; endif
+					else
+						if SD1->D1_LOCAL <> "10" ; TEMP->(DbSkip()) ; loop ; endif
+					endif
+				endif
 			endif
 		endif
 		
@@ -470,11 +482,23 @@ static function ImprAPagar()
 //	          1         2         3         4         5         6         7         8         9        10        11        12        13
 	
 	while !TEMP->(Eof())
-		if TEMP->E2_TIPO == "NF " .and. SD1->(DbSeek(xFilial("SD1")+TEMP->(E2_NUM+E2_PREFIXO+E2_FORNECE+E2_LOJA),.F.)) .and. nArmaz10 < 3
+/*		if TEMP->E2_TIPO == "NF " .and. SD1->(DbSeek(xFilial("SD1")+TEMP->(E2_NUM+E2_PREFIXO+E2_FORNECE+E2_LOJA),.F.)) .and. nArmaz10 < 3
 			if nArmaz10 == 1
 				if SD1->D1_LOCAL == "10" ; TEMP->(DbSkip()) ; loop ; endif
 			else
 				if SD1->D1_LOCAL <> "10" ; TEMP->(DbSkip()) ; loop ; endif
+			endif
+		endif*/
+		
+		if TEMP->E2_TIPO == "NF " .and. nArmaz10 < 3
+			if SD1->(DbSeek(xFilial("SD1")+TEMP->(E2_NUM+E2_PREFIXO+E2_FORNECE+E2_LOJA),.F.))
+				if SD1->D1_TIPO <> "C"
+					if nArmaz10 == 1
+						if SD1->D1_LOCAL == "10" ; TEMP->(DbSkip()) ; loop ; endif
+					else
+						if SD1->D1_LOCAL <> "10" ; TEMP->(DbSkip()) ; loop ; endif
+					endif
+				endif
 			endif
 		endif
 		
