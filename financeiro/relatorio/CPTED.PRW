@@ -157,10 +157,11 @@ static function Impr()
 			cQry += "from "+RetSqlName("SE2")+" "
 			cQry += "where E2_FATURA = '"+TEMP->E5_NUMERO+"' and E2_FATPREF = '"+TEMP->E5_PREFIXO+"' and D_E_L_E_T_ <> '*' "
 		else
-			cCondPA := IIf(TEMP->E5_TIPO == "PA","and E2_BCOPAG = '"+TEMP->E5_BANCO+"' ","")
+//			cCondPA := IIf(TEMP->E5_TIPO == "PA ","and E2_BCOPAG = '"+TEMP->E5_BANCO+"' ","")
 			cQry := "select E2_NUM, E2_PREFIXO, E2_PARCELA, E2_EMISSAO, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_BALGER, E2_NOMFOR, E2_VALLIQ "
 			cQry += "from "+RetSqlName("SE2")+" "
-			cQry += "where E2_NUM = '"+TEMP->E5_NUMERO+"' and E2_PREFIXO = '"+TEMP->E5_PREFIXO+"' and E2_PARCELA = '"+TEMP->E5_PARCELA+"' and E2_FORNECE = '"+TEMP->E5_CLIFOR+"' and E2_LOJA = '"+TEMP->E5_LOJA+"' "+cCondPA+"and D_E_L_E_T_ <> '*' "
+//			cQry += "where E2_NUM = '"+TEMP->E5_NUMERO+"' and E2_PREFIXO = '"+TEMP->E5_PREFIXO+"' and E2_PARCELA = '"+TEMP->E5_PARCELA+"' and E2_FORNECE = '"+TEMP->E5_CLIFOR+"' and E2_LOJA = '"+TEMP->E5_LOJA+"' "+cCondPA+"and D_E_L_E_T_ <> '*' "
+			cQry += "where E2_NUM = '"+TEMP->E5_NUMERO+"' and E2_PREFIXO = '"+TEMP->E5_PREFIXO+"' and E2_PARCELA = '"+TEMP->E5_PARCELA+"' and E2_FORNECE = '"+TEMP->E5_CLIFOR+"' and E2_LOJA = '"+TEMP->E5_LOJA+"' and E2_BCOPAG = '"+TEMP->E5_BANCO+"' and D_E_L_E_T_ <> '*' "
 		endif
 		
 		tcquery cQry new alias "CON1"
