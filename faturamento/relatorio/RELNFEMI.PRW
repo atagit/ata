@@ -24,6 +24,9 @@ user function RELNFEMI()
 	private Tamanho := "M"
 	private Titulo  := cDesc1
 	private wnrel   := FunName()
+	private nLastKey := 0
+	private lFilter := .F.
+	private lDic	:= .F.
 	private lAborta := .T.
 	
 	private nLin	:= 014
@@ -41,6 +44,8 @@ user function RELNFEMI()
 	private cTpPrjFin := ""
 	private cCliIni := ""
 //	private cCliFin := ""
+	private cProjIni := ""
+	private cProjFin := ""
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Parametros utilizados pelo programa                          ³
@@ -50,11 +55,13 @@ user function RELNFEMI()
 	//³ mv_par04 - Tipo Projeto ate                                  ³
 	//³ mv_par05 - Cliente de                                        ³
 	//³ mv_par06 - Cliente ate                                       ³
+	//³ mv_par07 - Projeto de                                        ³
+	//³ mv_par08 - Projeto ate                                       ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	
 	Pergunte(cPerg,.F.)
 	
-	wnrel := SetPrint(cString,wnrel,cPerg,Titulo,cDesc1,,,.T.,aOrd,,Tamanho)
+	wnrel := SetPrint(cString,wnrel,cPerg,Titulo,cDesc1,,,lDic,aOrd,,Tamanho,,lFilter)
 	
 	if nLastKey == 27 ; return ; endif
 	
@@ -67,6 +74,8 @@ user function RELNFEMI()
 	cTpPrjFin := IIf(Empty(mv_par04),"ZZZZ",mv_par04)
 	cCliIni := IIf(SA1->(DbSeek(xFilial("SA1")+mv_par05,.F.)),Left(SA1->A1_CGC,8),"")
 //	cCliFin := IIf(SA1->(DbSeek(xFilial("SA1")+mv_par06,.F.)),Left(SA1->A1_CGC,8),"ZZZZZZZZZZZZZZ")
+	cProjIni := mv_par06
+	cProjFin := mv_par07
 	
 	Processa({|| Impr()},"","Aguarde processando...",lAborta)
 	
@@ -110,6 +119,10 @@ static function Impr()
 	AAdd(aImpostos,{"PIS",0,0})
 	AAdd(aImpostos,{"COFIS",0,0})
 	
+	if Select("TEMP") <> 0
+		TEMP->(DbCloseArea())
+	endif
+	
 //	cQry := "select CTH_TPPRJ, D2_DOC, D2_SERIE, D2_CF, F4_TEXTO, D2_EMISSAO, D2_CLIENTE, D2_LOJA, NREDUZ = case when A2_NREDUZ is not null then A2_NREDUZ else A1_NREDUZ end, C6_CLVL, CTH_DTENTR, PESOL = case when left(F4_OPER,1) in ('6','8') then 0 else C5_PESOL end, F4_OPER, F2_VALISS, F2_VALINSS, F2_VALIRRF, F2_VALPIS, F2_VALCOFI, F2_VALCSLL, sum(D2_VALICM) as D2_VALICM, sum(D2_VALIPI) as D2_VALIPI, sum(D2_VALIMP6) as D2_VALIMP6, sum(D2_VALIMP5) as D2_VALIMP5, sum(case when left(F4_OPER,1) in ('6','8') then 0 else D2_TOTAL end) as D2_TOTAL "
 	cQry := "select CTH_TPPRJ, D2_DOC, D2_SERIE, D2_CF, F4_TEXTO, D2_EMISSAO, D2_CLIENTE, D2_LOJA, NREDUZ = case when A2_NREDUZ is not null then A2_NREDUZ else A1_NREDUZ end, C6_CLVL, CTH_DTENTR, PESOL = case when left(F4_OPER,1) in ('6','8') then 0 else C5_PESOL end, F4_OPER, F2_VALISS, F2_VALINSS, F2_VALIRRF, F2_VALPIS, F2_VALCOFI, F2_VALCSLL, sum(D2_VALICM) as D2_VALICM, sum(D2_VALIPI) as D2_VALIPI, sum(D2_VALIMP6) as D2_VALIMP6, sum(D2_VALIMP5) as D2_VALIMP5, sum(case when left(F4_OPER,1) in ('6','8') then 0 else D2_TOTAL end) as D2_TOTAL, CNPJ = case when A2_NREDUZ is not null then A2_CGC else A1_CGC end "
 	cQry += "from "+RetSqlName("SD2")+" SD2 inner join "+RetSqlName("SF2")+" SF2 on (D2_DOC = F2_DOC and D2_SERIE = F2_SERIE and D2_CLIENTE = F2_CLIENTE and D2_LOJA = F2_LOJA) "
@@ -121,7 +134,7 @@ static function Impr()
 	cQry += "	left join "+RetSqlName("SA1")+" SA1 on (D2_CLIENTE = A1_COD and D2_LOJA = A1_LOJA) and D2_TIPO not in ('B','D') "
 //	cQry += "where (D2_EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and (CTH_TPPRJ between '"+cTpPrjIni+"' and '"+cTpPrjFin+"') and SD2.D_E_L_E_T_ <> '*' and SC5.D_E_L_E_T_ <> '*' and SC6.D_E_L_E_T_ <> '*' and CTH.D_E_L_E_T_ <> '*' and SF4.D_E_L_E_T_ <> '*' and SF2.D_E_L_E_T_ <> '*' "
 //	cQry += "where ((left(A1_CGC,8) between '"+cCliIni+"' and '"+cCliFin+"') or (left(A2_CGC,8) between '"+cCliIni+"' and '"+cCliFin+"')) and (D2_EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and (CTH_TPPRJ between '"+cTpPrjIni+"' and '"+cTpPrjFin+"') and D2_SERIE <> 'Z' and SD2.D_E_L_E_T_ <> '*' and SC5.D_E_L_E_T_ <> '*' and SC6.D_E_L_E_T_ <> '*' and CTH.D_E_L_E_T_ <> '*' and SF4.D_E_L_E_T_ <> '*' and SF2.D_E_L_E_T_ <> '*' "
-	cQry += "where "+IIf(!Empty(cCliIni),"(left(A1_CGC,8) = '"+cCliIni+"' or left(A2_CGC,8) = '"+cCliIni+"') and ","")+"(D2_EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and (CTH_TPPRJ between '"+cTpPrjIni+"' and '"+cTpPrjFin+"') and D2_SERIE <> 'Z' and SD2.D_E_L_E_T_ <> '*' and SC5.D_E_L_E_T_ <> '*' and SC6.D_E_L_E_T_ <> '*' and CTH.D_E_L_E_T_ <> '*' and SF4.D_E_L_E_T_ <> '*' and SF2.D_E_L_E_T_ <> '*' "
+	cQry += "where "+IIf(!Empty(cCliIni),"(left(A1_CGC,8) = '"+cCliIni+"' or left(A2_CGC,8) = '"+cCliIni+"') and ","")+"(D2_EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and (CTH_TPPRJ between '"+cTpPrjIni+"' and '"+cTpPrjFin+"') and (CTH_CLVL between '"+cProjIni+"' and '"+cProjFin+"') and D2_SERIE <> 'Z' and SD2.D_E_L_E_T_ <> '*' and SC5.D_E_L_E_T_ <> '*' and SC6.D_E_L_E_T_ <> '*' and CTH.D_E_L_E_T_ <> '*' and SF4.D_E_L_E_T_ <> '*' and SF2.D_E_L_E_T_ <> '*' "
 //	cQry += "group by CTH_TPPRJ, D2_DOC, D2_SERIE, D2_CF, F4_TEXTO, D2_EMISSAO, D2_CLIENTE, D2_LOJA, A1_NREDUZ, A2_NREDUZ, C6_CLVL, CTH_DTENTR, C5_PESOL, F4_OPER, F2_VALISS, F2_VALINSS, F2_VALIRRF, F2_VALPIS, F2_VALCOFI, F2_VALCSLL "
 	cQry += "group by CTH_TPPRJ, D2_DOC, D2_SERIE, D2_CF, F4_TEXTO, D2_EMISSAO, D2_CLIENTE, D2_LOJA, A1_NREDUZ, A2_NREDUZ, C6_CLVL, CTH_DTENTR, C5_PESOL, F4_OPER, F2_VALISS, F2_VALINSS, F2_VALIRRF, F2_VALPIS, F2_VALCOFI, F2_VALCSLL, A1_CGC, A2_CGC "
 	cQry += "order by D2_EMISSAO, D2_DOC, D2_SERIE"
