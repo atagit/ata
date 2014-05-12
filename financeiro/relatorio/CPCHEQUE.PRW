@@ -152,7 +152,7 @@ static function Impr()
 			
 			cQry := "select * "
 			cQry += "from "+RetSqlName("SE5")+" "
-			cQry += "where E5_NUMCHEQ = '"+cNum+"' and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_TIPODOC not in ('CH','EC') and D_E_L_E_T_ <> '*' "
+			cQry += "where E5_NUMCHEQ = '"+cNum+"' and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and E5_TIPODOC not in ('CH','EC','MT','JR') and D_E_L_E_T_ <> '*' "
 			cQry += "order by E5_NUMCHEQ"
 			
 			tcquery cQry new alias "CON"
