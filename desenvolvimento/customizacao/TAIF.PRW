@@ -107,6 +107,7 @@ static function Importar(nOpcao,aTabelas,nCbo1,cGt1,cGt2,lCanc)
 	local nCont := 0
 	local cCanc := ""
 	local lDocSeq := .F.
+	local lConcluido := .F.
 	
 	if !Empty(aTabelas[1])
 		for i := 1 to Len(aTabelas)
@@ -127,7 +128,7 @@ static function Importar(nOpcao,aTabelas,nCbo1,cGt1,cGt2,lCanc)
 				
 				if !Empty(aCampos[1])
 					for j := 1 to Len(aCampos)
-						cCondicao += "PRO."+aCampos[j]+" = OFI."+aCampos[j]+" and "
+						cCondicao += "PRO."+AllTrim(aCampos[j])+" = OFI."+Alltrim(aCampos[j])+" and "
 					next
 					
 					cCondicao := SubStr(cCondicao,1,Len(cCondicao) - 5)
@@ -150,7 +151,7 @@ static function Importar(nOpcao,aTabelas,nCbo1,cGt1,cGt2,lCanc)
 				next
 				
 				cSelect += cMemo
-				cQry := "select "+AllTrim(cSelect)+"OFI."+aCampos[1]+" as OFIC "
+				cQry := "select "+AllTrim(cSelect)+"OFI."+AllTrim(aCampos[1])+" as OFIC "
 				cQry += "from [DADOSP11P].dbo."+cAlias+" PRO left join [DADOSP11O].dbo."+cAlias+" OFI on ("+AllTrim(cCondicao)+") "
 				
 				if !Empty(AllTrim(cCondic))
@@ -175,13 +176,16 @@ static function Importar(nOpcao,aTabelas,nCbo1,cGt1,cGt2,lCanc)
 								cResult += cCaract
 						endcase
 					next
-					cQry += "where "+cResult+" and "+cCanc+"OFI."+aCampos[1]+" is null and PRO.D_E_L_E_T_ <> '*'"
+					
+					cQry += "where "+cResult+" and "+cCanc+"OFI."+AllTrim(aCampos[1])+" is null and PRO.D_E_L_E_T_ <> '*'"
 				else
-					cQry += "where "+cCanc+"OFI."+aCampos[1]+" is null and PRO.D_E_L_E_T_ <> '*'"
+					cQry += "where "+cCanc+"OFI."+AllTrim(aCampos[1])+" is null and PRO.D_E_L_E_T_ <> '*'"
 				endif
 				
 				tcquery cQry new alias "TAIF"
+				
 				DbSelectArea("TAIF")
+				
 				count to nRegTAIF
 				
 				TAIF->(DbGoTop())
@@ -190,61 +194,76 @@ static function Importar(nOpcao,aTabelas,nCbo1,cGt1,cGt2,lCanc)
 				&("oMeter"+AllTrim(Str(nOpcao))):SetTotal(nRegTAIF)
 				&("oSay"+AllTrim(Str(nOpcao + 9))):SetText(Left(cAlias,3))
 				
-				while !TAIF->(Eof())
-					cCam := aSX3[1][1]
-					AAdd(aItm,{TAIF->&(aSX3[1][1])})
-					
-					if aSX3[1][2] == "C" .or. aSX3[1][2] == "D" .or. aSX3[1][2] == "L"
-						cIns := "'"+RetiraAspas(TAIF->&(aSX3[1][1]))+"'"
-					elseif aSX3[1][2] == "M"
-						cIns := "'"+AllTrim(TAIF->&(aSX3[1][1]))+"'"
-					elseif aSX3[1][2] == "N"
-						cIns := AllTrim(Str(TAIF->&(aSX3[1][1])))
-					endif
-					
-					for j := 2 to Len(aSX3)
-						cCam += ","+aSX3[j][1]
-						AAdd(aItm,{TAIF->&(aSX3[j][1])})
+				if nRegTAIF > 0
+					while !TAIF->(Eof())
+						cCam := aSX3[1][1]
 						
-						if aSX3[j][2] == "C" .or. aSX3[j][2] == "D" .or. aSX3[j][2] == "L"
-							cIns += ",'"+RetiraAspas(TAIF->&(aSX3[j][1]))+"'"
-						elseif aSX3[j][2] == "M"
-							cIns += ",'"+AllTrim(TAIF->&(aSX3[j][1]))+"'"
-						elseif aSX3[j][2] == "N"
-							cIns += ","+AllTrim(Str(TAIF->&(aSX3[j][1])))
+						AAdd(aItm,{TAIF->&(aSX3[1][1])})
+						
+						if aSX3[1][2] == "C" .or. aSX3[1][2] == "D" .or. aSX3[1][2] == "L"
+							cIns := "'"+RetiraAspas(TAIF->&(aSX3[1][1]))+"'"
+						elseif aSX3[1][2] == "M"
+							cIns := "'"+AllTrim(TAIF->&(aSX3[1][1]))+"'"
+						elseif aSX3[1][2] == "N"
+							cIns := AllTrim(Str(TAIF->&(aSX3[1][1])))
 						endif
-					next
+						
+						for j := 2 to Len(aSX3)
+							cCam += ","+aSX3[j][1]
+							
+							AAdd(aItm,{TAIF->&(aSX3[j][1])})
+							
+							if aSX3[j][2] == "C" .or. aSX3[j][2] == "D" .or. aSX3[j][2] == "L"
+								cIns += ",'"+RetiraAspas(TAIF->&(aSX3[j][1]))+"'"
+							elseif aSX3[j][2] == "M"
+								cIns += ",'"+AllTrim(TAIF->&(aSX3[j][1]))+"'"
+							elseif aSX3[j][2] == "N"
+								cIns += ","+AllTrim(Str(TAIF->&(aSX3[j][1])))
+							endif
+						next
+						
+						cCon := "select max(R_E_C_N_O_) + 1 as NRECNO from [DADOSP11O].dbo."+cAlias
+						
+						tcquery cCon new alias "CONTMP"
+						
+						DbSelectArea("CONTMP")
+						
+						cRecno := AllTrim(Str(CONTMP->NRECNO))
+						
+						CONTMP->(DbCloseArea())
+						
+						cSql := "insert into [DADOSP11O].dbo."+cAlias+"("+cCam+",R_E_C_N_O_) values("+cIns+","+cRecno+")"
+						
+						if TCSqlExec(cSql) < 0
+							AAdd(aRegistros,{cAlias,0})
+							
+							return Msg("TCSqlError() "+TCSqlError())
+						endif
+						
+						nCont++
+						
+						&("oMeter"+AllTrim(Str(nOpcao))):Set(nCont)
+						
+						TAIF->(DbSkip())
+					enddo
 					
-					cCon := "select max(R_E_C_N_O_) + 1 as NRECNO from [DADOSP11O].dbo."+cAlias
+					AAdd(aRegistros,{cAlias,nCont})
 					
-					tcquery cCon new alias "CONTMP"
-					DbSelectArea("CONTMP")
+					lConcluido := .T.
+				else
+					Msg("Nenhum registro encontrado para importacao!!!","Aviso")
 					
-					cRecno := AllTrim(Str(CONTMP->NRECNO))
-					
-					CONTMP->(DbCloseArea())
-					
-					cSql := "insert into [DADOSP11O].dbo."+cAlias+"("+cCam+",R_E_C_N_O_) values("+cIns+","+cRecno+")"
-					
-					if TCSqlExec(cSql) < 0
-						AAdd(aRegistros,{cAlias,0})
-						return MsgStop("TCSqlError() "+TCSqlError())
-					endif
-					
-					nCont++
-					
-					&("oMeter"+AllTrim(Str(nOpcao))):Set(nCont)
-					
-					TAIF->(DbSkip())
-				enddo
+					lConcluido := .F.
+				endif
 				
-				AAdd(aRegistros,{cAlias,nCont})
 				TAIF->(DbCloseArea())
 				
 				cAlias := "" ; aSX3 := {} ; aCampos := {} ; cCondic := "" ; cTipo := "" ; cCondicao := "" ; cQry := ""
 				cSelect := "" ; aMemo := {} ; cMemo := "" ; nCont := 0
 			else
-				MsgAlert("Tabela "+aTabelas[i]+" nao encontrada no cadastro de tabelas taif (SZT)!")
+				lConcluido := .F.
+				
+				Msg("Tabela "+aTabelas[i]+" nao encontrada no cadastro de tabelas taif (SZT)!","Aviso")
 			endif
 		next
 	endif
@@ -264,6 +283,7 @@ static function Importar(nOpcao,aTabelas,nCbo1,cGt1,cGt2,lCanc)
 			cQry += "select max(D"+AllTrim(Str(i))+"_NUMSEQ) as MAIOR from [DADOSP11O].dbo.SD"+AllTrim(Str(i))+"0"+AllTrim(Str(nCbo1))+"0 where D_E_L_E_T_ <> '*' "
 			
 			tcquery cQry new alias "TMPDOC"
+			
 			DbSelectArea("TMPDOC")
 			
 			if AllTrim(TMPDOC->MAIOR) >= cNumSD
@@ -277,7 +297,10 @@ static function Importar(nOpcao,aTabelas,nCbo1,cGt1,cGt2,lCanc)
 	endif
 	
 	&("oMeter"+AllTrim(Str(nOpcao))):Set(0)
-	MsgInfo("Importacao realizada com sucesso! Abaixo a quantidade de registro(s) importado: "+cMsg)
+	
+	if lConcluido
+		Msg("Importacao realizada com sucesso!"+Chr(13)+Chr(10)+Chr(13)+Chr(10)+"Abaixo a quantidade de registro(s) importado: "+cMsg,"Aviso")
+	endif
 return
 
 static function RetiraAspas(cTexto)
@@ -313,7 +336,7 @@ static function OkTabMovimento(cGt1,cGt2,nCbo1)
 	local aTabelas := {}
 	
 	if Empty(cGt1) .or. Empty(cGt2)
-		return MsgStop("O periodo nao pode esta em branco!")
+		return Msg("O periodo nao pode esta em branco!")
 	endif
 	
 	if Len(aWBrowse1) > 0
@@ -325,7 +348,7 @@ static function OkTabMovimento(cGt1,cGt2,nCbo1)
 		
 		Processa({|| Importar(3,aTabelas,nCbo1,cGt1,cGt2)},"Aguarde...","Processando a importacao...",.F.)
 	else
-		return MsgAlert("Nao foram selecionado nenhuma tabela para importacao!")
+		return Msg("Nao foram selecionado nenhuma tabela para importacao!","Aviso")
 	endif
 return
 
@@ -341,7 +364,7 @@ static function OkTabCadastro(nCbo1)
 		
 		Processa({|| Importar(2,aTabelas,nCbo1)},"Aguarde...","Processando a importacao...",.F.)
 	else
-		return MsgAlert("Nao foram selecionado nenhuma tabela para importacao!")
+		return Msg("Nao foram selecionado nenhuma tabela para importacao!","Aviso")
 	endif
 return
 
@@ -477,200 +500,20 @@ static function FWBrowse3()
 		oWBrowse3:bLDblClick := {|| aWBrowse3[oWBrowse3:nAt,1] := !aWBrowse3[oWBrowse3:nAt,1],oWBrowse3:DrawSelect()}
 return
 
-/*user function TAIF()
-	SetPrvt("cAlias","cDtIni","cDtFin","cDtAtu","cPad")
-	SetPrvt("cTabela","cSql","cCondicao","cQry","cCam","cIns","cUpd")
-	SetPrvt("aCam","aItm","nCont")
+static function Msg(cMsg,cTit,lEdt)
+	local oButton1Msg
+	local oGroup1Msg
+	local oMultiGe1Msg
+	local cMultiGe1Msg := cMsg
 	
-	cAlias := "" ; cDtIni := "" ; cDtFin := "" ; cDtAtu := "" ; cPad := ""
-	cTabela := "" ; cSql := "" ; cCondicao := "" ; cQry := ""
-	cCam := "" ; cIns := "" ; cUpd := "" ; aCam := {} ; aItm := {} ; nCont := 0
+	static oDlgMsg
 	
-	if !Pergunte("TAIF",.T.) ; return ; endif
+	default cTit := "Error"
+	default lEdt := .F.
 	
-	cAlias := mv_par01
-	cDtAtu := AllTrim(Str(Year(Date()))+StrZero(Month(Date()),2))
-	cDtIni := If(Empty(mv_par02),cDtAtu+"01",DToS(mv_par02))
-	cDtFin := If(Empty(mv_par03),cDtAtu+"31",DToS(mv_par03))
-	cTabela := cAlias+cFilAnt+"0"
-	cPad := Right(cAlias,2)+"_"
-	
-	Processa({|| ImportCompleta()},"Aguarde","Importando dados...",.F.)
+	define msdialog oDlgMsg title cTit from 000,000 to 295,500 colors 0,16777215 pixel
+		@002,002 group oGroup1Msg to 128,247 of oDlgMsg color 0,16777215 pixel
+		@006,003 get oMultiGe1Msg var cMultiGe1Msg of oDlgMsg multiline size 243,121 when lEdt colors 0,16777215 hscroll pixel
+		@132,209 button oButton1Msg prompt "OK" size 037,012 of oDlgMsg action oDlgMsg:End() pixel
+	activate msdialog oDlgMsg centered
 return
-
-static function ImportCompleta()
-	local cIdExpPro := cPad+"IDEXP"
-	local cDataExpPro := cPad+"DTEXP"
-	local cCampoData := ""
-	local cCampoFlag := ""
-	local cRecno := ""
-	
-	if cAlias == "SF1" .or. cAlias == "SD1"
-		cCampoData := cPad+"DTDIGIT"
-		cCampoFlag := cPad+"DTLANC"
-	elseif cAlias == "SF2" .or. cAlias == "SD2"
-		cCampoData := cPad+"EMISSAO"
-		cCampoFlag := cPad+"DTLANC"
-	elseif cAlias == "SE1" .or. cAlias == "SE2"
-		cCampoData := cPad+"EMIS1"
-		cCampoFlag := cPad+"LA"
-	elseif cAlias == "SE5" .or. cAlias == "SEF"
-		cCampoData := cPad+"DATA"
-		cCampoFlag := cPad+"LA"
-	endif
-	
-	cQry := "select D_E_L_E_T_ as DELET, * from [DADOSP11P].dbo."+RetSqlName(cAlias)+" where ("+cCampoData+" between '"+cDtIni+"' and '"+cDtFin+"') and "+cIdExpPro+" > 0 order by "+cIdExpPro
-	cCon := "select max(R_E_C_N_O_) + 1 as NRECNO from [DADOSP11O].dbo."+RetSqlName(cAlias)
-	
-	VariavelCampo()
-	
-	tcquery cQry new alias "TMPPRO"
-	DbSelectArea("TMPPRO")
-	DbGoTop()
-	
-	ProcRegua(RecCount())
-	
-	while !TMPPRO->(Eof())
-		AAdd(aItm,{TMPPRO->&(aCam[1][1])})
-		cCam := aCam[1][1]
-		
-		if aCam[1][2] == "C" .or. aCam[1][2] == "D" .or. aCam[1][2] == "L"
-			cIns := "'"+TMPPRO->&(aCam[1][1])+"'"
-			cUpd := aCam[1][1]+" = '"+TMPPRO->&(aCam[1][1])+"'"
-		elseif aCam[1][2] == "N"
-			cIns := AllTrim(Str(TMPPRO->&(aCam[1][1])))
-			cUpd := aCam[1][1]+" = "+AllTrim(Str(TMPPRO->&(aCam[1][1])))
-		endif
-		
-		for i := 2 to Len(aCam)
-			AAdd(aItm,{TMPPRO->&(aCam[i][1])})
-			cCam += ","+aCam[i][1]
-			
-			if aCam[i][2] == "C" .or. aCam[i][2] == "D" .or. aCam[i][2] == "L"
-				cIns += ",'"+TMPPRO->&(aCam[i][1])+"'"
-				cUpd += ","+aCam[i][1]+" = '"+TMPPRO->&(aCam[i][1])+"'"
-			elseif aCam[i][2] == "N"
-				cIns += ","+AllTrim(Str(TMPPRO->&(aCam[i][1])))
-				cUpd += ","+aCam[i][1]+" = "+AllTrim(Str(TMPPRO->&(aCam[i][1])))
-			endif
-		next
-		
-		tcquery cCon new alias "CONTMP"
-		DbSelectArea("CONTMP")
-		
-		cRecno := AllTrim(Str(CONTMP->NRECNO))
-		
-		CONTMP->(DbCloseArea())
-		
-		if cAlias <> "SD1" .and. cAlias <> "SD2"
-			cSql := "select "+cIdExpPro+", "+cDataExpPro+", "+cCampoFlag+", R_E_C_N_O_ as REC from [DADOSP11O].dbo."+RetSqlName(cAlias)+" where "+cIdExpPro+" = "+AllTrim(Str(TMPPRO->&(cIdExpPro)))
-		else
-			cSql := "select "+cIdExpPro+", "+cDataExpPro+", R_E_C_N_O_ as REC from [DADOSP11O].dbo."+RetSqlName(cAlias)+" where "+cIdExpPro+" = "+AllTrim(Str(TMPPRO->&(cIdExpPro)))
-		endif
-		
-		tcquery cSql new alias "RECTMP"
-		DbSelectArea("RECTMP")
-		
-		cIdExpOfi := AllTrim(Str(RECTMP->&(cIdExpPro)))
-		cDtExpOfi := RECTMP->&(cDataExpPro)
-		cFlagOfi := RECTMP->&(cCampoFlag)
-		cRecnoOfi := RECTMP->REC
-		
-		RECTMP->(DbCloseArea())
-		
-		if Empty(cIdExpOfi) .or. cIdExpOfi == '0'
-			if TMPPRO->DELET == "*" .and. cAlias <> "SEF" .and. cAlias <> "SE5"
-				if cAlias <> "SD1" .and. cAlias <> "SD2"
-					cSql := "insert into [DADOSP11O].dbo."+RetSqlName(cAlias)+"("+cCam+","+cCampoFlag+",R_E_C_N_O_,R_E_C_D_E_L_) values("+cIns+",'"+cFlagOfi+"',"+cRecno+","+cRecno+")"
-				else
-					cSql := "insert into [DADOSP11O].dbo."+RetSqlName(cAlias)+"("+cCam+",R_E_C_N_O_,R_E_C_D_E_L_) values("+cIns+","+cRecno+","+cRecno+")"
-				endif
-			else
-				if cAlias <> "SD1" .and. cAlias <> "SD2"
-					cSql := "insert into [DADOSP11O].dbo."+RetSqlName(cAlias)+"("+cCam+","+cCampoFlag+",R_E_C_N_O_) values("+cIns+",'"+cFlagOfi+"',"+cRecno+")"
-				else
-					cSql := "insert into [DADOSP11O].dbo."+RetSqlName(cAlias)+"("+cCam+",R_E_C_N_O_) values("+cIns+","+cRecno+")"
-				endif
-			endif
-		else
-			if TMPPRO->DELET == "*" .and. cAlias <> "SEF" .and. cAlias <> "SE5"
-				if cAlias <> "SD1" .and. cAlias <> "SD2"
-					cSql := "update [DADOSP11O].dbo."+RetSqlName(cAlias)+" set "+cUpd+", "+cCampoFlag+" = '"+cFlagOfi+"', D_E_L_E_T_ = '"+TMPPRO->DELET+"', R_E_C_D_E_L_ = "+AllTrim(Str(cRecnoOfi))+" where "+cIdExpPro+" = "+cIdExpOfi+" and "+cDataExpPro+" < '"+TMPPRO->&(cDataExpPro)+"'"
-				else
-					cSql := "update [DADOSP11O].dbo."+RetSqlName(cAlias)+" set "+cUpd+", D_E_L_E_T_ = '"+TMPPRO->DELET+"', R_E_C_D_E_L_ = "+AllTrim(Str(cRecnoOfi))+" where "+cIdExpPro+" = "+cIdExpOfi+" and "+cDataExpPro+" < '"+TMPPRO->&(cDataExpPro)+"'"
-				endif
-			else
-				if cAlias <> "SD1" .and. cAlias <> "SD2"
-					cSql := "update [DADOSP11O].dbo."+RetSqlName(cAlias)+" set "+cUpd+", "+cCampoFlag+" = '"+cFlagOfi+"', D_E_L_E_T_ = '"+TMPPRO->DELET+"' where "+cIdExpPro+" = "+cIdExpOfi+" and "+cDataExpPro+" < '"+TMPPRO->&(cDataExpPro)+"'"
-				else
-					cSql := "update [DADOSP11O].dbo."+RetSqlName(cAlias)+" set "+cUpd+", D_E_L_E_T_ = '"+TMPPRO->DELET+"' where "+cIdExpPro+" = "+cIdExpOfi+" and "+cDataExpPro+" < '"+TMPPRO->&(cDataExpPro)+"'"
-				endif
-			endif
-		endif
-		
-		nRet := TCSqlExec(cSql)
-		TCRefresh(cTabela)
-		
-		aItm := {} ; cCam := "" ; cIns := "" ; cUpd := "" ; cSql := ""
-		nCont++
-		
-		IncProc()
-		
-		TMPPRO->(DbSkip())
-	enddo
-	
-	TMPPRO->(DbCloseArea())
-	
-	AcertaFlags()
-//	ZeraFlags()
-return
-
-static function VariavelCampo()
-	DbSelectArea("SX3")
-	DbSetOrder(1)
-	DbSeek(cAlias)
-	
-	while !Eof() .and. X3_ARQUIVO == cAlias
-		if X3_CONTEXT <> "V" .and. Trim(X3_CAMPO) <> cPad+"EXPORT" .and. Trim(X3_CAMPO) <> cPad+"LA" .and. Trim(X3_CAMPO) <> cPad+"DTLANC"
-			AAdd(aCam,{Trim(X3_CAMPO),X3_TIPO})
-		endif
-		
-		DbSkip()
-	enddo
-return
-
-static function AcertaFlags()
-	if cAlias == "SF1"
-		cUpd := "alter table [DADOSP11P].dbo."+RetSqlName(cAlias)+" disable trigger T_EXPORT_"+cTabela+"_U"+Chr(10)+Chr(13)
-		cUpd += "update [DADOSP11P].dbo."+RetSqlName(cAlias)+" set "+cPad+"DTLANC = "+cPad+"DTDIGIT, "+cPad+"EXPORT = 'S' where ("+cPad+"DTDIGIT between '"+cDtIni+"' and '"+cDtFin+"') and "+cPad+"EXPORT <> 'S'"+Chr(10)+Chr(13)
-		cUpd += "alter table [DADOSP11P].dbo."+RetSqlName(cAlias)+" enable trigger T_EXPORT_"+cTabela+"_U"
-	elseif cAlias == "SF2"
-		cUpd := "alter table [DADOSP11P].dbo."+RetSqlName(cAlias)+" disable trigger T_EXPORT_"+cTabela+"_U"+Chr(10)+Chr(13)
-		cUpd += "update [DADOSP11P].dbo."+RetSqlName(cAlias)+" set "+cPad+"DTLANC = "+cPad+"EMISSAO, "+cPad+"EXPORT = 'S' where ("+cPad+"EMISSAO between '"+cDtIni+"' and '"+cDtFin+"') and "+cPad+"EXPORT <> 'S'"+Chr(10)+Chr(13)
-		cUpd += "alter table [DADOSP11P].dbo."+RetSqlName(cAlias)+" enable trigger T_EXPORT_"+cTabela+"_U"
-	elseif cAlias == "SE1" .or. cAlias == "SE2"
-		cUpd := "alter table [DADOSP11P].dbo."+RetSqlName(cAlias)+" disable trigger T_EXPORT_"+cTabela+"_U"+Chr(10)+Chr(13)
-		cUpd += "update [DADOSP11P].dbo."+RetSqlName(cAlias)+" set "+cPad+"LA = 'S', "+cPad+"EXPORT = 'S' where ("+cPad+"EMIS1 between '"+cDtIni+"' and '"+cDtFin+"') and "+cPad+"EXPORT <> 'S'"+Chr(10)+Chr(13)
-		cUpd += "alter table [DADOSP11P].dbo."+RetSqlName(cAlias)+" enable trigger T_EXPORT_"+cTabela+"_U"
-	elseif cAlias == "SE5" .or. cAlias == "SEF"
-		cUpd := "alter table [DADOSP11P].dbo."+RetSqlName(cAlias)+" disable trigger T_EXPORT_"+cTabela+"_U"+Chr(10)+Chr(13)
-		cUpd += "update [DADOSP11P].dbo."+RetSqlName(cAlias)+" set "+cPad+"LA = 'S', "+cPad+"EXPORT = 'S' where ("+cPad+"DATA between '"+cDtIni+"' and '"+cDtFin+"') and "+cPad+"EXPORT <> 'S'"+Chr(10)+Chr(13)
-		cUpd += "alter table [DADOSP11P].dbo."+RetSqlName(cAlias)+" enable trigger T_EXPORT_"+cTabela+"_U"
-	endif
-	
-	nRet := TCSqlExec(cUpd)
-return
-
-static function ZeraFlags()
-	if cAlias == "SF1"
-		cUpd += "update [DADOSP11O].dbo."+RetSqlName(cAlias)+" set "+cPad+"DTLANC = '' where ("+cPad+"DTDIGIT between '"+cDtIni+"' and '"+cDtFin+"')"
-	elseif cAlias == "SF2"
-		cUpd += "update [DADOSP11O].dbo."+RetSqlName(cAlias)+" set "+cPad+"DTLANC = '' where ("+cPad+"EMISSAO between '"+cDtIni+"' and '"+cDtFin+"')"
-	elseif cAlias == "SE1" .or. cAlias == "SE2"
-		cUpd += "update [DADOSP11O].dbo."+RetSqlName(cAlias)+" set "+cPad+"LA = '' where ("+cPad+"EMIS1 between '"+cDtIni+"' and '"+cDtFin+"')"
-	elseif cAlias == "SE5" .or. cAlias == "SEF"
-		cUpd += "update [DADOSP11O].dbo."+RetSqlName(cAlias)+" set "+cPad+"LA = '' where ("+cPad+"DATA between '"+cDtIni+"' and '"+cDtFin+"')"
-	endif
-	
-	nRet := TCSqlExec(cUpd)
-return*/

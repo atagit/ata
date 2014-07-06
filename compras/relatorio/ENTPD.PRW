@@ -44,7 +44,9 @@ user function ENTPD()
 	private cPCAberto := ""
 	private nAtrasado := 0
 	private nCritico := 0
+	private nResProd := 0
 	private aResumo := {0,0}
+	private aProduto := {}
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Parametros utilizados pelo programa                          ³
@@ -60,6 +62,7 @@ user function ENTPD()
 	//³ mv_par10 - So PC Abertos (1-Nao/2-Sim)                       ³
 	//³ mv_par11 - So Atrasados (1-Nao/2-Sim)                        ³
 	//³ mv_par12 - So Criticos (1-Nao/2-Sim)                         ³
+	//³ mv_par13 - Resumo Produtos (1-Nao/2-Sim)                     ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	
 	Pergunte(cPerg,.F.)
@@ -83,6 +86,7 @@ user function ENTPD()
 	cPCAberto := Str(mv_par10,1)
 	nAtrasado := mv_par11
 	nCritico := mv_par12
+	nResProd := mv_par13
 	
 	do case
 		case cTipo+cPCAberto == "11"
@@ -139,7 +143,7 @@ static function ImprSinN()
 	ProcRegua(TEMP->(RecCount()))
 	
 	Cabec1 := "ENTREGA  | EMISSAO  | DIAS | FONECEDOR            | PEDIDO |          VALOR | PROJETO | NOTA FISCAL"
-	cCbcRef := PADC("Periodo de: "+cDtIni+" a "+cDtFin,132)
+	cCbcRef := PadC("Periodo de: "+U_ConvData(cDtIni)+" a "+U_ConvData(cDtFin),132)
 	
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 	
@@ -147,6 +151,8 @@ static function ImprSinN()
 	//99/99/99   99/99/99   9999   AAAAAAAAAAAAAAAAAAAA   999999   999.999.999,99   999999    999999999-999
 	//012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 	//          1         2         3         4         5         6         7         8         9        10
+	
+	nTotal := 0
 	
 	while !TEMP->(Eof())
 		if nAtrasado == 2
@@ -159,12 +165,20 @@ static function ImprSinN()
 		
 //		nLin++
 		
+		if TEMP->C7_FORNECE <> "000359"
+			nValor := TEMP->C7_TOTAL
+		else
+			SF1->(MsSeek(xFilial("SF1")+TEMP->(D1_DOC+D1_SERIE+C7_FORNECE+C7_LOJA),.F.))
+			
+			nValor := SF1->F1_VALBRUT
+		endif
+		
 		@nLin,000 psay U_ConvData(TEMP->C7_DATPRF,"yy")
 		@nLin,011 psay U_ConvData(TEMP->D1_EMISSAO,"yy")
 		@nLin,022 psay AllTrim(Str(TEMP->DIAS))
 		@nLin,029 psay IIf(SA2->(DbSeek(xFilial("SA1")+TEMP->C7_FORNECE+TEMP->C7_LOJA,.F.)),SA2->A2_NREDUZ,"")
 		@nLin,052 psay TEMP->C7_NUM
-		@nLin,061 psay Transf(TEMP->C7_TOTAL,"@E 999,999,999.99")
+		@nLin,061 psay Transf(nValor,"@E 999,999,999.99")
 		@nLin,078 psay Left(TEMP->C7_CLVL,6)
 		@nLin,088 psay TEMP->D1_DOC+"-"+TEMP->D1_SERIE
 		
@@ -176,11 +190,19 @@ static function ImprSinN()
 		endif
 		
 		nLin++
+		nTotal += nValor
 		
 		U_SaltaFolha()
 		IncProc()
 		TEMP->(DbSkip())
 	enddo
+	
+	nLin++
+	
+	U_SaltaFolha()
+	
+	@nLin,044 psay "TOTAL"
+	@nLin,061 psay Transf(nTotal,"@E 999,999,999.99")
 	
 	nLin += 2
 	
@@ -205,7 +227,12 @@ static function ImprAnaN()
 	cQry := "select C7_DATPRF, D1_EMISSAO, datediff(day,convert(datetime,C7_DATPRF,126),convert(datetime,D1_EMISSAO,126)) as DIAS, C7_FORNECE, C7_LOJA, A2_NREDUZ, C7_NUM, D1_DOC, D1_SERIE, C7_PRODUTO, C7_DESCRI, C7_CLVL, C7_QUANT, C7_TOTAL "
 	cQry += "from "+RetSqlName("SC7")+" SC7 inner join "+RetSqlName("SD1")+" SD1 on (SC7.C7_NUM = SD1.D1_PEDIDO and SC7.C7_ITEM = SD1.D1_ITEMPC) "
 	cQry += "		inner join "+RetSqlName("SA2")+" SA2 on (SC7.C7_FORNECE = SA2.A2_COD and SC7.C7_LOJA = SA2.A2_LOJA) "
-	cQry += "where (SC7.C7_DATPRF between '"+cDtIni+"' and '"+cDtFin+"') and (SC7.C7_NUM between '"+cPedIni+"' and '"+cPedFin+"') and (SC7.C7_FORNECE between '"+cForIni+"' and '"+cForFin+"') and (SC7.C7_CLVL between '"+cProIni+"' and '"+cProFin+"') and SC7.D_E_L_E_T_ <> '*' and SD1.D_E_L_E_T_ <> '*' and SA2.D_E_L_E_T_ <> '*' "
+	cQry += "where (SC7.C7_DATPRF between '"+cDtIni+"' and '"+cDtFin+"') and (SC7.C7_NUM between '"+cPedIni+"' and '"+cPedFin+"') and (SC7.C7_FORNECE between '"+cForIni+"' and '"+cForFin+"') and (SC7.C7_CLVL between '"+cProIni+"' and '"+cProFin+"') and SC7.C7_FORNECE <> '000359' and SC7.D_E_L_E_T_ <> '*' and SD1.D_E_L_E_T_ <> '*' and SA2.D_E_L_E_T_ <> '*' "
+	cQry += "union all "
+	cQry += "select distinct C7_DATPRF, D1_EMISSAO, datediff(day,convert(datetime,C7_DATPRF,126),convert(datetime,D1_EMISSAO,126)) as DIAS, C7_FORNECE, C7_LOJA, A2_NREDUZ, C7_NUM, D1_DOC, D1_SERIE, C7_PRODUTO, C7_DESCRI, C7_CLVL, C7_QUANT, C7_TOTAL "
+	cQry += "from "+RetSqlName("SC7")+" SC7 inner join "+RetSqlName("SD1")+" SD1 on (SC7.C7_NUM = SD1.D1_PEDIDO) "
+	cQry += "		inner join "+RetSqlName("SA2")+" SA2 on (SC7.C7_FORNECE = SA2.A2_COD and SC7.C7_LOJA = SA2.A2_LOJA) "
+	cQry += "where (SC7.C7_DATPRF between '"+cDtIni+"' and '"+cDtFin+"') and (SC7.C7_NUM between '"+cPedIni+"' and '"+cPedFin+"') and (SC7.C7_CLVL between '"+cProIni+"' and '"+cProFin+"') and SC7.C7_FORNECE = '000359' and SC7.C7_ITEM = '0001' and SC7.D_E_L_E_T_ <> '*' and SD1.D_E_L_E_T_ <> '*' and SA2.D_E_L_E_T_ <> '*' "
 	
 	do case
 		case nOrdem == 1
@@ -222,7 +249,7 @@ static function ImprAnaN()
 	
 	Cabec1 := "ENTREGA  | EMISSAO  | DIAS | FONECEDOR            | PEDIDO"
 	Cabec2 := "           PRODUTO                                    | PROJETO |       QUANT |          VALOR | NOTA FISCAL"
-	cCbcRef := PadC("Periodo de: "+cDtIni+" a "+cDtFin,132)
+	cCbcRef := PadC("Periodo de: "+U_ConvData(cDtIni)+" a "+U_ConvData(cDtFin),132)
 	
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 	
@@ -235,6 +262,8 @@ static function ImprAnaN()
 	//           999999 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA        999999    99999999.99   999.999.999,99   999999999-999
 	//0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 	//          1         2         3         4         5         6         7         8         9        10        11
+	
+	nTotGeral := 0
 	
 	while !TEMP->(Eof())
 		nLin++
@@ -252,30 +281,70 @@ static function ImprAnaN()
 		@nLin,029 psay IIf(SA2->(DbSeek(xFilial("SA1")+TEMP->C7_FORNECE+TEMP->C7_LOJA,.F.)),SA2->A2_NREDUZ,"")
 		@nLin,052 psay TEMP->C7_NUM
 		
-		while cPedido == TEMP->C7_NUM
-			nLin++
+		if TEMP->C7_FORNECE <> "000359"
+			while !TEMP->(Eof()) .and. cPedido == TEMP->C7_NUM
+				nLin++
+				
+				U_SaltaFolha()
+				
+				@nLin,011 psay Left(TEMP->C7_PRODUTO,6)+" "+Left(TEMP->C7_DESCRI,35)
+				@nLin,056 psay Left(TEMP->C7_CLVL,6)
+				@nLin,066 psay Transf(TEMP->C7_QUANT,"@E 99999999.99")
+				@nLin,080 psay Transf(TEMP->C7_TOTAL,"@E 999,999,999.99")
+				@nLin,097 psay TEMP->D1_DOC+"-"+TEMP->D1_SERIE
+				
+				if (nInd := AScan(aProduto,{|x| x[1] = TEMP->C7_PRODUTO})) == 0
+					AAdd(aProduto,{TEMP->C7_PRODUTO,TEMP->C7_DESCRI,TEMP->C7_QUANT,TEMP->C7_TOTAL})
+				else
+					aProduto[nInd][3] += TEMP->C7_QUANT
+					aProduto[nInd][4] += TEMP->C7_TOTAL
+				endif
+				
+				nTotal += TEMP->C7_TOTAL
+//				nQuant += TEMP->C7_QUANT
+				nTotGeral += TEMP->C7_TOTAL
+				
+				IncProc()
+				TEMP->(DbSkip())
+			enddo
+		else
+			SC7->(MsSeek(xFilial("SC7")+cPedido,.F.))
 			
-			U_SaltaFolha()
+			while !SC7->(Eof()) .and. SC7->C7_NUM == cPedido
+				nLin++
+				
+				U_SaltaFolha()
+				
+				@nLin,011 psay Left(SC7->C7_PRODUTO,6)+" "+Left(SC7->C7_DESCRI,35)
+				@nLin,056 psay Left(SC7->C7_CLVL,6)
+				@nLin,066 psay Transf(SC7->C7_QUANT,"@E 99999999.99")
+				@nLin,080 psay Transf(SC7->C7_TOTAL,"@E 999,999,999.99")
+				@nLin,097 psay TEMP->D1_DOC+"-"+TEMP->D1_SERIE
+				
+				if (nInd := AScan(aProduto,{|x| x[1] = SC7->C7_PRODUTO})) == 0
+					AAdd(aProduto,{SC7->C7_PRODUTO,SC7->C7_DESCRI,SC7->C7_QUANT,SC7->C7_TOTAL})
+				else
+					aProduto[nInd][3] += SC7->C7_QUANT
+					aProduto[nInd][4] += SC7->C7_TOTAL
+				endif
+				
+				nTotal += SC7->C7_TOTAL
+//				nQuant += SC7->C7_QUANT
+				nTotGeral += SC7->C7_TOTAL
+				
+				IncProc()
+				SC7->(DbSkip())
+			enddo
 			
-			@nLin,011 psay Left(TEMP->C7_PRODUTO,6)+" "+Left(TEMP->C7_DESCRI,35)
-			@nLin,056 psay Left(TEMP->C7_CLVL,6)
-			@nLin,066 psay Transf(TEMP->C7_QUANT,"@E 99999999.99")
-			@nLin,080 psay Transf(TEMP->C7_TOTAL,"@E 999,999,999.99")
-			@nLin,097 psay TEMP->D1_DOC+"-"+TEMP->D1_SERIE
-			
-			nTotal += TEMP->C7_TOTAL
-			nQuant += TEMP->C7_QUANT
-			
-			IncProc()
 			TEMP->(DbSkip())
-		enddo
+		endif
 		
 		nLin++
 		
 		U_SaltaFolha()
 		
-		@nLin,052 psay "TOTAL"
-		@nLin,066 psay Transf(nQuant,"@E 99999999.99")
+		@nLin,064 psay "TOTAL"
+//		@nLin,066 psay Transf(nQuant,"@E 99999999.99")
 		@nLin,080 psay Transf(nTotal,"@E 999,999,999.99")
 		
 		nLin++
@@ -289,6 +358,13 @@ static function ImprAnaN()
 		U_SaltaFolha()
 	enddo
 	
+	nLin++
+	
+	U_SaltaFolha()
+	
+	@nLin,056 psay "TOTAL Geral"
+	@nLin,080 psay Transf(nTotGeral,"@E 999,999,999.99")
+	
 	nLin += 2
 	
 	U_SaltaFolha()
@@ -296,6 +372,10 @@ static function ImprAnaN()
 	@nLin,000 psay "REGISTRO(S): "+Transf(nCont,"@E 999,999")
 	@nLin,030 psay "DIAS EM ATRASO: "+Transf(aResumo[2],"@E 999,999,999")
 	@nLin,070 psay "MEDIA DE DIAS: "+Transf(aResumo[2] / aResumo[1],"@E 999,999.99")
+	
+	if nResProd == 2
+		Resumo()
+	endif
 	
 	U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 	TEMP->(DbCloseArea())
@@ -328,7 +408,7 @@ static function ImprSinS()
 	ProcRegua(TEMP->(RecCount()))
 	
 	Cabec1 := "ENTREGA  | ATRASADO | FONECEDOR            | PEDIDO |          VALOR | PROJETO |     ENTREGUE"
-	cCbcRef := PADC("Periodo de: "+cDtIni+" a "+cDtFin,132)
+	cCbcRef := PadC("Periodo de: "+U_ConvData(cDtIni)+" a "+U_ConvData(cDtFin),132)
 	
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 	
@@ -337,8 +417,12 @@ static function ImprSinS()
 	//012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 	//          1         2         3         4         5         6         7         8         9        10
 	
+	nTotal := 0
+	
 	while !TEMP->(Eof())
 		nLin++
+		
+		U_SaltaFolha()
 		
 		if nAtrasado == 2
 			if TEMP->DIAS < 0 ; TEMP->(DbSkip()) ; loop ; endif
@@ -353,16 +437,24 @@ static function ImprSinS()
 		@nLin,081 psay IIf(TEMP->C7_QUJE > 0,Transf(TEMP->C7_QUJE,"@E 999999999.99"),"")
 		
 		nCont++
+		nTotal += TEMP->C7_TOTAL
 		
 		if TEMP->DIAS > 0
 			aResumo[1] += 1
 			aResumo[2] += TEMP->DIAS
 		endif
 		
-		U_SaltaFolha()
+//		U_SaltaFolha()
 		IncProc()
 		TEMP->(DbSkip())
 	enddo
+	
+	nLin++
+	
+	U_SaltaFolha()
+	
+	@nLin,037 psay "TOTAL"
+	@nLin,054 psay Transf(nTotal,"@E 999,999,999.99")
 	
 	nLin += 2
 	
@@ -402,7 +494,7 @@ static function ImprAnaS()
 	
 	Cabec1 := "ENTREGA  | ATRASADO | FONECEDOR            | PEDIDO"
 	Cabec2 := "           PRODUTO                                    | PROJETO |       QUANT |          VALOR |     ENTREGUE"
-	cCbcRef := PADC("Periodo de: "+cDtIni+" a "+cDtFin,132)
+	cCbcRef := PadC("Periodo de: "+U_ConvData(cDtIni)+" a "+U_ConvData(cDtFin),132)
 	
 	U_Cbc(cEmpAnt,cCbcNum,cDesc1,Cabec1,Cabec2,cCbcRef,Tamanho,wnrel)
 	
@@ -412,6 +504,8 @@ static function ImprAnaS()
 	//           999999                                       999999    99999999.99   999,999,999.99   999999999.99
 	//012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 	//          1         2         3         4         5         6         7         8         9        10
+	
+	nTotGeral := 0
 	
 	while !TEMP->(Eof())
 		nLin++
@@ -440,7 +534,15 @@ static function ImprAnaS()
 			@nLin,080 psay Transf(TEMP->C7_TOTAL,"@E 999,999,999.99")
 			@nLin,097 psay IIf(TEMP->C7_QUJE > 0,Transf(TEMP->C7_QUJE,"@E 999999999.99"),"")
 			
+			if (nInd := AScan(aProduto,{|x| x[1] = TEMP->C7_PRODUTO})) == 0
+				AAdd(aProduto,{TEMP->C7_PRODUTO,TEMP->C7_DESCRI,TEMP->C7_QUANT,TEMP->C7_TOTAL})
+			else
+				aProduto[nInd][3] += TEMP->C7_QUANT
+				aProduto[nInd][4] += TEMP->C7_TOTAL
+			endif
+			
 			nTotal += TEMP->C7_TOTAL
+			nTotGeral += TEMP->C7_TOTAL
 			nQuant += TEMP->C7_QUANT
 			nEntregue += TEMP->C7_QUJE
 			
@@ -468,6 +570,13 @@ static function ImprAnaS()
 		U_SaltaFolha()
 	enddo
 	
+	nLin++
+	
+	U_SaltaFolha()
+	
+	@nLin,056 psay "TOTAL"
+	@nLin,080 psay Transf(nTotGeral,"@E 999,999,999.99")
+	
 	nLin += 2
 	
 	U_SaltaFolha()
@@ -476,6 +585,44 @@ static function ImprAnaS()
 	@nLin,030 psay "DIAS EM ATRASO: "+Transf(aResumo[2],"@E 999,999,999")
 	@nLin,070 psay "MEDIA DE DIAS: "+Transf(aResumo[2] / aResumo[1],"@E 999,999.99")
 	
+	if nResProd == 2
+		Resumo()
+	endif
+	
 	U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 	TEMP->(DbCloseArea())
+return
+
+static function Resumo()
+	nLin := 75
+	
+	ASort(aProduto,,,{|x,y| x[1] > y[1]})
+	U_SaltaFolha()
+	
+	//* * * * *   R E S U M O   P O R   P R O D U T O   * * * * *
+	//PRODUTO                                                    |       QUANT |          VALOR
+	//999999  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   99999999.99   999,999,999.99
+	//012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+	//          1         2         3         4         5         6         7         8         9        10
+	
+	nTotal := 0
+	
+	@nLin,000 psay PadC("* * * * *   R E S U M O   P O R   P R O D U T O   * * * * *",90)
+	
+	nLin += 2
+	
+	for n := 1 to Len(aProduto)
+		@nLin,000 psay Left(aProduto[n][1],6)
+		@nLin,008 psay Left(aProduto[n][2],50)
+		@nLin,061 psay Transf(aProduto[n][3],"@E 99999999.99")
+		@nLin,075 psay Transf(aProduto[n][4],"@E 999,999,999.99")
+		
+		nLin++
+		nTotal += aProduto[n][4]
+		
+		U_SaltaFolha()
+	next
+	
+	@nLin,000 psay "TOTAL"
+	@nLin,075 psay Transf(nTotal,"@E 999,999,999.99")
 return

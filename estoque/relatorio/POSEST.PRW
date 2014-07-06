@@ -4,6 +4,7 @@
    ¦Descrição ¦ Relatório Posicao de Estoque                          ¦
   ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*/
 #include "rwmake.ch"
+#include "protheus.ch"
 #include "topconn.ch"
 
 user function POSEST()
@@ -99,6 +100,7 @@ static function Impr()
 	private cUltMes := DToS(GetMV("MV_ULMES"))
 	private cPriMes := DToS(GetMV("MV_ULMES") + 1)
 	private aAlmox := {}
+	private aUnidade := {}
 	
 	if nTipoRel == 1
 		GravarMov()
@@ -174,8 +176,57 @@ static function Impr()
 	next
 	
 	@nLin,083 psay "TOTAL"
-	@nLin,095 psay Transf(nTotQuant,"@E 999,999,999.9999")
+//	@nLin,095 psay Transf(nTotQuant,"@E 999,999,999.9999")
 	@nLin,113 psay Transf(nTotValor,"@E 999,999,999.99")
+	
+	nLin += 2
+	
+	U_SaltaFolha()
+	
+	@nLin,000 psay __PrtThinLine()
+	
+	nLin += 2
+	
+	U_SaltaFolha()
+	
+	@nLin,000 psay "AMZ  UNIDADE                                            QUANT             VALOR"
+	
+	nLin++
+	
+//	AMZ  UNIDADE                                            QUANT             VALOR
+//	99   AA  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA      999,999,999.9999    999,999,999.99
+//	0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
+//	          1         2         3         4         5         6         7         8         9        10        11        12        13
+	i := 1
+	
+	while i <= Len(aUnidade)
+		cAmz := aUnidade[i][1]
+		nTotQuant := 0
+		nTotValor := 0
+		
+		U_SaltaFolha()
+		
+		while i <= Len(aUnidade) .and. aUnidade[i][1] == cAmz
+			@nLin,000 psay aUnidade[i][1]
+			@nLin,005 psay aUnidade[i][2]
+			@nLin,009 psay IIf(SAH->(DbSeek(xFilial("SAH")+aUnidade[i][2],.F.)),Left(SAH->AH_DESCPO,30)," ")
+			@nLin,045 psay Transf(aUnidade[i][3],"@E 999,999,999.9999")
+			@nLin,065 psay Transf(aUnidade[i][4],"@E 999,999,999.99")
+			
+			nLin++
+			nTotQuant += aUnidade[i][3]
+			nTotValor += aUnidade[i][4]
+			i++
+			
+			U_SaltaFolha()
+		enddo
+		
+		@nLin,000 psay "TOTAL"
+//		@nLin,045 psay Transf(nTotQuant,"@E 999,999,999.9999")
+		@nLin,065 psay Transf(nTotValor,"@E 999,999,999.99")
+		
+		nLin += 2
+	enddo
 	
 	U_Rdp(nRdpPag,cRdpLeg,Tamanho)
 return
@@ -237,10 +288,18 @@ static function GravarMov()
 			endif
 		endif
 		
+		if (nInd := AScan(aUnidade,{|x| x[1]+x[2] = TEMP->LOCAL+TEMP->UM})) == 0
+			AAdd(aUnidade,{TEMP->LOCAL,TEMP->UM,TEMP->QUANT,TEMP->CUSTO})
+		else
+			aUnidade[nInd][3] += TEMP->QUANT
+			aUnidade[nInd][4] += TEMP->CUSTO
+		endif
+		
 		IncProc()
 		TEMP->(DbSkip())
 	enddo
 	
+	ASort(aUnidade,,,{|x,y| x[1]+x[2] < y[1]+y[2]})
 	ASort(aAlmox,,,{|x,y| x[4]+x[1] < y[4]+y[1]})
 return
 
@@ -248,7 +307,7 @@ static function GravarAtu()
 	local cCondic := IIf(nListZero == 2," and B2_QATU <> 0","")
 	
 //	cQry := "select 0 as NUMSEQ, 'SB2' as TM, B2_COD as COD, B2_LOCAL as LOCAL, B1_UM as UM, B2_QATU as QUANT, B2_CM1 as CUSTO "
-	cQry := "select 0 as NUMSEQ, 'SB2' as TM, B2_COD as COD, B2_LOCAL as LOCAL, B1_UM as UM, B2_QATU as QUANT, (B2_QATU * B1_ULTPRC) as CUSTO, B1_DESC as DESC "
+	cQry := "select 0 as NUMSEQ, 'SB2' as TM, B2_COD as COD, B2_LOCAL as LOCAL, B1_UM as UM, B2_QATU as QUANT, (B2_QATU * B1_ULTPRC) as CUSTO, B1_DESC as DESCRI "
 	cQry += "from "+RetSqlName("SB2")+" SB2 inner join "+RetSqlName("SB1")+" SB1 on (B2_COD = B1_COD) "
 	cQry += "where (B2_COD between '"+cProdIni+"' and '"+cProdFin+"') and (B2_LOCAL between '"+cArmaIni+"' and '"+cArmaFin+"')"+cCondic+" and B1_MSBLQL <> '1' and SB2.D_E_L_E_T_ <> '*' and SB1.D_E_L_E_T_ <> '*' "
 	cQry += "order by B2_LOCAL, B2_COD"
@@ -260,11 +319,20 @@ static function GravarAtu()
 	TEMP->(DbGoTop())
 	
 	while !TEMP->(Eof())
-		AAdd(aAlmox,{TEMP->COD,TEMP->QUANT,TEMP->CUSTO,TEMP->LOCAL,TEMP->DESC})
+		AAdd(aAlmox,{TEMP->COD,TEMP->QUANT,TEMP->CUSTO,TEMP->LOCAL,TEMP->DESCRI})
+		
+		if (nInd := AScan(aUnidade,{|x| x[1]+x[2] = TEMP->LOCAL+TEMP->UM})) == 0
+			AAdd(aUnidade,{TEMP->LOCAL,TEMP->UM,TEMP->QUANT,TEMP->CUSTO})
+		else
+			aUnidade[nInd][3] += TEMP->QUANT
+			aUnidade[nInd][4] += TEMP->CUSTO
+		endif
 		
 		IncProc()
 		TEMP->(DbSkip())
 	enddo
+	
+	ASort(aUnidade,,,{|x,y| x[1]+x[2] < y[1]+y[2]})
 	
 	do case
 		case nOrdem == 1
