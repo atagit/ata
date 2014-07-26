@@ -613,10 +613,10 @@ user function ATUAORCA()
 		
 		while !TEMP->(Eof())
 			if Empty(TEMP->C7_RESIDUO)
-				nValor := TEMP->C7_TOTAL
+				nValor := TEMP->(C7_TOTAL + C7_VALIPI)
 			else
 				if !Empty(TEMP->C7_QUJE)
-					nValor := C7_QUJE * C7_PRECO
+					nValor := TEMP->(C7_QUJE * C7_PRECO) + ((TEMP->(C7_QUJE * C7_PRECO) * TEMP->C7_VALIPI) / 100)
 				else
 					nValor := 0
 				endif
