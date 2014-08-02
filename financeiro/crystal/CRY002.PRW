@@ -370,6 +370,7 @@ static function GeraRel(aBancos,cMes,cAno)
 		TRB->(DbSkip())
 	enddo
 	
+	DbSelectArea("TRB")
 	ZAP
 	
 	ASort(aMatriz,,,{|x,y| x[1] < y[1]})

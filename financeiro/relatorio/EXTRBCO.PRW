@@ -569,6 +569,7 @@ static function Impr()
 //		endif
 		
 		nLin += 2
+		nSaldoAtual := nSldCtaPrin - aAplicacao[2] + aAplicacao[1]
 		
 		U_SaltaFolha()
 		RestArea(aArea1)
