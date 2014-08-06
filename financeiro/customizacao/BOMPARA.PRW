@@ -35,7 +35,7 @@ user function BOMPARA()
 	
 	cQry := "select E5_RECONC "
 	cQry += "from "+RetSqlName("SE5")+" "
-	cQry += "where E5_NUMCHEQ = '"+SEF->EF_NUM+"' and E5_TIPODOC = 'CH' and E5_TIPO = '' and D_E_L_E_T_ <> '*'"
+	cQry += "where E5_NUMCHEQ = '"+SEF->EF_NUM+"' and E5_BANCO = '"+SEF->EF_BANCO+"' and E5_AGENCIA = '"+SEF->EF_AGENCIA+"' and E5_CONTA = '"+SEF->EF_CONTA+"' and E5_TIPODOC = 'CH' and E5_TIPO = '' and D_E_L_E_T_ <> '*'"
 	
 	tcquery cQry new alias "TEMP"
 	DbSelectArea("TEMP")
