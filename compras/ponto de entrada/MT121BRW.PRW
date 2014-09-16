@@ -6,5 +6,6 @@
 #include "rwmake.ch"
 
 user function MT121BRW()
-	AAdd(aRotina,{"Notif. N C","U_VISSZR()",0,6})
+	AAdd(aRotina,{"Notificacao N.C.","U_VISSZR()",0,6})
+	AAdd(aRotina,{"Mudar Fornecedor","U_ALTFORPC()",0,6})
 return

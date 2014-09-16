@@ -96,7 +96,8 @@ static function Impr()
 	
 	cQry := "select distinct E5_DTDIGIT, SEF.* "
 	cQry += "from "+RetSqlName("SEF")+" SEF inner join "+RetSqlName("SE5")+" SE5 on (EF_NUM = E5_NUMCHEQ and EF_BANCO = E5_BANCO and EF_AGENCIA = E5_AGENCIA and EF_CONTA = E5_CONTA and EF_VALOR = E5_VALOR) "
-	cQry += "where (EF_NUM between '"+cChqIni+"' and '"+cChqFin+"') and EF_BANCO = '"+cBancoDe+"' and EF_AGENCIA = '"+cAgenciaDe+"' and EF_CONTA = '"+cContaDe+"' and EF_TITULO = '' and E5_TIPODOC = 'CH' and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
+//	cQry += "where (EF_NUM between '"+cChqIni+"' and '"+cChqFin+"') and EF_BANCO = '"+cBancoDe+"' and EF_AGENCIA = '"+cAgenciaDe+"' and EF_CONTA = '"+cContaDe+"' and EF_TITULO = '' and E5_TIPODOC = 'CH' and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
+	cQry += "where (EF_NUM between '"+cChqIni+"' and '"+cChqFin+"') and EF_BANCO = '"+cBancoDe+"' and EF_AGENCIA = '"+cAgenciaDe+"' and EF_CONTA = '"+cContaDe+"' and ((EF_TITULO = '' and E5_TIPODOC = 'CH') or (EF_TIPO = 'PA')) and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
 	cQry += "order by EF_NUM, EF_BANCO, EF_AGENCIA, EF_CONTA, EF_TITULO"
 	
 	tcquery cQry new alias "TEMP"
@@ -212,6 +213,8 @@ static function Impr()
 				CON->(DbSkip())
 			enddo
 			
+			CON->(DbCloseArea())
+			
 			@++nLin,002 psay Replicate("-",132)
 			@++nLin,077 psay "T O T A L"
 			@nLin  ,114 psay Transf(nTotChq,"@E 999,999,999.99")
@@ -229,7 +232,6 @@ static function Impr()
 //		endif
 	enddo
 	
-	CON->(DbCloseArea())
 	TEMP->(DbCloseArea())
 return
 

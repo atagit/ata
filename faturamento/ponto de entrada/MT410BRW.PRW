@@ -6,13 +6,16 @@
 #include "rwmake.ch"
 
 user function MT410BRW()
-	AAdd(aRotina,{"Pre-Danfe","U_ChamarNF()",0,3})
+	AAdd(aRotina,{"Pre-Nota","U_CHAMARNF()",0,6})
+	AAdd(aRotina,{"Folha Rosto","U_IMPFOLR()",0,6})
 return
 
-user function ChamarNF()
+user function CHAMARNF()
+	local aAreaAnt := GetArea()
 	local cNota := SC5->C5_NOTA
 	local cSerie := SC5->C5_SERIE
 	local cCliente := SC5->(C5_CLIENTE+C5_LOJACLI)
+	local cPedVen := SC5->C5_NUM
 	
 /*	if !Empty(cNota) .and. !Empty(cSerie)
 		if cEmpresa == "01"
@@ -26,9 +29,11 @@ user function ChamarNF()
 		MsgBox("O Pedido de Venda nao foi preparado (nao gerou nota fiscal)!","Alerta","ALERT")
 	endif*/
 	
-	if !Empty(cNota) .and. !Empty(cSerie)
-		U_PREDANFE("S",cNota,cSerie,cCliente)
-	else
-		MsgBox("O Pedido de Venda nao foi preparado (nao gerou nota fiscal)!","Alerta","ALERT")
-	endif
+//	if !Empty(cNota) .and. !Empty(cSerie)
+		U_PREDANFE("S",cPedVen,cNota,cSerie,cCliente)
+//	else
+//		MsgBox("O Pedido de Venda nao foi preparado (nao gerou nota fiscal)!","Alerta","ALERT")
+//	endif
+	
+	RestArea(aAreaAnt)
 return

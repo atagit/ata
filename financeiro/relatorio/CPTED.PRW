@@ -105,7 +105,7 @@ static function Impr()
 	cQry += "where (((E5_DOCUMEN between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_NATUREZ = '40103') or ((E5_NUMCHEQ between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_TIPO = 'PA ')) and (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and D_E_L_E_T_ <> '*' "
 	cQry += "order by E5_DOCUMEN"*/
 	
-	cQry := "select E5_DTDISPO, E5_NUMTED, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E5_RECONC, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_NUMCHEQ, E5_TIPO "
+	cQry := "select E5_DTDISPO, E5_NUMTED, E5_DATA, E5_BANCO, E5_AGENCIA, E5_CONTA, E5_BENEF, E5_HISTOR, E5_VALOR, E5_CLIFOR, E5_LOJA, E5_RECONC, E5_PREFIXO, E5_NUMERO, E5_PARCELA, E5_NUMCHEQ, E5_TIPO, E5_TIPODOC "
 	cQry += "from "+RetSqlName("SE5")+" "
 	cQry += "where (((E5_NUMTED between '"+cTedIni+"' and '"+cTedFin+"') and E5_NATUREZ = '40103') or ((E5_NUMCHEQ between 'TED"+cTedIni+"' and 'TED"+cTedFin+"') and E5_TIPO = 'PA ')) and (E5_DTDISPO between '"+cDataIni+"' and '"+cDataFin+"') and E5_BANCO = '"+cBancoDe+"' and E5_AGENCIA = '"+cAgenciaDe+"' and E5_CONTA = '"+cContaDe+"' and D_E_L_E_T_ <> '*' "
 	cQry += "order by E5_NUMTED"
@@ -161,7 +161,7 @@ static function Impr()
 			cQry := "select E2_NUM, E2_PREFIXO, E2_PARCELA, E2_EMISSAO, (E2_VALOR + E2_ACRESC - E2_DECRESC) as E2_VALOR, E2_BALGER, E2_NOMFOR, E2_VALLIQ "
 			cQry += "from "+RetSqlName("SE2")+" "
 //			cQry += "where E2_NUM = '"+TEMP->E5_NUMERO+"' and E2_PREFIXO = '"+TEMP->E5_PREFIXO+"' and E2_PARCELA = '"+TEMP->E5_PARCELA+"' and E2_FORNECE = '"+TEMP->E5_CLIFOR+"' and E2_LOJA = '"+TEMP->E5_LOJA+"' "+cCondPA+"and D_E_L_E_T_ <> '*' "
-			cQry += "where E2_NUM = '"+TEMP->E5_NUMERO+"' and E2_PREFIXO = '"+TEMP->E5_PREFIXO+"' and E2_PARCELA = '"+TEMP->E5_PARCELA+"' and E2_FORNECE = '"+TEMP->E5_CLIFOR+"' and E2_LOJA = '"+TEMP->E5_LOJA+"' and E2_BCOPAG = '"+TEMP->E5_BANCO+"' and D_E_L_E_T_ <> '*' "
+			cQry += "where E2_NUM = '"+TEMP->E5_NUMERO+"' and E2_PREFIXO = '"+TEMP->E5_PREFIXO+"' and E2_PARCELA = '"+TEMP->E5_PARCELA+"' and E2_FORNECE = '"+TEMP->E5_CLIFOR+"' and E2_LOJA = '"+TEMP->E5_LOJA+"' and "+IIf(TEMP->E5_TIPODOC == 'PA',"E2_TIPO = 'PA '","E2_BCOPAG = '"+TEMP->E5_BANCO+"'")+" and D_E_L_E_T_ <> '*' "
 		endif
 		
 		tcquery cQry new alias "CON1"

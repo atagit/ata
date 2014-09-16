@@ -31,6 +31,7 @@ user function CADOC()
 							{"Imprimir","U_RELOC(SZM->ZM_OC)",0,6},;
 							{"Atualizar","U_ATUOC(SZM->ZM_OC,SZM->ZM_CODIGO)",0,7},;
 							{"Validar","U_VALOC(SZM->ZM_OC,SZM->ZM_CODIGO)",0,8},;
+							{"Consultar","U_CONOC(SZM->ZM_OC,SZM->ZM_CODIGO)",0,9},;
 							{"Legenda","U_LEGCADOC()",0,9}}
 	
 	aColors := {{"ZM_VENCOC > dDataBase","BR_VERDE"},;
@@ -39,7 +40,6 @@ user function CADOC()
 	
 	DbSelectArea("SZM")
 	DbSetOrder(1)
-	
 	MBrowse(06,01,22,75,"SZM",,,,,,aColors)
 return
 
@@ -205,7 +205,26 @@ user function CADOC01(cOpcao)
 		aAltEnchoice := {}
 	endif*/
 	
-	aAltEnchoice := {"ZM_OC","ZM_VENCOC","ZM_CLIENTE","ZM_LOJA","ZM_CONTATO","ZM_QUANT","ZM_UM","ZM_PRCUNIT","ZM_TOTAL","ZM_ADIANTA","ZM_VLADIAN","ZM_GARANTI","ZM_VENGARA","ZM_BCOEMIT",;
+	aAltEnchoice := {}
+	
+	DbSelectArea("SX3")
+	DbSeek("SZM")
+	
+	while !Eof() .and. X3_ARQUIVO == "SZM"
+		if AllTrim(X3_CAMPO) == "ZM_FILIAL"
+			DbSkip()
+			
+			loop
+		endif
+		
+		if X3Uso(X3_USADO) .and. cNivel >= X3_NIVEL
+			AAdd(aAltEnchoice,AllTrim(X3_CAMPO))
+		endif
+		
+		DbSkip()
+	enddo
+	
+/*	aAltEnchoice := {"ZM_OC","ZM_VENCOC","ZM_CLIENTE","ZM_LOJA","ZM_CONTATO","ZM_QUANT","ZM_UM","ZM_PRCUNIT","ZM_TOTAL","ZM_ADIANTA","ZM_VLADIAN","ZM_GARANTI","ZM_VENGARA","ZM_BCOEMIT",;
 						"ZM_PERCDB","ZM_VLDB","ZM_MULTA","ZM_VLMULTA","ZM_VENMULT","ZM_CONDPAG","ZM_ALQICMS","ZM_BASICMS","ZM_VALICMS","ZM_ALQIPI","ZM_BASIPI","ZM_VALIPI","ZM_ALQPIS",;
 						"ZM_BASPIS","ZM_VALPIS","ZM_ALQCOF","ZM_BASCOF","ZM_VALCOF","ZM_ALQISS","ZM_BASISS","ZM_VALISS","ZM_NCM","ZM_TES1","ZM_TES2","ZM_TES3","ZM_TES4","ZM_PRJQTD",;
 						"ZM_PRJVLR","ZM_PRJSLDQ","ZM_PRJSLDV","ZM_EMAIL","ZM_EMAILNF","ZM_TOTALG","ZM_T1CLI","ZM_T1LOJ","ZM_T2CLI","ZM_T2LOJ","ZM_T3CLI","ZM_T3LOJ","ZM_T4CLI","ZM_T4LOJ",;
@@ -213,7 +232,7 @@ user function CADOC01(cOpcao)
 						"ZM_OBSCOF","ZM_OBSISS","ZM_NATOPER","ZM_BCOREC","ZM_PROJETO","ZM_NATFAT","ZM_GARAPLI","ZM_GARDOC","ZM_GARANT2","ZM_GARDOC2","ZM_BCOEMI2","ZM_PERGAR2","ZM_BSGARA2",;
 						"ZM_VLGARA2","ZM_VENGAR2","ZM_GARAPL2","ZM_GARANT3","ZM_GARDOC3","ZM_BCOEMI3","ZM_PERGAR3","ZM_BSGARA3","ZM_VLGARA3","ZM_VENGAR3","ZM_GARAPL3","ZM_GARANT4","ZM_GARDOC4",;
 						"ZM_BCOEMI4","ZM_PERGAR4","ZM_BSGARA4","ZM_VLGARA4","ZM_VENGAR4","ZM_GARAPL4","ZM_GARANT5","ZM_GARDOC5","ZM_BCOEMI5","ZM_PERGAR5","ZM_BSGARA5","ZM_VLGARA5","ZM_VENGAR5",;
-						"ZM_GARAPL5","ZM_VLAPLIC","ZM_VLAPLI2","ZM_VLAPLI3","ZM_VLAPLI4","ZM_VLAPLI5","ZM_PERRETE","ZM_BSRETEN","ZM_VLRETEN","ZM_VENRETE","ZM_DDADIC","ZM_TPPESAG"}
+						"ZM_GARAPL5","ZM_VLAPLIC","ZM_VLAPLI2","ZM_VLAPLI3","ZM_VLAPLI4","ZM_VLAPLI5","ZM_PERRETE","ZM_BSRETEN","ZM_VLRETEN","ZM_VENRETE","ZM_DDADIC","ZM_TPPESAG"}*/
 	
 	if !lInclui
 		_lRet := Modelo3(cTitulo,cAliasEnchoice,cAliasGetD,aCpoEnchoice,cLinOk,cTudOk,nOpcE,nOpcG,cFieldOk,,,aAltEnchoice,,aButtons,aCordW,_TAMCABEC)
@@ -377,6 +396,11 @@ static function IncluiBanco()
 		SZM->ZM_VENRETE := M->ZM_VENRETE
 		SZM->ZM_DDADIC	:= M->ZM_DDADIC
 		SZM->ZM_TPPESAG	:= M->ZM_TPPESAG
+		SZM->ZM_CONDPGT	:= M->ZM_CONDPGT
+		SZM->ZM_NATUR1	:= M->ZM_NATUR1
+		SZM->ZM_NATUR2	:= M->ZM_NATUR2
+		SZM->ZM_NATUR3	:= M->ZM_NATUR3
+		SZM->ZM_NATUR4	:= M->ZM_NATUR4
 	MsUnLock()
 	ConfirmSx8()
 	
@@ -553,6 +577,11 @@ static function AlteraBanco()
 		SZM->ZM_VENRETE := M->ZM_VENRETE
 		SZM->ZM_DDADIC	:= M->ZM_DDADIC
 		SZM->ZM_TPPESAG	:= M->ZM_TPPESAG
+		SZM->ZM_CONDPGT	:= M->ZM_CONDPGT
+		SZM->ZM_NATUR1	:= M->ZM_NATUR1
+		SZM->ZM_NATUR2	:= M->ZM_NATUR2
+		SZM->ZM_NATUR3	:= M->ZM_NATUR3
+		SZM->ZM_NATUR4	:= M->ZM_NATUR4
 	MsUnLock()
 	
 //	nTotSaldo := 0
@@ -812,6 +841,128 @@ return
 	M->ZM_TOTALG := nQuant * nPrcUnitImp
 	M->ZM_PRJSLDQ := M->ZM_QUANT - M->ZM_PRJQTD
 return*/
+
+user function CONOC(cOC,cCodigo)
+	local oButton1, oButton2
+	local oGroup1, oGroup2
+	local oSay1, oSay2, oSay3, oSay4
+	
+	private oDlg
+	private aWBrowse1, aWBrowse2
+	private oWBrowse1, oWBrowse2
+	private lWBrowse1, lWBrowse2
+	
+	oFont := TFont():New("Arial",,15,,.F.)
+	oFontN := TFont():New("Arial",,15,,.T.)
+	
+	define msdialog oDlg title "Consultar" from 000,000 to 335,650 colors 0,16777215 pixel
+		@003,004 group oGroup1 to 022,323 of oDlg color 0,16777215 pixel
+		
+		oSay1 := TSay():New(009,007,{|| "CODIGO"},oDlg,,oFont,,,,.T.,,,,)
+		oSay2 := TSay():New(009,034,{|| cCodigo},oDlg,,oFontN,,,,.T.,,,,)
+		oSay3 := TSay():New(009,103,{|| "O.C."},oDlg,,oFont,,,,.T.,,,,)
+		oSay4 := TSay():New(009,120,{|| cOC},oDlg,,oFontN,,,,.T.,,,,)
+		
+		@026,004 group oGroup2 to 149,161 prompt " Pre-Nota " of oDlg color 0,16777215 pixel
+		
+		FWBrowse1(cCodigo)
+		
+		@026,167 group oGroup3 to 149,323 prompt " Nota Fiscal " of oDlg color 0,16777215 pixel
+		
+		FWBrowse2(cCodigo)
+		
+		@153,123 button oButton1 prompt "Visualizar" size 037,012 of oDlg action Visual("PV",aWBrowse1[oWBrowse1:nAt,1]) when lWBrowse1 pixel
+		@153,285 button oButton2 prompt "Visualizar" size 037,012 of oDlg action Visual("NF",aWBrowse2[oWBrowse2:nAt,1]+aWBrowse2[oWBrowse2:nAt,2]) when lWBrowse2 pixel
+	activate msdialog oDlg centered
+return
+
+static function Visual(nOpc,cReg)
+	if nOpc == "PV"
+		SC5->(MsSeek(xFilial("SC5")+cReg,.F.))
+		
+		A410Visual("SC5",SC5->(Recno()),2)
+	elseif nOpc == "NF"
+		SF2->(MsSeek(xFilial("SF2")+cReg,.F.))
+		
+		Mc090Visual("SF2",SF2->(Recno()),2)
+	endif
+return
+
+static function FWBrowse1(cCod)
+	aWBrowse1 := {}
+	
+	if Select("TMP") <> 0
+		TMP->(DbCloseArea())
+	endif
+	
+	cQry := "select C5_NUM, C5_PROJETO "
+	cQry += "from "+RetSqlName("SC5")+" "
+	cQry += "where C5_FOLROST = '"+cCod+"' and D_E_L_E_T_ <> '*' "
+	cQry += "order by C5_NUM"
+	
+	tcquery cQry new alias "TMP"
+	
+	DbSelectArea("TMP")
+	TMP->(DbGoTop())
+	
+	while !TMP->(Eof())
+		AAdd(aWBrowse1,{TMP->C5_NUM,TMP->C5_PROJETO})
+		
+		TMP->(DbSkip())
+	enddo
+	
+	TMP->(DbCloseArea())
+	
+	if Len(aWBrowse1) <= 0
+		AAdd(aWBrowse1,{"",""})
+		
+		lWBrowse1 := .F.
+	endif
+	
+	@034,008 listbox oWBrowse1 fields header "PRE-NOTA","PROJETO" size 149,112 of oDlg pixel /*colsizes 50,30*/
+		oWBrowse1:SetArray(aWBrowse1)
+		oWBrowse1:bLine := {|| {aWBrowse1[oWBrowse1:nAt,1],aWBrowse1[oWBrowse1:nAt,2]}}
+		oWBrowse1:Refresh()
+return
+
+static function FWBrowse2(cCod)
+	aWBrowse2 := {}
+	
+	if Select("TMP") <> 0
+		TMP->(DbCloseArea())
+	endif
+	
+	cQry := "select C6_NFORI, C6_SERIORI, C5_TIPO "
+	cQry += "from "+RetSqlName("SC5")+" SC5 inner join "+RetSqlName("SC6")+" SC6 on (C5_NUM = C6_NUM) "
+	cQry += "where C5_FOLROST = '"+cCod+"' and SC5.D_E_L_E_T_ <> '*' and SC6.D_E_L_E_T_ <> '*' "
+	cQry += "order by C6_NFORI"
+	
+	tcquery cQry new alias "TMP"
+	
+	DbSelectArea("TMP")
+	TMP->(DbGoTop())
+	
+	while !TMP->(Eof())
+		if !Empty(TMP->C6_NFORI)
+			AAdd(aWBrowse2,{TMP->C6_NFORI,TMP->C6_SERIORI,TMP->C5_TIPO})
+		endif
+		
+		TMP->(DbSkip())
+	enddo
+	
+	TMP->(DbCloseArea())
+	
+	if Len(aWBrowse2) <= 0
+		AAdd(aWBrowse2,{"","",""})
+		
+		lWBrowse2 := .F.
+	endif
+	
+	@034,170 listbox oWBrowse2 fields header "NOTA","SERIE","TIPO" size 149,112 of oDlg pixel /*colsizes 50,30*/
+		oWBrowse2:SetArray(aWBrowse2)
+		oWBrowse2:bLine := {|| {aWBrowse2[oWBrowse2:nAt,1],aWBrowse2[oWBrowse2:nAt,2],aWBrowse2[oWBrowse2:nAt,3]}}
+		oWBrowse2:Refresh()
+return
 
 user function VALOC(cOC,cCodigo)
 	private aOrd    := {"Validar OC"}

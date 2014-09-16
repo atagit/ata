@@ -12,7 +12,7 @@
 #define _MAXMEMO 1000
 
 user function TAIF()
-	local oButton1, oButton2, oButton3, oButton4, oButton5, oButton6
+	local oButton1, oButton2, oButton3, oButton4, oButton5, oButton6, oButton7
 	local oCheckBo1, oCheckBo2, oCheckBo3, oCheckBo4, oCheckBo5
 	local oComboBo1, oComboBo2, oComboBo3
 	local oGet1, oGet2, oGet3, oGet4, oGet5, oGet6
@@ -23,9 +23,9 @@ user function TAIF()
 	local lCheckBo3 := .F.
 	local lCheckBo4 := .F.
 	local lCheckBo5 := .F.
-	local nComboBo1 := _EMPRESAS[1]
-	local nComboBo2 := _EMPRESAS[1]
-	local nComboBo3 := _EMPRESAS[1]
+	local nComboBo1 := _EMPRESAS[2]
+	local nComboBo2 := _EMPRESAS[2]
+	local nComboBo3 := _EMPRESAS[2]
 	local cGet1 := Date()
 	local cGet2 := Date()
 	local cGet3 := Date()
@@ -57,7 +57,7 @@ user function TAIF()
 		@090,104 msget oGet5 var cGet5 size 042,010 of oFolder1:aDialogs[3] picture "99/99/9999" colors 0,16777215 pixel
 		@093,149 say oSay9 prompt "à" size 008,007 of oFolder1:aDialogs[3] colors 0,16777215 pixel
 		@090,156 msget oGet6 var cGet6 size 042,010 of oFolder1:aDialogs[3] picture "99/99/9999" colors 0,16777215 pixel
-		@110,121 button oButton5 prompt "OK" size 037,012 of oFolder1:aDialogs[3] action OkTabMovimento(cGet5,cGet6,If(nComboBo3 == _EMPRESAS[1],1,2)) pixel
+		@110,121 button oButton5 prompt "OK" size 037,012 of oFolder1:aDialogs[3] action OkTabMovimento(cGet5,cGet6,IIf(nComboBo3 == _EMPRESAS[1],1,2)) pixel
 		@110,164 button oButton6 prompt "Cancel" size 037,012 of oFolder1:aDialogs[3] action oDlg:End() pixel
 		@114,090 say oSay12 prompt "" size 025,007 of oFolder1:aDialogs[3] colors 0,16777215 pixel
 		@114,001 meter oMeter3 var nMeter size 085,008 of oFolder1:aDialogs[3] total 100 color 0,16777215 pixel
@@ -67,7 +67,7 @@ user function TAIF()
 		@086,001 group oGroup3 to 106,201 of oFolder1:aDialogs[2] color 0,16777215 pixel
 		@093,005 say oSay4 prompt "Empresa" size 025,007 OF oFolder1:aDialogs[2] colors 0,16777215 pixel
 		@091,030 mscombobox oComboBo2 var nComboBo2 items _EMPRESAS size 039,010 of oFolder1:aDialogs[2] colors 0,16777215 pixel
-		@110,121 button oButton3 prompt "OK" size 037,012 of oFolder1:aDialogs[2] action OkTabCadastro(If(nComboBo2 == _EMPRESAS[1],1,2)) pixel
+		@110,121 button oButton3 prompt "OK" size 037,012 of oFolder1:aDialogs[2] action OkTabCadastro(IIf(nComboBo2 == _EMPRESAS[1],1,2)) pixel
 		@110,164 button oButton4 prompt "Cancel" size 037,012 of oFolder1:aDialogs[2] action oDlg:End() pixel
 		@114,090 say oSay11 prompt "" size 025,007 of oFolder1:aDialogs[2] colors 0,16777215 pixel
 		@114,001 meter oMeter2 var nMeter size 085,008 of oFolder1:aDialogs[2] total 100 color 0,16777215 pixel
@@ -81,7 +81,7 @@ user function TAIF()
 		@090,104 msget oGet1 var cGet1 size 042,010 of oFolder1:aDialogs[1] colors 0,16777215 pixel
 		@093,149 say oSay3 prompt "à" size 008,007 of oFolder1:aDialogs[1] colors 0,16777215 pixel
 		@090,156 msget oGet2 var cGet2 size 042,010 of oFolder1:aDialogs[1] colors 0,16777215 pixel
-		@110,121 button oButton1 prompt "OK" size 037,012 of oFolder1:aDialogs[1] action OkResumido(cGet1,cGet2,If(nComboBo1 == _EMPRESAS[1],1,2)) pixel
+		@110,121 button oButton1 prompt "OK" size 037,012 of oFolder1:aDialogs[1] action OkResumido(cGet1,cGet2,IIf(nComboBo1 == _EMPRESAS[1],1,2)) pixel
 		@110,164 button oButton2 prompt "Cancel" size 037,012 of oFolder1:aDialogs[1] action oDlg:End() pixel
 		@114,090 say oSay10 prompt "" size 025,007 of oFolder1:aDialogs[1] colors 0,16777215 pixel
 		@114,001 meter oMeter1 var nMeter size 085,008 of oFolder1:aDialogs[1] total 100 color 0,16777215 pixel
@@ -188,6 +188,7 @@ static function Importar(nOpcao,aTabelas,nCbo1,cGt1,cGt2,lCanc)
 				
 				count to nRegTAIF
 				
+				TAIF->(ProcRegua(nRegTAIF))
 				TAIF->(DbGoTop())
 				
 				&("oMeter"+AllTrim(Str(nOpcao))):Set(nCont)
@@ -244,6 +245,7 @@ static function Importar(nOpcao,aTabelas,nCbo1,cGt1,cGt2,lCanc)
 						
 						&("oMeter"+AllTrim(Str(nOpcao))):Set(nCont)
 						
+						IncProc()
 						TAIF->(DbSkip())
 					enddo
 					
@@ -323,7 +325,7 @@ static function VariavelCampo(cTabela)
 	DbSeek(cTabela)
 	
 	while !Eof() .and. X3_ARQUIVO == cTabela
-		//if X3_CONTEXT <> "V" .and. X3Uso(X3_USADO)
+//		if X3_CONTEXT <> "V" .and. X3Uso(X3_USADO)
 		if X3_CONTEXT <> "V"
 			AAdd(aCam,{Trim(X3_CAMPO),X3_TIPO})
 		endif
@@ -373,9 +375,7 @@ static function OkResumido(cGt1,cGt2,nCbo1)
 	local cTabelas := ""
 	local aTabCanc := {}
 	local cTabCanc := ""
-	Alert("1")
-	Alert(cGt1)
-	Alert(cGt2)
+	
 	if Empty(cGt1) .or. Empty(cGt2)
 		return MsgStop("O periodo nao pode esta em branco!")
 	endif
@@ -389,13 +389,13 @@ static function OkResumido(cGt1,cGt2,nCbo1)
 					SZT->(DbGoTop())
 					
 					if SZT->(DbSeek(xFilial("SZT")+aWBrowse3[i,2],.F.))
-						cTabelas += "/"+AllTrim(SZT->ZT_CHAVE)
+						cTabelas += AllTrim(SZT->ZT_CHAVE)+"/"
 					endif
 				else
 					SZT->(DbGoTop())
 					
 					if SZT->(DbSeek(xFilial("SZT")+aWBrowse3[i,2],.F.))
-						cTabCanc += "/"+AllTrim(SZT->ZT_CHAVE)
+						cTabCanc += AllTrim(SZT->ZT_CHAVE)+"/"
 					endif
 				endif
 			endif
@@ -425,6 +425,7 @@ static function FWBrowse1()
 	
 	DbSelectArea("SZT")
 	SZT->(DbSetOrder(3))
+	SZT->(DbGoTop())
 	SZT->(DbSeek(xFilial("SZT")+_TIPO[2],.F.))
 	
 	while SZT->ZT_TIPO == _TIPO[2]
@@ -442,7 +443,7 @@ static function FWBrowse1()
 	@001,001 listbox oWBrowse1 fields header "","TABELA","DESCRICAO" size 200,085 of oFolder1:aDialogs[3] pixel colsizes 50,30
 		oWBrowse1:SetArray(aWBrowse1)
 		oWBrowse1:bLine := {|| {If(aWBrowse1[oWBrowse1:nAt,1],oOk,oNo),aWBrowse1[oWBrowse1:nAt,2],aWBrowse1[oWBrowse1:nAt,3]}}
-		// DoubleClick event
+//		DoubleClick event
 		oWBrowse1:bLDblClick := {|| aWBrowse1[oWBrowse1:nAt,1] := !aWBrowse1[oWBrowse1:nAt,1],oWBrowse1:DrawSelect()}
 return
 
@@ -452,6 +453,7 @@ static function FWBrowse2()
 	
 	DbSelectArea("SZT")
 	SZT->(DbSetOrder(3))
+	SZT->(DbGoTop())
 	SZT->(DbSeek(xFilial("SZT")+_TIPO[1],.F.))
 	
 	while SZT->ZT_TIPO == _TIPO[1]
@@ -469,7 +471,7 @@ static function FWBrowse2()
 	@001,001 listbox oWBrowse2 fields header "","TABELA","DESCRICAO" size 200,085 of oFolder1:aDialogs[2] pixel colsizes 50,30
 		oWBrowse2:SetArray(aWBrowse2)
 		oWBrowse2:bLine := {|| {If(aWBrowse2[oWBrowse2:nAt,1],oOk,oNo),aWBrowse2[oWBrowse2:nAt,2],aWBrowse2[oWBrowse2:nAt,3]}}
-		// DoubleClick event
+//		DoubleClick event
 		oWBrowse2:bLDblClick := {|| aWBrowse2[oWBrowse2:nAt,1] := !aWBrowse2[oWBrowse2:nAt,1],oWBrowse2:DrawSelect()}
 return
 
@@ -479,6 +481,7 @@ static function FWBrowse3()
 	
 	DbSelectArea("SZT")
 	SZT->(DbSetOrder(3))
+	SZT->(DbGoTop())
 	SZT->(DbSeek(xFilial("SZT")+_TIPO[3],.F.))
 	
 	while SZT->ZT_TIPO == _TIPO[3]
@@ -492,11 +495,11 @@ static function FWBrowse3()
 	if Len(aWBrowse3) <= 0
 		AAdd(aWBrowse3,{.F.,"",""})
 	endif
-	alert("teste")
+	
 	@001,001 listbox oWBrowse3 fields header "","TABELA","DESCRICAO" size 200,085 of oFolder1:aDialogs[1] pixel colsizes 50,30
 		oWBrowse3:SetArray(aWBrowse3)
 		oWBrowse3:bLine := {|| {If(aWBrowse3[oWBrowse3:nAt,1],oOk,oNo),aWBrowse3[oWBrowse3:nAt,2],aWBrowse3[oWBrowse3:nAt,3]}}
-		// DoubleClick event
+//		DoubleClick event
 		oWBrowse3:bLDblClick := {|| aWBrowse3[oWBrowse3:nAt,1] := !aWBrowse3[oWBrowse3:nAt,1],oWBrowse3:DrawSelect()}
 return
 

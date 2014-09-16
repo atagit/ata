@@ -15,10 +15,12 @@ user function BOMPARA()
 	local lValid := .T.
 	local aArea := GetArea()
 	
-	if !Empty(SEF->EF_TIPO) .and. lValid
-		lValid := .F.
-		
-		MsgInfo("Esse registro nao e o cheque aglutinado.")
+	if SEF->EF_TIPO <> "PA "
+		if !Empty(SEF->EF_TIPO) .and. lValid
+			lValid := .F.
+			
+			MsgInfo("Esse registro nao e o cheque aglutinado.")
+		endif
 	endif
 	
 	if SEF->EF_IMPRESS == "S" .and. lValid

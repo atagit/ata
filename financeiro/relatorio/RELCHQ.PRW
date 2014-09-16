@@ -386,7 +386,8 @@ static function Impr1()
 	
 	cQry := "select EF_DATA, EF_NUM, E5_DTDIGIT, EF_BANCO, EF_AGENCIA, EF_CONTA, EF_HIST, EF_VALOR, EF_PREDATA, EF_DTPREDA, EF_IMPRESS, EF_NATUR, E5_DTDISPO, E5_RECONC, E5_TIPODOC "
 	cQry += "from "+RetSqlName("SEF")+" SEF inner join "+RetSqlName("SE5")+" SE5 on (EF_NUM = E5_NUMCHEQ and EF_BANCO = E5_BANCO and EF_AGENCIA = E5_AGENCIA and EF_CONTA = E5_CONTA and EF_VALOR = E5_VALOR) "
-	cQry += "where (EF_NUM between '"+cChequeDe+"' and '"+cChequeAte+"') "+cCondicao+cCondicao1+"and (EF_DTPREDA between '"+cVencDe+"' and '"+cVencAte+"') and EF_TIPO = '' and EF_IMPRESS <> 'C' and E5_TIPODOC in ('CH','EC') and EF_PREDATA = 'T' and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
+//	cQry += "where (EF_NUM between '"+cChequeDe+"' and '"+cChequeAte+"') "+cCondicao+cCondicao1+"and (EF_DTPREDA between '"+cVencDe+"' and '"+cVencAte+"') and EF_TIPO = '' and EF_IMPRESS <> 'C' and E5_TIPODOC in ('CH','EC') and EF_PREDATA = 'T' and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
+	cQry += "where (EF_NUM between '"+cChequeDe+"' and '"+cChequeAte+"') "+cCondicao+cCondicao1+"and (EF_DTPREDA between '"+cVencDe+"' and '"+cVencAte+"') and ((EF_TIPO = '' and E5_TIPODOC in ('CH','EC')) or (E5_TIPODOC = 'PA')) and EF_IMPRESS <> 'C' and EF_PREDATA = 'T' and SEF.D_E_L_E_T_ <> '*' and SE5.D_E_L_E_T_ <> '*' "
 	cQry += "order by SE5.R_E_C_N_O_"
 	
 	tcquery cQry new alias "QTRB"
