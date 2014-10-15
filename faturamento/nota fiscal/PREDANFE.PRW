@@ -265,9 +265,9 @@ static function DPreDanfeNF(cModNF,cNota,cSerie,cCliFor)
 	DbSeek(xFilial("SC5")+aNotaF[2]+aNotaF[3]+aNotaF[4],.F.)
 	
 	do case																							// 07 Frete por Conta
-		case SC5->C5_TPFRETE == "F"
-			AAdd(aTransp,"0")
 		case SC5->C5_TPFRETE == "C"
+			AAdd(aTransp,"0")
+		case SC5->C5_TPFRETE == "F"
 			AAdd(aTransp,"1")
 		case SC5->C5_TPFRETE == "T"
 			AAdd(aTransp,"2")
@@ -658,6 +658,15 @@ static function DPreDanfePV(cModNF,cPedVen,cCliFor)
 		endif
 		
 		aImpostos := U_FIMPOSTOS(Left(aNotaF[4],6),Right(aNotaF[4],2),aNotaF[5],SC6->C6_PRODUTO,SC6->C6_TES,SC6->C6_QTDVEN,SC6->C6_PRCVEN,SC6->C6_VALOR)
+		nTotIpi := 0
+		
+		SF4->(DbGoTop())
+		
+		if SF4->(DbSeek(xFilial("SF4")+SC6->C6_TES,.F.))
+			if SF4->F4_INCIDE == "S"
+				nTotIpi := aImpostos[10]
+			endif
+		endif
 		
 		AAdd(aItens,{Left(SC6->C6_PRODUTO,6),;																			// 01 Código Produto
 						MemoLine(cDescri,MAXITEMC,1),;																	// 02 Descrição do Produto
@@ -710,7 +719,7 @@ static function DPreDanfePV(cModNF,cPedVen,cCliFor)
 			endif
 		next
 		
-		nTotNota += SC6->C6_VALOR
+		nTotNota += (SC6->C6_VALOR + nTotIpi)
 		
 		if !Empty(aImpostos[22])
 			nTotServico += SC6->C6_VALOR
@@ -923,7 +932,7 @@ static function PreDanfeProc(cModNF)
 	if aTransp[7] == "0"
 		oPrinter:Say(382,247,"0-EMITENTE",oFont08:oFont)
 	elseif aTransp[7] == "1"
-		oPrinter:Say(382,247,"1-DEST/REM",oFont08:oFont)
+		oPrinter:Say(382,247,"1-DESTINATARIO",oFont08:oFont)
 	elseif aTransp[7] == "2"
 		oPrinter:Say(382,247,"2-TERCEIROS",oFont08:oFont)
 	elseif aTransp[7] == "9"

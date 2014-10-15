@@ -71,11 +71,9 @@ user function CADOC01(cOpcao)
 	SetPrvt("aHeader,aCols,nOpcE,nOpcG,cTit,n,cValid")
 	SetPrvt("lVisual,lInclui,lAltera,lExclui")
 	SetPrvt("_nPosCodigo","_nPosItem","_nPosProjeto","_nPosQuant","_nPosUm","_nPosPrcUnit","_nPosTotal","_nPosVenc","_nPosDel","_nPosATF22",;
-			"_nPosBmp","_nPosProduto")
+			"_nPosBmp","_nPosProduto","_nPosDescProd")
 	
-	n := 1
-	cValid := ""
-	
+	n := 1 ; cValid := ""
 	lVisual := IIf(cOpcao == "V",.T.,.F.)
 	lInclui := IIf(cOpcao == "I",.T.,.F.)
 	lAltera := IIf(cOpcao == "A",.T.,.F.)
@@ -170,6 +168,7 @@ user function CADOC01(cOpcao)
 //	_nPosATF22		:= AScan(aHeader,{|x| AllTrim(Upper(x[2])) == "ZN_ATF22"})
 	_nPosBmp		:= AScan(aHeader,{|x| AllTrim(Upper(x[2])) == "ZN_BMP"})
 	_nPosProduto	:= AScan(aHeader,{|x| AllTrim(Upper(x[2])) == "ZN_PRODUTO"})
+	_nPosDescProd	:= AScan(aHeader,{|x| AllTrim(Upper(x[2])) == "ZN_DESCPRO"})
 	_nPosDel		:= Len(aHeader) + 1
 	
 	if Len(aCols) <= 0
@@ -276,7 +275,7 @@ static function IncluiBanco()
 	DbSelectArea("SZM")
 	RecLock("SZM",.T.)
 		SZM->ZM_FILIAL	:= xFilial()
-		SZM->ZM_CODIGO	:= M->ZM_CODIGO
+/*		SZM->ZM_CODIGO	:= M->ZM_CODIGO
 		SZM->ZM_OC		:= M->ZM_OC
 		SZM->ZM_VENCOC	:= M->ZM_VENCOC
 		SZM->ZM_CLIENTE	:= M->ZM_CLIENTE
@@ -401,6 +400,18 @@ static function IncluiBanco()
 		SZM->ZM_NATUR2	:= M->ZM_NATUR2
 		SZM->ZM_NATUR3	:= M->ZM_NATUR3
 		SZM->ZM_NATUR4	:= M->ZM_NATUR4
+		SZM->ZM_TPFRETE	:= M->ZM_TPFRETE*/
+		
+		for k := 1 to Len(aAltEnchoice)
+			if !(aAltEnchoice[k] $ "ZM_CGC/ZM_NREDUZ")
+				SZM->&(aAltEnchoice[k]) := M->&(aAltEnchoice[k])
+			endif
+		next k
+		
+		if SA1->(DbSeek(xFilial("SA1")+M->(ZM_CLIENTE+ZM_LOJA),.F.))
+			SZM->ZM_CGC		:= SA1->A1_CGC
+			SZM->ZM_NREDUZ	:= SA1->A1_NREDUZ
+		endif
 	MsUnLock()
 	ConfirmSx8()
 	
@@ -427,6 +438,7 @@ static function IncluiBanco()
 //				SZN->ZN_ATF22	:= aCols[nIt,_nPosATF22]
 				SZN->ZN_BMP		:= aCols[nIt,_nPosBmp]
 				SZN->ZN_PRODUTO	:= aCols[nIt,_nPosProduto]
+				SZN->ZN_DESCPRO	:= aCols[nIt,_nPosDescProd]
 				
 //				nTotSaldo += aCols[nIt,_nPosSaldo]
 				nTotQuant += aCols[nIt,_nPosQuant]
@@ -456,7 +468,7 @@ static function AlteraBanco()
 	DbSetOrder(1)
 	DbSeek(xFilial()+M->ZM_CODIGO)
 	RecLock("SZM",.F.)
-		SZM->ZM_FILIAL	:= xFilial()
+/*		SZM->ZM_FILIAL	:= xFilial()
 		SZM->ZM_CODIGO	:= M->ZM_CODIGO
 		SZM->ZM_OC		:= M->ZM_OC
 		SZM->ZM_VENCOC	:= M->ZM_VENCOC
@@ -582,6 +594,18 @@ static function AlteraBanco()
 		SZM->ZM_NATUR2	:= M->ZM_NATUR2
 		SZM->ZM_NATUR3	:= M->ZM_NATUR3
 		SZM->ZM_NATUR4	:= M->ZM_NATUR4
+		SZM->ZM_TPFRETE	:= M->ZM_TPFRETE*/
+		
+		for k := 1 to Len(aAltEnchoice)
+			if !(aAltEnchoice[k] $ "ZM_CGC/ZM_NREDUZ")
+				SZM->&(aAltEnchoice[k]) := M->&(aAltEnchoice[k])
+			endif
+		next k
+		
+		if SA1->(DbSeek(xFilial("SA1")+M->(ZM_CLIENTE+ZM_LOJA),.F.))
+			SZM->ZM_CGC		:= SA1->A1_CGC
+			SZM->ZM_NREDUZ	:= SA1->A1_NREDUZ
+		endif
 	MsUnLock()
 	
 //	nTotSaldo := 0
@@ -608,6 +632,7 @@ static function AlteraBanco()
 //					SZN->ZN_ATF22	:= aCols[nIt,_nPosATF22]
 					SZN->ZN_BMP		:= aCols[nIt,_nPosBmp]
 					SZN->ZN_PRODUTO	:= aCols[nIt,_nPosProduto]
+					SZN->ZN_DESCPRO	:= aCols[nIt,_nPosDescProd]
 				MsUnLock()
 			else
 				RecLock("SZN",.F.)
@@ -620,6 +645,7 @@ static function AlteraBanco()
 //					SZN->ZN_ATF22	:= aCols[nIt,_nPosATF22]
 					SZN->ZN_BMP		:= aCols[nIt,_nPosBmp]
 					SZN->ZN_PRODUTO	:= aCols[nIt,_nPosProduto]
+					SZN->ZN_DESCPRO	:= aCols[nIt,_nPosDescProd]
 				MsUnLock()
 			endif
 			

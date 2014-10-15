@@ -131,12 +131,23 @@ static function Impr()
 //			CLIENTE: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA                                       UF: AA
 //			END....: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA        CEP: 99999-999
 //			CNPJ...: 99.999.999/9999-99    I.E.: 99999999999999999999
-//			TELEF..: 99 9999-9999       CONTATO: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA    ATT. NFe: AAAAAAAAAAAAAAAAAAAA
+//			TELEF..: 99 9999-9999       CONTATO: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA    ATT. NFe: AAAAAAAAAAAAAAAAAAAA              FRETE: AAAAAAAA
 //			E-MAIL.: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA          E-MAIL NFe: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 //			012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 //			          1         2         3         4         5         6         7         8         9        10        11        12        13
 			
 			if SA1->(DbSeek(xFilial("SA1")+TEMP->(ZM_CLIENTE+ZM_LOJA),.F.))
+				do case
+					case TEMP->ZM_TPFRETE == "C"
+						cFrete := "CIF"
+					case TEMP->ZM_TPFRETE == "F"
+						cFrete := "FOB"
+					case TEMP->ZM_TPFRETE == "T"
+						cFrete := "TERCEIRO"
+					otherwise
+						cFrete := ""
+				endcase
+				
 				@nLin,000 psay "CLIENTE: "+AllTrim(SA1->A1_NOME)
 				@nLin,118 psay "UF: "+SA1->A1_EST
 				@++nLin,000 psay "END....: "+AllTrim(SA1->A1_END)+' - '+AllTrim(SA1->A1_BAIRRO)+' - '+AllTrim(SA1->A1_MUN)
@@ -146,6 +157,7 @@ static function Impr()
 				@++nLin,000 psay "TELEF..: "+Left(AllTrim(SA1->A1_DDD),2)+" "+Transf(SA1->A1_TEL,"@R 9999-9999")
 				@nLin,028 psay "CONTATO: "+AllTrim(TEMP->ZM_CONTATO)
 				@nLin,071 psay "ATT. NFe: "+AllTrim(TEMP->ZM_ATT)
+				@nLin,115 psay "FRETE: "+cFrete
 				@++nLin,000 psay "E-MAIL.: "+Left(AllTrim(TEMP->ZM_EMAIL),50)
 				@nLin,069 psay "E-MAIL NFe: "+Left(AllTrim(TEMP->ZM_EMAILNF),50)
 			endif

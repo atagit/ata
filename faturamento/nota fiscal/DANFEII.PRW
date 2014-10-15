@@ -2079,7 +2079,11 @@ oDanfe:Say(372,247,"FRETE POR CONTA",oFont08N:oFont)
 If cModFrete =="0"
 	oDanfe:Say(382,247,"0-EMITENTE",oFont08:oFont)
 ElseIf cModFrete =="1"
-	oDanfe:Say(382,247,"1-DEST/REM",oFont08:oFont)
+//	oDanfe:Say(382,247,"1-DEST/REM",oFont08:oFont)
+	
+	//** BRENO **//
+	oDanfe:Say(382,247,"1-DESTINATARIO",oFont08:oFont)
+	//**********//
 ElseIf cModFrete =="2"
 	oDanfe:Say(382,247,"2-TERCEIROS",oFont08:oFont)
 ElseIf cModFrete =="9"

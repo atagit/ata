@@ -23,10 +23,10 @@ return
 
 user function GMOBJ(cAlias,nRecno,nTipo)
 	local oDlg
-	local oFont10 := TFont():New('Arial',8,16,,.F.,,,,.T.,.F.)
-	local oFont10n := TFont():New('Arial',8,16,,.T.,,,,.T.,.F.)
 	local _ni
 	local lOk
+	local oFont10 := TFont():New("Arial",8,16,,.F.,,,,.T.,.F.)
+	local oFont10n := TFont():New("Arial",8,16,,.T.,,,,.T.,.F.)
 	
 	private aHeader	:= {}
 	private aCols	:= {}
@@ -229,7 +229,7 @@ static function ValDFornece()
 	DbSetOrder(1)
 	
 	if SZO->(DbSeek(xFilial("SZO")+cCnpj,.F.))
-		MsgAlert("Para esse fornecedor ja foi relacinado grupo de material.")
+		MsgAlert("Para este fornecedor ja foi relacinado grupo de material. Acesse alterando!")
 		
 		lRet := .F.
 	endif

@@ -46,13 +46,12 @@ static function FSetArray()
 		endif
 	endif
 	
-	cQry := "select SZO.*, A2_ULTCOM, A2_COD, A2_LOJA "
+	cQry := "select ZO_CPFCNPJ, ZO_DFORNEC, ZO_DGRPMAT, A2_ULTCOM, A2_COD, A2_LOJA "
 	cQry += "from "+RetSqlName("SZO")+" SZO inner join "+RetSqlName("SA2")+" SA2 on (ZO_CPFCNPJ = A2_CGC) "
 	cQry += "where ZO_GRPMAT = '"+AllTrim(cGet1)+"' and SZO.D_E_L_E_T_ <> '*' and SA2.D_E_L_E_T_ <> '*' "
 	cQry += "order by A2_ULTCOM desc "
 	
 	DbUseArea(.T.,"TOPCONN",TCGenQry(,,cQry),"TTT",.F.,.T.)
-	TTT->(DbGoTop())
 	
 	cGet2 := TTT->ZO_DGRPMAT
 	
@@ -62,6 +61,8 @@ static function FSetArray()
 		
 		oListBox1:Refresh()
 	else
+		TTT->(DbGoTop())
+		
 		while !TTT->(Eof())
 			cQry := "select ZV_VALIQF, ZV_FINAVAL, ZV_STATUS "
 			cQry += "from "+RetSqlName("SA2")+" SA2 inner join "+RetSqlName("SZV")+" SZV on (A2_COD = ZV_FORNECE and A2_LOJA = ZV_LOJA) "
@@ -73,41 +74,43 @@ static function FSetArray()
 			DbSelectArea("TIQF")
 			TIQF->(DbGoTop())
 			
-			AAdd(aDados,{TTT->ZO_CPFCNPJ,TTT->ZO_DFORNEC+Space(80 - Len(TTT->ZO_DFORNEC)),IIf(!Empty(TIQF->ZV_VALIQF),TIQF->ZV_VALIQF,0),TTT->A2_ULTCOM,TTT->A2_COD,TTT->A2_LOJA})
+			AAdd(aDados,{TTT->ZO_CPFCNPJ,TTT->ZO_DFORNEC+Space(80 - Len(TTT->ZO_DFORNEC)),IIf(!Empty(TIQF->ZV_VALIQF),TIQF->ZV_VALIQF,0),TTT->A2_COD,TTT->A2_LOJA})
 			
 			TIQF->(DbCloseArea())
-			TTT->(dbSkip())
+			TTT->(DbSkip())
 		enddo
 		
 		ASort(aDados,,,{|x,y| x[3] > y[3]})
 		
 		for i := 1 to Len(aDados)
-			AAdd(aArqList,{Transf(aDados[i][1],"@R 99.999.999/9999-99"),aDados[i][2],aDados[i][3],aDados[i][5],aDados[i][6]})
-		next 
+			AAdd(aArqList,{aDados[i][1],aDados[i][2],aDados[i][3],aDados[i][4],aDados[i][5]})
+		next
 		
 		ADel(aArqList,1)
 		ASize(aArqList,Len(aArqList) - 1)
 		
 		oListBox1:SetArray(aArqList)
-		oListBox1:bLine := {|| {aArqList[oListBox1:nAt][1],aArqList[oListBox1:nAt][2],aArqList[oListBox1:nAt][3]}}
+		oListBox1:bLine := {|| {Transf(aArqList[oListBox1:nAt][1],IIf(Len(aArqList[oListBox1:nAt][1]) = 14,"@R 99.999.999/9999-99","@R 999.999.999-99")),aArqList[oListBox1:nAt][2],aArqList[oListBox1:nAt][3],aArqList[oListBox1:nAt][4],aArqList[oListBox1:nAt][5]}}
 		oListBox1:bLDblClick := {|| Selecionados()}
 		oListBox1:Refresh()
 	endif
 return .T.
 
 static function FGetList()
-	AAdd(aArqList,{"","",0})
+	AAdd(aArqList,{"","",0,"",""})
 	
-	@042,007 listbox oListBox1 fields, header "CNPJ/CPF","N.FANTASIA","IQF" size 235,112 of oDlg pixel colsizes 050,030 /*Largura*//*Altura*/
+	@042,007 listbox oListBox1 fields, header "CNPJ/CPF","N.FANTASIA","IQF","CODIGO","LOJA" size 235,112 of oDlg pixel colsizes 050,030 /*Largura*//*Altura*/
 		oListBox1:SetArray(aArqList)
-		oListBox1:bLine := {|| {aArqList[oListBox1:nAt][1],aArqList[oListBox1:nAt][2],aArqList[oListBox1:nAt][3]}}
+		oListBox1:bLine := {|| {aArqList[oListBox1:nAt][1],aArqList[oListBox1:nAt][2],aArqList[oListBox1:nAt][3],aArqList[oListBox1:nAt][4],aArqList[oListBox1:nAt][5]}}
 		oListBox1:bLDblClick := {|| Selecionados()}
 		oListBox1:Refresh()
 return
 
 static function Selecionados()
-	CA120FORN := aArqList[oListBox1:nAt][4]
-	CA120LOJ := aArqList[oListBox1:nAt][5]
+	if !Empty(aArqList)
+		CA120FORN := aArqList[oListBox1:nAt][4]
+		CA120LOJ := aArqList[oListBox1:nAt][5]
+	endif
 	
 	oDlg:End()
 return

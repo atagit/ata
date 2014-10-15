@@ -25,13 +25,13 @@ user function COPSF4()
 	cTesNova := mv_par01
 	
 	if cTipo == "E"
-		if cTesNova >= 500
+		if cTesNova >= "500"
 			MsgInfo("A TES que deseja copiar e de ENTRADA, sendo assim, o codigo tem que esta ABAIXO de 500.")
 			
 			return
 		endif
 	else
-		if cTesNova < 500
+		if cTesNova < "500"
 			MsgInfo("A TES que deseja copiar e de SAIDA, sendo assim, o codigo tem que esta ACIMA de 500.")
 			
 			return

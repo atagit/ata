@@ -79,31 +79,36 @@ user function ALTFORPC()
 return
 
 static function Mudar(cFornec,cNReduz,cContato,cNum)
-	if Empty(cNum)
-		MsgAlert("Nao foi selecionado nenhum fornecedor para alterar.")
-		
-		return
-	endif
-	
-	SC7->(DbGoTop())
-	
-	if SC7->(MsSeek(xFilial("SC7")+cNum,.F.))
-		while SC7->C7_NUM == cNum .and. !SC7->(Eof())
-			if RecLock("SC7",.F.)
-				SC7->C7_FORNECE := Left(cFornec,6)
-				SC7->C7_LOJA := Right(cFornec,2)
-				SC7->C7_NOMFORN := cNReduz
-				SC7->C7_CONTATO := cContato
-				
-				MsUnLock()
-			else
-				MsgAlert("Fornecedor nao pode ser alterado devido o pedido esta em uso.")
-			endif
+	if SA2->(DbSeek(xFilial("SA2")+Left(cFornec,6)+Right(cFornec,2),.F.))
+		if Empty(cNum)
+			MsgAlert("Nao foi selecionado nenhum pedido de compra para alterar o fornecedor.")
 			
-			SC7->(DbSkip())
-		enddo
+			return
+		endif
+		
+		SC7->(DbGoTop())
+		
+		if SC7->(MsSeek(xFilial("SC7")+cNum,.F.))
+			while SC7->C7_NUM == cNum .and. !SC7->(Eof())
+				if RecLock("SC7",.F.)
+					SC7->C7_FORNECE := Left(cFornec,6)
+					SC7->C7_LOJA := Right(cFornec,2)
+					SC7->C7_NOMFORN := cNReduz
+					SC7->C7_CONTATO := cContato
+					
+					MsUnLock()
+				else
+					MsgAlert("Fornecedor nao pode ser alterado devido o pedido esta em uso.")
+				endif
+				
+				SC7->(DbSkip())
+			enddo
+		endif
+		
+		MsgInfo("Fornecedor do pedido de compra alterado com sucesso.")
+		RestArea(aArea)
+		oDlg:End()
+	else
+		MsgAlert("O fornecedor informado nao esta cadastrado ou esta incorreto!")
 	endif
-	
-	MsgInfo("Fornecedor do pedido de compra alterado com sucesso.")
-	RestArea(aArea)
 return

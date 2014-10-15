@@ -94,6 +94,9 @@ static function Gerar()
 				AAdd(aCabec,{"C5_FOLROST",SZM->ZM_CODIGO,nil})
 				AAdd(aCabec,{"C5_NATUREZ",aWBrowse2[i][4],nil})
 				AAdd(aCabec,{"C5_TPFRETE",SZM->ZM_TPFRETE,nil})
+				AAdd(aCabec,{"C5_MENNOTA",MemoLine(SZM->ZM_DDADIC,200,1),nil})
+				AAdd(aCabec,{"C5_MENNOT2",MemoLine(SZM->ZM_DDADIC,200,2),nil})
+				AAdd(aCabec,{"C5_MENNOT3",MemoLine(SZM->ZM_DDADIC,200,3),nil})
 			endif
 			
 			for j := 1 to Len(aWBrowse1)
@@ -112,6 +115,11 @@ static function Gerar()
 				AAdd(aLinha,{"C6_PRUNIT",aWBrowse1[j][6],nil})
 				AAdd(aLinha,{"C6_VALOR",aWBrowse1[j][7],nil})
 				AAdd(aLinha,{"C6_TES",aWBrowse2[i][2],nil})
+				
+				if !Empty(aWBrowse1[i][8])
+					AAdd(aLinha,{"C6_DESCRI",aWBrowse1[i][8],nil})
+				endif
+				
 				AAdd(aItens,aLinha)
 			next j
 			
@@ -134,13 +142,13 @@ return
 
 static function FWBrowse1()
 	if Len(aWBrowse1) <= 0
-		AAdd(aWBrowse1,{.F.,"","",0.00,"",0.00,0.00})
+		AAdd(aWBrowse1,{.F.,"","",0.00,"",0.00,0.00,""})
 //		AAdd(aWBrowse1,{.F.,"","","","","",""})
 	endif
 	
-	@048,007 listbox oWBrowse1 fields header "","PROJETO","PRODUTO","QUANT","UN","PRC. UNIT.","TOTAL" size 338,130 of oDlg pixel /*colsizes 50,30*/
+	@048,007 listbox oWBrowse1 fields header "","PROJETO","PRODUTO","QUANT","UN","PRC. UNIT.","TOTAL","DESCRICAO" size 338,130 of oDlg pixel /*colsizes 50,30*/
 		oWBrowse1:SetArray(aWBrowse1)
-		oWBrowse1:bLine := {|| {IIf(aWBrowse1[oWBrowse1:nAt,1],oOk,oNo),aWBrowse1[oWBrowse1:nAt,2],aWBrowse1[oWBrowse1:nAt,3],aWBrowse1[oWBrowse1:nAt,4],aWBrowse1[oWBrowse1:nAt,5],aWBrowse1[oWBrowse1:nAt,6],aWBrowse1[oWBrowse1:nAt,7]}}
+		oWBrowse1:bLine := {|| {IIf(aWBrowse1[oWBrowse1:nAt,1],oOk,oNo),aWBrowse1[oWBrowse1:nAt,2],aWBrowse1[oWBrowse1:nAt,3],aWBrowse1[oWBrowse1:nAt,4],aWBrowse1[oWBrowse1:nAt,5],aWBrowse1[oWBrowse1:nAt,6],aWBrowse1[oWBrowse1:nAt,7],aWBrowse1[oWBrowse1:nAt,8]}}
 		oWBrowse1:bLDblClick := {|| aWBrowse1[oWBrowse1:nAt,1] := !aWBrowse1[oWBrowse1:nAt,1],oWBrowse1:DrawSelect()}
 return
 
@@ -203,7 +211,7 @@ static function CarregarGrid()
 	if SZN->(DbSeek(xFilial("SZN")+cGet1,.F.))
 		while !SZN->(Eof()) .and. SZN->ZN_CODIGO == cGet1
 //			AAdd(aWBrowse1,{.F.,SZN->ZN_PROJETO,SZN->ZN_PRODUTO,Transf(SZN->ZN_QUANT,"@E 999,999,999.9999"),SZN->ZN_UM,Transf(SZN->ZN_PRCUNIT,"@E 999,999,999.99"),Transf(SZN->ZN_TOTAL,"@E 9,999,999,999,999.99")})
-			AAdd(aWBrowse1,{.F.,SZN->ZN_PROJETO,SZN->ZN_PRODUTO,SZN->ZN_QUANT,SZN->ZN_UM,SZN->ZN_PRCUNIT,SZN->ZN_TOTAL})
+			AAdd(aWBrowse1,{.F.,SZN->ZN_PROJETO,SZN->ZN_PRODUTO,SZN->ZN_QUANT,SZN->ZN_UM,SZN->ZN_PRCUNIT,SZN->ZN_TOTAL,AllTrim(SZN->ZN_DESCPRO)})
 			
 			SZN->(DbSkip())
 		enddo
@@ -212,6 +220,6 @@ static function CarregarGrid()
 	SZN->(DbCloseArea())
 	
 	oWBrowse1:SetArray(aWBrowse1)
-	oWBrowse1:bLine := {|| {IIf(aWBrowse1[oWBrowse1:nAt,1],oOk,oNo),aWBrowse1[oWBrowse1:nAt,2],aWBrowse1[oWBrowse1:nAt,3],Transf(aWBrowse1[oWBrowse1:nAt,4],"@E 999,999,999.9999"),aWBrowse1[oWBrowse1:nAt,5],Transf(aWBrowse1[oWBrowse1:nAt,6],"@E 999,999,999.99"),Transf(aWBrowse1[oWBrowse1:nAt,7],"@E 9,999,999,999,999.99")}}
+	oWBrowse1:bLine := {|| {IIf(aWBrowse1[oWBrowse1:nAt,1],oOk,oNo),aWBrowse1[oWBrowse1:nAt,2],aWBrowse1[oWBrowse1:nAt,3],Transf(aWBrowse1[oWBrowse1:nAt,4],"@E 999,999,999.9999"),aWBrowse1[oWBrowse1:nAt,5],Transf(aWBrowse1[oWBrowse1:nAt,6],"@E 999,999,999.99"),Transf(aWBrowse1[oWBrowse1:nAt,7],"@E 9,999,999,999,999.99"),aWBrowse1[oWBrowse1:nAt,8]}}
 	oWBrowse1:Refresh()
 return
