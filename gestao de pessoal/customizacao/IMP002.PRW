@@ -42,7 +42,6 @@ static function ImportarDepto(oDlg)
 	cDeptoFin := mv_par02
 	
 	Processa({|| U_IncluirDepto(cDeptoIni,cDeptoFin,.T.)},"","Aguarde processando...",.T.)
-	
 	RestArea(aAreaAnt)
 return
 
@@ -56,7 +55,7 @@ user function IncluirDepto(cDeptoIni,cDeptoFin,lMsg)
 	DbUseArea(.T.,"DBFCDX",cTblDEPTO,"DEP",.T.,.F.)
 	DbSetIndex(cIndDEPTO)
 	DEP->(DbGoTop())
-	DEP->(DbSeek(cDeptoIni,.F.))
+	DEP->(DbSeek(cDeptoIni,.T.))
 	
 	while !DEP->(Eof()) .and. DEP->DEPTO >= cDeptoIni .and. DEP->DEPTO <= cDeptoFin
 		nContReg++
@@ -70,7 +69,7 @@ user function IncluirDepto(cDeptoIni,cDeptoFin,lMsg)
 	ProcRegua(nContReg)
 	
 	DEP->(DbGoTop())
-	DEP->(DbSeek(cDeptoIni,.F.))
+	DEP->(DbSeek(cDeptoIni,.T.))
 	
 	while !DEP->(Eof()) .and. DEP->DEPTO >= cDeptoIni .and. DEP->DEPTO <= cDeptoFin
 		SBQ->(DbGoTop())

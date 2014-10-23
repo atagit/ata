@@ -54,6 +54,40 @@ static function AlterarFuncao(cMatIni,cMatFin)
 	
 	DbUseArea(.T.,"DBFCDX",cTblFUN,"FUN",.T.,.F.)
 	DbSetIndex(cIndFUN)
+	
+	DbSelectArea("SRA")
+	ProcRegua(SRA->(LastRec()))
+	SRA->(DbGoTop())
+	SRA->(DbSeek(xFilial("SRA")+cMatIni,.T.))
+	
+	while !SRA->(Eof()) .and. SRA->RA_MAT >= cMatIni .and. SRA->RA_MAT <= cMatFin
+		FUN->(DbGoTop())
+		
+		if FUN->(DbSeek(SRA->RA_MAT,.F.))
+			cCodFuncao := U_IncluirFuncao(FUN->FUNCAO,FUN->FUNCAO,.F.)
+			
+			RecLock("SRA",.F.)
+				SRA->RA_CODFUNC := cCodFuncao
+			MsUnLock()
+		endif
+		
+		IncProc()
+		SRA->(DbSkip())
+	enddo
+	
+	MsgInfo("A(s) funcao(oes) do(s) funcionario(s) foi(ram) acertado(s)!")
+	FUN->(DbCloseArea())
+return
+
+/*static function AlterarFuncao(cMatIni,cMatFin)
+	local cTblFUN := "\\ATFSRV001\mastermaq$\MFOLHA"+IIf(cEmpAnt == "02","\DADOS4\FUNCS016.DBF","\DADOS1\FUNCS003.DBF")
+	local cIndFUN := "\\ATFSRV001\mastermaq$\MFOLHA"+IIf(cEmpAnt == "02","\DADOS4\FUNCS016.IDX","\DADOS1\FUNCS003.IDX")
+	local cCodFuncao := ""
+	local nContReg := 0
+	local cRet := ""
+	
+	DbUseArea(.T.,"DBFCDX",cTblFUN,"FUN",.T.,.F.)
+	DbSetIndex(cIndFUN)
 	FUN->(DbGoTop())
 	FUN->(DbSeek(cMatIni,.F.))
 	
@@ -90,4 +124,4 @@ static function AlterarFuncao(cMatIni,cMatFin)
 	
 	MsgInfo("A(s) funcao(oes) do(s) funcionario(s) foi(ram) acertado(s)!")
 	FUN->(DbCloseArea())
-return
+return*/

@@ -42,7 +42,6 @@ static function ImportarFunc(oDlg)
 	cMatFin := mv_par02
 	
 	Processa({|| IncluirFunc(cMatIni,cMatFin)},"","Aguarde processando...",.T.)
-	
 	RestArea(aAreaAnt)
 return
 
@@ -83,7 +82,7 @@ static function IncluirFunc(cMatIni,cMatFin)
 	DbSetIndex(cIndBCO)
 	
 	FUN->(DbGoTop())
-	FUN->(DbSeek(cMatIni,.F.))
+	FUN->(DbSeek(cMatIni,.T.))
 	
 	while !FUN->(Eof()) .and. FUN->FUNCC >= cMatIni .and. FUN->FUNCC <= cMatFin
 		nContReg++
@@ -97,7 +96,7 @@ static function IncluirFunc(cMatIni,cMatFin)
 	ProcRegua(nContReg)
 	
 	FUN->(DbGoTop())
-	FUN->(DbSeek(cMatIni,.F.))
+	FUN->(DbSeek(cMatIni,.T.))
 	
 	while !FUN->(Eof()) .and. FUN->FUNCC >= cMatIni .and. FUN->FUNCC <= cMatFin
 		if !Empty(FUN->RESCISAO) ; FUN->(DbSkip()) ; loop ; endif
@@ -293,15 +292,19 @@ static function IncluirFunc(cMatIni,cMatFin)
 						{"RA_VIEMRAI","10",nil},;
 						{"RA_TPDEFFI","0",nil},;
 						{"RA_HOPARC","2",nil},;
-						{"RA_COMPSAB","2",nil}}
+						{"RA_COMPSAB","2",nil},;
+						{"RA_DEPIR","00",nil},;
+						{"RA_DEPSF","00",nil}}
 			
-			MsExecAuto({|x,y,k,w| GPEA010(x,y,k,w)},nil,nil,aVetor,IIf(SRA->(DbSeek(xFilial("SRA")+FUN->FUNCC,.F.)),4,3))
+			MsExecAuto({|x,y,k,w| GPEA010(x,y,k,w)},nil,nil,aVetor,IIf(SRA->(DbSeek(xFilial("SRA")+cMat,.F.)),4,3))
 			
 			if lMsErroAuto
 				MostraErro()
 				
 				lMsErroAuto := .F.
 			endif
+			
+			U_IncDependente(cMat,cMat,.F.)
 		endif
 		
 		cMat := "" ; cCpf := "" ; cHabilitacao := "" ; cTitEleitor := "" ; cCodFuncao := "" ; cDesFuncao := "" ; cBcoSal := "" ; cCtaSal := ""

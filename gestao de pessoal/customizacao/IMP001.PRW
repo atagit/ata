@@ -42,7 +42,6 @@ static function ImportarFuncao(oDlg)
 	cFunFin := mv_par02
 	
 	Processa({|| U_IncluirFuncao(cFunIni,cFunFin,.T.)},"","Aguarde processando...",.T.)
-	
 	RestArea(aAreaAnt)
 return
 
@@ -56,7 +55,7 @@ user function IncluirFuncao(cFunIni,cFunFin,lMsg)
 	DbUseArea(.T.,"DBFCDX",cTblFCOES,"FCO",.T.,.F.)
 	DbSetIndex(cIndFCOES)
 	FCO->(DbGoTop())
-	FCO->(DbSeek(cFunIni,.F.))
+	FCO->(DbSeek(cFunIni,.T.))
 	
 	while !FCO->(Eof()) .and. FCO->FUNCAO >= cFunIni .and. FCO->FUNCAO <= cFunFin
 		nContReg++
@@ -70,7 +69,7 @@ user function IncluirFuncao(cFunIni,cFunFin,lMsg)
 	ProcRegua(nContReg)
 	
 	FCO->(DbGoTop())
-	FCO->(DbSeek(cFunIni,.F.))
+	FCO->(DbSeek(cFunIni,.T.))
 	
 	while !FCO->(Eof()) .and. FCO->FUNCAO >= cFunIni .and. FCO->FUNCAO <= cFunFin
 		SRJ->(DbGoTop())

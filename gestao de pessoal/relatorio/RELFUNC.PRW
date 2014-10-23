@@ -90,6 +90,7 @@ static function Impr()
 		otherwise
 			cCondicao := ""
 	endcase
+	
 	cQry := "select RA_MAT, RA_NOME, RA_NUMCP, RA_SERCP, RJ_NREDUZ, RA_ADMISSA, RA_DEMISSA, RA_SALARIO, RA_HRSMES, RA_CATFUNC "
 	cQry += "from "+RetSqlName("SRA")+" SRA inner join "+RetSqlName("SRJ")+" SRJ on (RA_CODFUNC = RJ_FUNCAO) "
 	cQry += "where (RA_MAT between '"+cMatDe+"' and '"+cMatAte+"') and (RA_CODFUNC between '"+cFunDe+"' and '"+cFunAte+"') "+cCondicao+"and SRA.D_E_L_E_T_ <> '*' and SRJ.D_E_L_E_T_ <> '*' "
@@ -128,8 +129,8 @@ static function Impr()
 		@nLin,012 psay TEMP->RA_NOME
 		@nLin,045 psay TEMP->RA_NUMCP+"/"+TEMP->RA_SERCP
 		@nLin,061 psay TEMP->RJ_NREDUZ
-		@nLin,074 psay U_ConvData(RA_ADMISSA,"yy")
-		@nLin,085 psay U_ConvData(RA_DEMISSA,"yy")
+		@nLin,074 psay U_ConvData(TEMP->RA_ADMISSA,"yy")
+		@nLin,085 psay U_ConvData(TEMP->RA_DEMISSA,"yy")
 		
 		if nExibirSal == 2
 			if TEMP->RA_CATFUNC $ "P/E"
