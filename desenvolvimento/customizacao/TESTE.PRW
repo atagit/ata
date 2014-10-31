@@ -34,6 +34,19 @@ Return aClone(aRet)*/
 	MsgAlert("Ponto de entrada FC021HEAD executado")
 Return aRet*/
 
+/*/{Protheus.doc} TESTE
+Função para testar partes de rotinas ou comandos, antes de sua utilização final.
+
+@author Breno Ferreira
+@since 31/10/2014
+@version P11
+
+@param cOpc, caracter, Opção para execução
+@param [lMsg], lógico, Se irá ou não exibir mensagem ao final da execução
+
+@return numérico, Área calculada
+/*/
+
 user function TESTE()
 //	Alert(cEmpAnt+" ==> "+IIf(cEmpAnt == "01","ATA","ATF"))
 	StartJob("U_FUNCAO",GetEnvServer(),.T.,"01","01")
