@@ -658,7 +658,7 @@ If cTipo == "1"
 							//cServ := SC5->C5_MENNOTA
 							
 							//** BRENO **//
-							cServ := AllTrim(SC5->C5_MENNOTA)+" "+AllTrim(SC5->C5_MENNOT2)+" "+AllTrim(SC5->C5_MENNOT3)
+							cServ := AllTrim(AllTrim(SC5->C5_MENNOTA)+" "+AllTrim(SC5->C5_MENNOT2)+" "+AllTrim(SC5->C5_MENNOT3))
 							//**********//
 						EndIf
 						
@@ -1547,7 +1547,7 @@ If cTipo == "1"
 							//cMensCli += AllTrim(SC5->C5_MENNOTA)
 							
 							//** BRENO **//
-							cMensCli += AllTrim(SC5->C5_MENNOTA)+" "+AllTrim(SC5->C5_MENNOT2)+" "+AllTrim(SC5->C5_MENNOT3)
+							cMensCli += AllTrim(AllTrim(SC5->C5_MENNOTA)+" "+AllTrim(SC5->C5_MENNOT2)+" "+AllTrim(SC5->C5_MENNOT3))
 							//**********//
 						EndIf
 						
@@ -5831,11 +5831,15 @@ If Len( aNfVinc ) > 0		//Nota de espécie NFE e CTE vinculada
 			if !Empty(aNfVinc[nZ][6]) .and. "CTE" == UPPER(Alltrim(aNfVinc[nZ][6]))
 				cString += "Emissao Original CT-e: "
 			else
-				cString += "Emissao Original NF-e: "
+				//cString += "Emissao Original NF-e: "
+								
+				//** BRENO **//
+				cString := AllTrim(cString)+"Emissao Original NF-e: "
+				//**********//
 			endif
 
 			cChvNFe += aNfVinc[nZ][2] + aNfVinc[nZ][3] + "|"
-			cNfVinc := ( aNfVinc[nZ][2] + " " + aNfVinc[nZ][3] + " " + StrZero( Day( aNfVinc[nZ][1] ), 2 ) + "-" + StrZero( Month( aNfVinc[nZ][1] ), 2 ) + "-" + StrZero( Year( aNfVinc[nZ][1] ), 4 ) + ", " )
+			cNfVinc := AllTrim( aNfVinc[nZ][2] + " " + aNfVinc[nZ][3] + " " + StrZero( Day( aNfVinc[nZ][1] ), 2 ) + "-" + StrZero( Month( aNfVinc[nZ][1] ), 2 ) + "-" + StrZero( Year( aNfVinc[nZ][1] ), 4 ) + ", " )
 			cString += ConvType( cNfVinc, Len( cNfVinc ) ) + " "
 			if SM0->M0_ESTENT == 'SP'  // Conforme chamado TIGZGX feito com a Consultoria tributaria
 				if !Empty(cVoperDoc)
