@@ -15,7 +15,11 @@
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 /*/
+//Function Matr110( cAlias, nReg, nOpcx )
+
+//** BRENO **//
 user Function Matr110( cAlias, nReg, nOpcx )
+//**********//
 
 Local oReport
 Local lTRepInUse := .T.
@@ -69,8 +73,7 @@ Local oReport
 Local oSection1
 Local oSection2
 Local nTamCdProd:= TamSX3("C7_PRODUTO")[1]
-Local nTamCdDesc:= TamSX3("B1_DESC")[1]     
-Local nTamQtd   := TamSX3("C7_QUANT")[1]
+
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Variaveis utilizadas para parametros                         ³
@@ -101,12 +104,13 @@ Pergunte("MTR110",.F.)
 //³ExpB4 : Bloco de codigo que sera executado na confirmacao da impressao  ³
 //³ExpC5 : Descricao                                                       ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-oReport:= TReport():New("MATR110",cTitle,If(lAuto,Nil,"MTR110"), {|oReport| ReportPrint(oReport,nReg,nOpcx)},STR0001+" "+STR0002)
+oReport:= TReport():New("MATR110",cTitle,"MTR110", {|oReport| ReportPrint(oReport,nReg,nOpcx)},STR0001+" "+STR0002)
 oReport:SetPortrait()
 oReport:HideParamPage()
 oReport:HideHeader()
 oReport:HideFooter()
 oReport:SetTotalInLine(.F.)
+oReport:DisableOrientation()
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³Criacao da secao utilizada pelo relatorio                               ³
 //³                                                                        ³
@@ -142,63 +146,55 @@ oReport:SetTotalInLine(.F.)
 oSection1:= TRSection():New(oReport,STR0102,{"SC7","SM0","SA2"},/*aOrdem*/) //"| P E D I D O  D E  C O M P R A S"
 oSection1:SetLineStyle()
 oSection1:SetReadOnly()
+oSection1:SetNoFilter("SA2")
 
 TRCell():New(oSection1,"M0_NOMECOM","SM0",STR0087      ,/*Picture*/,49,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"A2_NOME"   ,"SA2",/*Titulo*/   ,/*Picture*/,40,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"A2_COD"    ,"SA2",/*Titulo*/   ,/*Picture*/,20,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"A2_LOJA"   ,"SA2",/*Titulo*/   ,/*Picture*/,04,/*lPixel*/,/*{|| code-block de impressao }*/)
 TRCell():New(oSection1,"M0_ENDENT" ,"SM0",STR0088      ,/*Picture*/,48,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"A2_END"    ,"SA2",/*Titulo*/   ,/*Picture*/,40,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"A2_BAIRRO" ,"SA2",/*Titulo*/   ,/*Picture*/,20,/*lPixel*/,/*{|| code-block de impressao }*/)
 TRCell():New(oSection1,"M0_CEPENT" ,"SM0",STR0089      ,/*Picture*/,10,/*lPixel*/,{|| Trans(SM0->M0_CEPENT,PesqPict("SA2","A2_CEP")) })
 TRCell():New(oSection1,"M0_CIDENT" ,"SM0",STR0090      ,/*Picture*/,20,/*lPixel*/,/*{|| code-block de impressao }*/)
 TRCell():New(oSection1,"M0_ESTENT" ,"SM0",STR0091      ,/*Picture*/,11,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"A2_MUN"    ,"SA2",/*Titulo*/   ,/*Picture*/,15,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"A2_EST"    ,"SA2",/*Titulo*/   ,/*Picture*/,02,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"A2_CEP"    ,"SA2",/*Titulo*/   ,/*Picture*/,08,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"A2_CGC"    ,"SA2",/*Titulo*/   ,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"M0_TEL"    ,"SM0",STR0092      ,/*Picture*/,14,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"M0_FAX"    ,"SM0",STR0093      ,/*Picture*/,34,/*lPixel*/,/*{|| code-block de impressao }*/)
-TRCell():New(oSection1,"FONE"      ,"   ",STR0094      ,/*Picture*/,25,/*lPixel*/,{|| "("+Substr(SA2->A2_DDD,1,3)+") "+Substr(SA2->A2_TEL,1,15)})
-TRCell():New(oSection1,"FAX"       ,"   ",STR0093      ,/*Picture*/,25,/*lPixel*/,{|| "("+Substr(SA2->A2_DDD,1,3)+") "+SubStr(SA2->A2_FAX,1,15)})
-TRCell():New(oSection1,"INSCR"     ,"   ",If( cPaisLoc$"ARG|POR|EUA",space(11) , STR0095 ),/*Picture*/,18,/*lPixel*/,{|| If( cPaisLoc$"ARG|POR|EUA",space(18), SA2->A2_INSCR ) })
 TRCell():New(oSection1,"M0_CGC"    ,"SM0",STR0124      ,/*Picture*/,18,/*lPixel*/,{|| Transform(SM0->M0_CGC,PesqPict("SA2","A2_CGC")) })
-
 If cPaisLoc == "BRA"
 	TRCell():New(oSection1,"M0IE"  ,"   ",STR0041      ,/*Picture*/,18,/*lPixel*/,{|| InscrEst()})
 EndIf
+TRCell():New(oSection1,"M0_TEL"    ,"SM0",STR0092      ,/*Picture*/,14,/*lPixel*/,/*{|| code-block de impressao }*/)
+TRCell():New(oSection1,"M0_FAX"    ,"SM0",STR0093      ,/*Picture*/,34,/*lPixel*/,/*{|| code-block de impressao }*/)
+TRCell():New(oSection1,"A2_NOME"   ,"SA2",/*Titulo*/   ,/*Picture*/,40,/*lPixel*/,/*{|| code-block de impressao }*/)
+TRCell():New(oSection1,"A2_COD"    ,"SA2",/*Titulo*/   ,/*Picture*/,20,/*lPixel*/,/*{|| code-block de impressao }*/)
+TRCell():New(oSection1,"A2_LOJA"   ,"SA2",/*Titulo*/   ,/*Picture*/,04,/*lPixel*/,/*{|| code-block de impressao }*/)
+TRCell():New(oSection1,"A2_END"    ,"SA2",/*Titulo*/   ,/*Picture*/,40,/*lPixel*/,/*{|| code-block de impressao }*/)
+TRCell():New(oSection1,"A2_BAIRRO" ,"SA2",/*Titulo*/   ,/*Picture*/,20,/*lPixel*/,/*{|| code-block de impressao }*/)
+TRCell():New(oSection1,"A2_CEP"    ,"SA2",/*Titulo*/   ,/*Picture*/,08,/*lPixel*/,/*{|| code-block de impressao }*/)
+TRCell():New(oSection1,"A2_MUN"    ,"SA2",/*Titulo*/   ,/*Picture*/,15,/*lPixel*/,/*{|| code-block de impressao }*/)
+TRCell():New(oSection1,"A2_EST"    ,"SA2",/*Titulo*/   ,/*Picture*/,02,/*lPixel*/,/*{|| code-block de impressao }*/)
+TRCell():New(oSection1,"A2_CGC"    ,"SA2",/*Titulo*/   ,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/)
+TRCell():New(oSection1,"INSCR"     ,"   ",If( cPaisLoc$"ARG|POR|EUA",space(11) , STR0095 ),/*Picture*/,18,/*lPixel*/,{|| If( cPaisLoc$"ARG|POR|EUA",space(18), SA2->A2_INSCR ) })
+TRCell():New(oSection1,"FONE"      ,"   ",STR0094      ,/*Picture*/,25,/*lPixel*/,{|| "("+Substr(SA2->A2_DDD,1,3)+") "+Substr(SA2->A2_TEL,1,15)})
+TRCell():New(oSection1,"FAX"       ,"   ",STR0093      ,/*Picture*/,25,/*lPixel*/,{|| "("+Substr(SA2->A2_DDD,1,3)+") "+SubStr(SA2->A2_FAX,1,15)})
 
 oSection1:Cell("A2_BAIRRO"):SetCellBreak()
 oSection1:Cell("A2_CGC"   ):SetCellBreak()
 oSection1:Cell("INSCR"    ):SetCellBreak()
-
-//Tamanho Descrição //
-If nTamCdDesc<30
-	nTamCdDesc:=nTamCdDesc+(30-nTamCdDesc)
-Else
-	If nTamCdDesc>30
-		nTamCdDesc:=30
-	EndIf
-EndIf
 
 oSection2:= TRSection():New(oSection1,STR0103,{"SC7","SB1"},/*aOrdem*/)
 
 oSection2:SetCellBorder("ALL",,,.T.)                          
 oSection2:SetCellBorder("RIGHT")                        
 oSection2:SetCellBorder("LEFT")                                   
-                                                                                
+
+TRCell():New(oSection2,"C7_NUM"		,"SC7",STR0129   ,/*Picture*/,15,/*lPixel*/,,,,,,,.F.)                                                                                
 TRCell():New(oSection2,"C7_ITEM"    ,"SC7",/*Titulo*/,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
-TRCell():New(oSection2,"C7_PRODUTO" ,"SC7",/*Titulo*/,/*Picture*/,IIf(nTamCdProd<30,nTamCdProd+(30-nTamCdProd),30),/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
-TRCell():New(oSection2,"DESCPROD"   ,"   ",STR0097   ,/*Picture*/,nTamCdDesc,/*lPixel*/, {|| cDescPro},,,,,,.F.)
+TRCell():New(oSection2,"C7_PRODUTO" ,"SC7",/*Titulo*/,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
+TRCell():New(oSection2,"DESCPROD"   ,"   ",STR0097   ,/*Picture*/,30,/*lPixel*/, {|| cDescPro},,,,,,.F.)
 TRCell():New(oSection2,"C7_UM"      ,"SC7",STR0115   ,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
+TRCell():New(oSection2,"C7_QUANT"   ,"SC7",/*Titulo*/,PesqPictQt("C7_QUANT",13),/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
 TRCell():New(oSection2,"C7_SEGUM"   ,"SC7",STR0118,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
-TRCell():New(oSection2,"C7_QUANT"   ,"SC7",/*Titulo*/,PesqPictQt("C7_QUANT",13),IIf(nTamQtd<12,nTamQtd+(12-nTamQtd),12),/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
 TRCell():New(oSection2,"C7_QTSEGUM" ,"SC7",/*Titulo*/,PesqPictQt("C7_QUANT",13),/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
 TRCell():New(oSection2,"PRECO"      ,"   ",STR0098,/*Picture*/,16/*Tamanho*/,/*lPixel*/,{|| nVlUnitSC7 },"RIGHT",,"RIGHT")
-TRCell():New(oSection2,"C7_IPI"     ,"SC7",/*Titulo*/,/*Picture*/,13,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
-TRCell():New(oSection2,"TOTAL"     ,"   ",STR0099,/*Picture*/,17.5,/*lPixel*/,{|| nValTotSC7 },"RIGHT",,"RIGHT",,,.F.)
+TRCell():New(oSection2,"C7_IPI"     ,"SC7",/*Titulo*/,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
+TRCell():New(oSection2,"TOTAL"     ,"   ",STR0099,/*Picture*/,14/*Tamanho*/,/*lPixel*/,{|| nValTotSC7 },"RIGHT",,"RIGHT",,,.F.)
 TRCell():New(oSection2,"C7_DATPRF"  ,"SC7",/*Titulo*/,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
-TRCell():New(oSection2,"C7_CC"      ,"SC7",STR0066,PesqPict("SC7","C7_CC",20),9,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
+TRCell():New(oSection2,"C7_CC"      ,"SC7",STR0066,PesqPict("SC7","C7_CC",20),/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
 TRCell():New(oSection2,"C7_NUMSC"   ,"SC7",STR0123,/*Picture*/,/*Tamanho*/,/*lPixel*/,/*{|| code-block de impressao }*/,,,,,,.F.)
 TRCell():New(oSection2,"OPCC"       ,"   ",STR0100   ,/*Picture*/,30.5,/*lPixel*/,{|| cOPCC },,,,,,.F.)          
 
@@ -258,8 +254,10 @@ Local cPictVUnit := PesqPict("SC7","C7_PRECO",16)
 Local cPictVTot  := PesqPict("SC7","C7_TOTAL",, mv_par12)
 Local lNewAlc	  := .F.
 Local lLiber      := .F.
+Local lRet			:= .T.
 
 Local nRecnoSC7   := 0
+Local nTotalsX3   := 0
 Local nRecnoSM0   := 0
 Local nX          := 0
 Local nY          := 0
@@ -289,6 +287,31 @@ Local cCident	  := ""
 Local cCidcob	  := ""
 Local nLinPC2	  := 0
 Local nLinPC3	  := 0
+
+Local nTamCdProd:= TamSX3("C7_PRODUTO")[1]
+Local nTamQtd   := TamSX3("C7_QUANT")[1]
+Local nTamanCorr:=148 // tamanho correto do final da linha
+Local nTotalCpos:= 0//tamanho atual do final da linha
+Local lArrumou	:= .F.
+//Arrays abaixo := {Campo		,oSection2,Tamanho Minimo	,  Tamanho Maximo}
+Local aTamItem	:= {"C7_ITEM"	,0,TamSX3("C7_ITEM")[1]		,TamSX3("C7_ITEM")[1]+5}
+Local aTamProd 	:= {"C7_PRODUTO",0,IIf(nTamCdProd<30,nTamCdProd+(30-nTamCdProd),30),50}
+Local aTamCdDesc:= {"DESCPROD"	,0,TamSX3("B1_DESC")[1]		,TamSX3("B1_DESC")[1]+30}
+Local aTamUm	:= {"C7_UM"		,0,TamSX3("C7_UM")[1]		,TamSX3("C7_UM")[1]+5}
+Local aTamQuant := {"C7_QUANT"	,0,IIf(nTamQtd<12,nTamQtd+(12-nTamQtd),12),12}
+Local aTamSeg	:= {"C7_SEGUM"	,0,TamSX3("C7_SEGUM")[1]	,TamSX3("C7_SEGUM")[1]+5}
+Local aTamqtseg	:= {"C7_QTSEGUM",0,TamSX3("C7_QTSEGUM")[1]	,TamSX3("C7_QTSEGUM")[1]}
+Local aTamprec 	:= {"PRECO"		,0,16						,30}
+Local aTamIpi   := {"C7_IPI"	,0,TamSX3("C7_IPI")[1]		,TamSX3("C7_IPI")[1]}
+Local aTamTot 	:= {"TOTAL"		,0,14						,25}
+Local aTamDaTp	:= {"C7_DATPRF"	,0,TamSX3("C7_DATPRF")[1]	,IIf(TamSX3("C7_DATPRF")[1]+5 < 11,11,TamSX3("C7_DATPRF")[1]+5)}
+Local aTamCC 	:= {"C7_CC"		,0,9						,15}
+Local aTamNum	:= {"C7_NUMSC"	,0,TamSX3("C7_NUMSC")[1]	,TamSX3("C7_NUMSC")[1]+10}
+//                     1*       2*        3*       4*       5*       6*      7*        8*      9*      10*      11*    12*     13*
+Local aTamCamp 	:= {aTamItem,aTamProd,aTamCdDesc,aTamUm,aTamQuant,aTamSeg,aTamqtseg,aTamprec,aTamIpi,aTamTot,aTamDaTp,aTamCC,aTamNum}
+For nX:= 1 To Len(aTamCamp)
+	aTamCamp[nX][2] :=oSection2:Cell(aTamCamp[nX][1]):GetCellSize()
+Next
 
 Private cDescPro  := ""
 Private cOPCC     := ""
@@ -410,7 +433,7 @@ While !oReport:Cancel() .And. !SC7->(Eof()) .And. SC7->C7_FILIAL == xFilial("SC7
 	EndIf
 	
 	MaFisEnd()
-	MaFisIniPC(SC7->C7_NUM,,,cFiltro)
+	R110FIniPC(SC7->C7_NUM,,,cFiltro)
 	
 	cObs01    := " "
 	cObs02    := " "
@@ -514,7 +537,7 @@ While !oReport:Cancel() .And. !SC7->(Eof()) .And. SC7->C7_FILIAL == xFilial("SC7
 			//** BRENO **//
 			cDescPro := cDescPro+Chr(13)+Chr(10)+AllTrim(SC7->C7_OBS)
 			//**********//
-			
+
 			SA5->(dbSetOrder(1))
 			If SA5->(dbSeek(xFilial("SA5")+SC7->C7_FORNECE+SC7->C7_LOJA+SC7->C7_PRODUTO)) .And. !Empty(SA5->A5_CODPRF)
 				cDescPro := cDescPro + " ("+Alltrim(SA5->A5_CODPRF)+")"
@@ -540,17 +563,29 @@ While !oReport:Cancel() .And. !SC7->(Eof()) .And. SC7->C7_FILIAL == xFilial("SC7
 			nTotal     := nTotal + SC7->C7_TOTAL
 			nTotMerc   := MaFisRet(,"NF_TOTAL")
 			
+			If oReport:nDevice != 4 .Or. (oReport:nDevice == 4 .And. !oReport:lXlsTable .And. oReport:lXlsHeader)  //impressao em planilha tipo tabela
+				oSection2:Cell("C7_NUM"):Disable()
+			EndIf
+			
 			If MV_PAR07 == 2 .And. !Empty(SC7->C7_QTSEGUM) .And. !Empty(SC7->C7_SEGUM)
-				oSection2:Cell("C7_DATPRF"):SetSize(9)
+				//oSection2:Cell("C7_DATPRF"):SetSize(9)
 				oSection2:Cell("C7_SEGUM"  ):Enable()
 				oSection2:Cell("C7_QTSEGUM"):Enable()
 				oSection2:Cell("C7_UM"     ):Disable()
 				oSection2:Cell("C7_QUANT"  ):Disable()
 				nVlUnitSC7 := xMoeda((SC7->C7_TOTAL/SC7->C7_QTSEGUM),SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda)
-			Else
-				oSection2:Cell("C7_DATPRF"):SetSize(11)
+			ElseIf MV_PAR07 == 1 .And. !Empty(SC7->C7_QUANT) .And. !Empty(SC7->C7_UM)
+				//oSection2:Cell("C7_DATPRF"):SetSize(11)
 				oSection2:Cell("C7_SEGUM"  ):Disable()
 				oSection2:Cell("C7_QTSEGUM"):Disable()
+				oSection2:Cell("C7_UM"     ):Enable()
+				oSection2:Cell("C7_QUANT"  ):Enable()
+				nVlUnitSC7 := xMoeda(SC7->C7_PRECO,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda)
+			Else
+				nTamanCorr  :=143
+				//oSection2:Cell("C7_DATPRF"):SetSize(11)
+				oSection2:Cell("C7_SEGUM"  ):Enable()
+				oSection2:Cell("C7_QTSEGUM"):Enable()
 				oSection2:Cell("C7_UM"     ):Enable()
 				oSection2:Cell("C7_QUANT"  ):Enable()
 				nVlUnitSC7 := xMoeda(SC7->C7_PRECO,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda)
@@ -572,8 +607,54 @@ While !oReport:Cancel() .And. !SC7->(Eof()) .And. SC7->C7_FILIAL == xFilial("SC7
 					cOPCC := STR0066 + " " + SC7->C7_CC
 				EndIf
 			EndIf
-			
-			oSection2:PrintLine()
+			nTamanCorr := IIF(oReport:nDevice == 2,nTamanCorr-2,nTamanCorr)  // se for impressão por spool diminuir o tamanho da linha
+				//Ajusta o tamanho dos campos de acordo com o tamanho do relatorio
+			    If !lArrumou .And. !oSection2:UseFilter() 
+			    	lArrumou := .T.
+				 	For nX:= 1 To Len(aTamCamp)
+				 		If oSection2:Cell(aTamCamp[nX][1]):Enabled()
+		   					nTotalCpos +=aTamCamp[nX][2]
+		   					nTotalsX3 +=aTamCamp[nX][3]
+		   				EndIf
+					Next
+					nX:=0
+					
+					//Verifica se é possível realizar ajuste no tamanho dos campos considerando o tamanho físico dos campos no dicionário.
+					If nTotalsX3 > nTamanCorr
+						lRet := .F.
+					EndIf
+					
+					If lRet
+						While nTotalCpos <> nTamanCorr
+							IIf(nX >= Len(aTamCamp),nX:=1,nX++)
+							If oSection2:Cell(aTamCamp[nX][1]):Enabled() //se o campo estiver  Enable
+								If nTotalCpos > nTamanCorr //se os campos passarem da linha 
+									If aTamCamp[nX][2] >  aTamCamp[nX][3] //Se o campo[nX] estiver maior que o tamanho minimo
+										aTamCamp[nX][2] -= 1      //diminui o tamanho do campo
+										nTotalCpos -= 1
+									EndIf
+								ElseIf aTamCamp[nX][2] <  aTamCamp[nX][4] //Se o campo[nX] estiver menor que o tamanho maximo
+									aTamCamp[nX][2] += 1 //aumenta o tamanho do campo
+									nTotalCpos +=1
+								Endif
+							Endif
+						EndDo 
+					EndIf
+					For nX:= 1 To Len(aTamCamp)
+				 		If oSection2:Cell(aTamCamp[nX][1]):Enabled()
+		   					oSection2:Cell(aTamCamp[nX][1]):SetSize(aTamCamp[nX][2])//atualiza o tamanho certo dos campos
+		   				EndIf
+					Next
+				EndIf
+			If oReport:nDevice == 4 .And. oReport:lXlsTable .And. !oReport:lXlsHeader  //impressao em planilha tipo tabela	
+				oSection1:Init()
+				TRPosition():New(oSection1,"SA2",1,{ || xFilial("SA2") + SC7->C7_FORNECE + SC7->C7_LOJA })
+				oSection1:PrintLine()
+				oSection2:PrintLine()
+				oSection1:Finish()
+			Else
+				oSection2:PrintLine()
+			EndIf
 			
 			nPrinted ++
 			lImpri  := .T.
@@ -842,7 +923,7 @@ While !oReport:Cancel() .And. !SC7->(Eof()) .And. SC7->C7_FILIAL == xFilial("SC7
 
 			nLinPC := oReport:Row()
 			oReport:PrintText( If((SC7->C7_TIPO == 1 .OR. SC7->C7_TIPO == 3),STR0079,STR0084),nLinPC,1310) //"Liberacao do Pedido"##"Liber. Autorizacao "
-			oReport:PrintText( STR0080 + IF( SC7->C7_TPFRETE $ "F","FOB",IF(SC7->C7_TPFRETE $ "C","CIF"," " )) ,nLinPC,1820 )
+			oReport:PrintText( STR0080 + IF( SC7->C7_TPFRETE $ "F","FOB",IF(SC7->C7_TPFRETE $ "C","CIF",IF(SC7->C7_TPFRETE $ "T","Por Conta Terceiros"," " ) )) ,nLinPC,1820 )
 			oReport:SkipLine()
 
 			oReport:SkipLine()
@@ -878,15 +959,15 @@ While !oReport:Cancel() .And. !SC7->(Eof()) .And. SC7->C7_FILIAL == xFilial("SC7
 			
 		Else
 			
-			oReport:Box( 2570 , 1220 , 2700 , 1850 )
-			oReport:Box( 2570 , 1850 , 2700 , nPageWidth )
+			oReport:Box( 2570 , 1220 , 2700 , 1820 )
+			oReport:Box( 2570 , 1820 , 2700 , nPageWidth )
 			oReport:Box( 2700 , 0010 , 3020 , nPageWidth )
 			oReport:Box( 2970 , 0010 , 3020 , 1340 )
 			
 			nLinPC := nLinPC3
 			
 			oReport:PrintText( If((SC7->C7_TIPO == 1 .OR. SC7->C7_TIPO == 3), If( lLiber , STR0050 , STR0051 ) , If( lLiber , STR0085 , STR0086 ) ),nLinPC,1290 ) //"     P E D I D O   L I B E R A D O"#"|     P E D I D O   B L O Q U E A D O !!!"
-			oReport:PrintText( STR0080 + If( SC7->C7_TPFRETE $ "F","FOB",If(SC7->C7_TPFRETE $ "C","CIF"," " )),nLinPC,1920 ) //"Obs. do Frete: "
+			oReport:PrintText( STR0080 + Substr(RetTipoFrete(SC7->C7_TPFRETE),3),nLinPC,1830 ) //"Obs. do Frete: "
 			oReport:SkipLine()
 
 			oReport:SkipLine()
@@ -920,17 +1001,35 @@ While !oReport:Cancel() .And. !SC7->(Eof()) .And. SC7->C7_FILIAL == xFilial("SC7
 	
 	MaFisEnd()
 	
+	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Grava no SC7 as Reemissoes e atualiza o Flag de impressao.   ³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	
+		
 	dbSelectArea("SC7")
 	If Len(aRecnoSave) > 0
 		For nX :=1 to Len(aRecnoSave)
 			dbGoto(aRecnoSave[nX])
-			RecLock("SC7",.F.)
-			SC7->C7_QTDREEM := (SC7->C7_QTDREEM + 1)
-			SC7->C7_EMITIDO := "S"
-			MsUnLock()
+			If(SC7->C7_QTDREEM >= 99)	
+				If nRet == 1
+					RecLock("SC7",.F.)
+					SC7->C7_EMITIDO := "S"
+					MsUnLock()
+				Elseif nRet == 2
+					RecLock("SC7",.F.)
+					SC7->C7_QTDREEM := 1
+					SC7->C7_EMITIDO := "S"
+					MsUnLock()
+				Elseif nRet == 3
+					//cancelar
+				Endif
+			Else
+				RecLock("SC7",.F.)
+				SC7->C7_QTDREEM := (SC7->C7_QTDREEM + 1)
+				SC7->C7_EMITIDO := "S"
+				MsUnLock()
+			Endif
 		Next nX
 		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 		//³ Reposiciona o SC7 com base no ultimo elemento do aRecnoSave. ³
@@ -955,7 +1054,7 @@ oSection2:Finish()
 //³ do os pedidos enviados para possivel manipulacao.            ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 If ExistBlock("M110MAIL")
-	lEnvMail := HasEmail(,,,,.F.)
+	lEnvMail := (oReport:nDevice == 3)
 	If lEnvMail
 		Execblock("M110MAIL",.F.,.F.,{aPedMail})
 	EndIf
@@ -998,7 +1097,14 @@ Local nLinPC	:= 0
 Local nTpImp	  := IIF(ValType(oReport:nDevice)!=Nil,oReport:nDevice,0) // Tipo de Impressao
 Local nPageWidth  := IIF(nTpImp==1.Or.nTpImp==6,2314,2290)
 Local cCident	:= IIF(len(SM0->M0_CIDENT)>20,Substr(SM0->M0_CIDENT,1,15),SM0->M0_CIDENT)
+PRIVATE cBitmap := ""
+Public nRet:= 0
 TRPosition():New(oSection1,"SA2",1,{ || xFilial("SA2") + SC7->C7_FORNECE + SC7->C7_LOJA })
+
+cBitmap := "LGRL"+SM0->M0_CODIGO+SM0->M0_CODFIL+".BMP" // Empresa+Filial
+If !File( cBitmap )
+	cBitmap := "LGRL"+SM0->M0_CODIGO+".BMP" // Empresa
+EndIf
 
 SA2->(dbSetOrder(1))
 SA2->(dbSeek(xFilial("SA2") + SC7->C7_FORNECE + SC7->C7_LOJA))
@@ -1014,24 +1120,41 @@ nLinPC := oReport:Row()
 oReport:PrintText( If( mv_par08 == 1 , (STR0068), (STR0069) ) + " - " + GetMV("MV_MOEDA"+cMoeda) ,nLinPC,1030 )
 oReport:PrintText( If( mv_par08 == 1 , SC7->C7_NUM, SC7->C7_NUMSC + "/" + SC7->C7_NUM ) + " /" + Ltrim(Str(nPagina,2)) ,nLinPC,1910 )
 oReport:SkipLine()
-                                             
+
+
 nLinPC := oReport:Row()
-oReport:PrintText( If( SC7->C7_QTDREEM > 0, Str(SC7->C7_QTDREEM+1,2) , "1" ) + STR0034 + Str(nVias,2) + STR0035 ,nLinPC,1910 )
+If(SC7->C7_QTDREEM >= 99)	
+	nRet := Aviso("TOTVS", STR0125 +chr(13)+chr(10)+ "1- " + STR0126 +chr(13)+chr(10)+ "2- " + STR0127 +chr(13)+chr(10)+ "3- " + STR0128,{"1", "2", "3"},2)
+	If(nRet == 1)
+		oReport:PrintText( Str(SC7->C7_QTDREEM,2) + STR0034 + Str(nVias,2) + STR0035 ,nLinPC,1910 )
+	Elseif(nRet == 2)
+		oReport:PrintText( "1" + STR0034 + Str(nVias,2) + STR0035 ,nLinPC,1910 )
+	Elseif(nRet == 3)
+		oReport:CancelPrint()
+	Endif
+Else		
+	oReport:PrintText( If( SC7->C7_QTDREEM > 0, Str(SC7->C7_QTDREEM+1,2) , "1" ) + STR0034 + Str(nVias,2) + STR0035 ,nLinPC,1910 )
+Endif                                             
+
 
 oReport:SkipLine()
+
+_cFileLogo	:= GetSrvProfString('Startpath','') + cBitmap
+oReport:SayBitmap(25,25,_cFileLogo,150,60) // insere o logo no relatorio
+
 nLinPC := oReport:Row()
 oReport:PrintText(STR0087 + SM0->M0_NOMECOM,nLinPC,15)  // "Empresa:"
-oReport:PrintText(STR0106 + SA2->A2_NOME+" "+STR0107+SA2->A2_COD+" "+STR0108+SA2->A2_LOJA,nLinPC,1025)
+oReport:PrintText(STR0106 + Substr(SA2->A2_NOME,1,50)+" "+STR0107+SA2->A2_COD+" "+STR0108+SA2->A2_LOJA,nLinPC,1025)
 oReport:SkipLine()
 
 nLinPC := oReport:Row()
 oReport:PrintText(STR0088 + SM0->M0_ENDENT,nLinPC,15)
-oReport:PrintText(STR0088 + SA2->A2_END+" "+STR0109+SA2->A2_BAIRRO,nLinPC,1025)
+oReport:PrintText(STR0088 + Substr(SA2->A2_END,1,49)+" "+STR0109+ Substr(SA2->A2_BAIRRO,1,25),nLinPC,1025)
 oReport:SkipLine()
                             
 nLinPC := oReport:Row()
 oReport:PrintText(STR0089 + Trans(SM0->M0_CEPENT,PesqPict("SA2","A2_CEP"))+Space(2)+STR0090 + "  " + RTRIM(SM0->M0_CIDENT) + " " + STR0091 + SM0->M0_ESTENT ,nLinPC,15)
-oReport:PrintText(STR0110+SA2->A2_MUN+" "+STR0111+SA2->A2_EST+" "+STR0112+SA2->A2_CEP+" "+STR0124+Transform(SA2->A2_CGC,PesqPict("SA2","A2_CGC")),nLinPC,1025)
+oReport:PrintText(STR0110+Left(SA2->A2_MUN, 30)+" "+STR0111+SA2->A2_EST+" "+STR0112+SA2->A2_CEP+" "+STR0124+":"+Transform(SA2->A2_CGC,Iif(SA2->A2_TIPO == 'F',Substr(PICPES(SA2->A2_TIPO),1,17),Substr(PICPES(SA2->A2_TIPO),1,21))),nLinPC,1025)
 oReport:SkipLine()
 
 nLinPC := oReport:Row()
@@ -1090,7 +1213,11 @@ Return
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 /*/
+//Function MATR110R3(cAlias,nReg,nOpcx)
+
+//** BRENO **//
 static Function MATR110R3(cAlias,nReg,nOpcx)
+//**********//
 
 LOCAL wnrel		:= "MATR110"
 LOCAL cDesc1	:= STR0001	//"Emissao dos pedidos de compras ou autorizacoes de entrega"
@@ -1217,7 +1344,6 @@ Private cCGCPict, cCepPict
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 cCepPict:=PesqPict("SA2","A2_CEP")
 cCGCPict:=PesqPict("SA2","A2_CGC")
-
 If nDifColCC < 11
 	limite   := 139
 Else
@@ -1333,7 +1459,7 @@ While !Eof() .And. C7_FILIAL = xFilial("SC7") .And. C7_NUM >= mv_par01 .And. ;
 	EndIf
 
 	MaFisEnd()
-	MaFisIniPC(SC7->C7_NUM,,,cFiltro)
+	R110FIniPC(SC7->C7_NUM,,,cFiltro)
 
 	For ncw := 1 To mv_par09		// Imprime o numero de vias informadas
 
@@ -1630,7 +1756,7 @@ While !Eof().And.C7_FILIAL = xFilial("SC7") .And. C7_NUM >= mv_par01 .And. C7_NU
 	EndIf
 
 	MaFisEnd()
-	MaFisIniPC(SC7->C7_NUM,,,cFiltro)
+	R110FIniPC(SC7->C7_NUM,,,cFiltro)
 
 	For ncw := 1 To mv_par09		// Imprime o numero de vias informadas
 
@@ -2320,7 +2446,11 @@ If !lNewAlc
 	@ li,046 PSAY STR0023		//"Diretoria"
 	@ li,061 PSAY "|     ------------------------------"
 	@ li,102 PSAY "|"
-	@ li,104 PSAY "Transportadora:"			//BRENO
+
+	//** BRENO **//
+	@ li,104 PSAY "Transportadora:"
+	//**********//
+
 	@ li,142 - nDifColCC PSAY "|"
 	li++
 	@ li,001 PSAY "|"
@@ -2328,7 +2458,11 @@ If !lNewAlc
 	@ li,041 PSAY "|"
 	@ li,061 PSAY "|     " + R110Center(cLiberador) // 30 posicoes
 	@ li,102 PSAY "|"
-	@ li,104 PSAY Transportadora(SC7->C7_NUM)	//BRENO
+
+	//** BRENO **//
+	@ li,104 PSAY Transportadora(SC7->C7_NUM)
+	//**********//
+
 	@ li,142 - nDifColCC PSAY "|"
 	li++
 	@ li,001 PSAY "|"
@@ -2347,11 +2481,12 @@ Else
 	@ li,054 PSAY "|"
 	@ li,059 PSAY IF(lLiber,STR0050,STR0051)		//"     P E D I D O   L I B E R A D O"#"|     P E D I D O   B L O Q U E A D O !!!"
 	@ li,102 PSAY STR0020		//"| Obs. do Frete: "
-	@ li,119 PSAY IF( SC7->C7_TPFRETE $ "F","FOB",IF(SC7->C7_TPFRETE $ "C","CIF"," " ))
+	@ li,119 PSAY Substr(RetTipoFrete(SC7->C7_TPFRETE),3,10)
 	@ li,142 - nDifColCC PSAY "|"
 	li++
 	@ li,001 PSAY "|"+Replicate("-",99)
 	@ li,102 PSAY "|"
+	@ li,104 PSAY Substr(RetTipoFrete(SC7->C7_TPFRETE),13)
 	@ li,142 - nDifColCC PSAY "|"
 	li++
 	@ li,001 PSAY "|"
@@ -2360,7 +2495,11 @@ Else
 	@ li,088 PSAY "|"
 	@ li,089 PSAY STR0060      //"BLQ:Bloqueado"
 	@ li,102 PSAY "|"
-	@ li,104 PSAY "Transportadora:"			//BRENO
+
+	//** BRENO **//
+	@ li,104 PSAY "Transportadora:"
+	//**********//
+
 	@ li,142 - nDifColCC PSAY "|"
 	li++
 	nAuxLin := Len(cAlter)
@@ -2374,7 +2513,11 @@ Else
 			lImpLeg := .F.
 		EndIf
 		@ li,102 PSAY "|"
-		@ li,104 PSAY Transportadora(SC7->C7_NUM)		//BRENO
+
+		//** BRENO **//
+		@ li,104 PSAY Transportadora(SC7->C7_NUM)
+		//**********//
+
 		@ li,142 - nDifColCC PSAY "|"
 		nAuxLin -= 60
 		li++
@@ -2880,11 +3023,11 @@ nOrden = IndexOrd()
 dbSetOrder(2)
 dbSeek("A2_CGC")
 cCGC := Alltrim(X3TITULO())
-@ 06,093 PSAY cCGC //"CGC: "
+@ 06,093 PSAY cCGC+":" //"CGC: "
 dbSetOrder(nOrden)
 
 dbSelectArea("SA2")
-@ 06,103 PSAY SA2->A2_CGC    		Picture PesqPict("SA2","A2_CGC")
+@ 06,103 PSAY SA2->A2_CGC  Picture If(SA2->A2_TIPO=="J",PesqPict("SA2","A2_CGC"),Transform(SA2->A2_CGC,"@R 999.999.999-99"))
 @ 06,142 - nDifColCC PSAY "|"
 @ 07,001 PSAY "|"
 @ 07,002 PSAY (cCGC) + " "+ Transform(SM0->M0_CGC,cCgcPict)		//"CGC: "
@@ -2971,6 +3114,7 @@ Static Function AjustaSX1()
 Local aHelpPor	:= {}
 Local aHelpEng	:= {}
 Local aHelpSpa	:= {}
+Local nTamSX1   := Len(SX1->X1_GRUPO)
 
 Aadd( aHelpPor, "Filtra os itens do PC a serem impressos " )
 Aadd( aHelpPor, "Todos,somente os abertos ou Atendidos.  " )
@@ -2981,9 +3125,20 @@ Aadd( aHelpEng, "                                        " )
 Aadd( aHelpSpa, "                                        " )
 Aadd( aHelpSpa, "                                        " )
 
-PutSx1("MTR110","14","Lista quais ?       ","Cuales Lista ?      ","List which ?        ","mv_che","N",1,0,1,"C","","","","","mv_par14",;
+PutSx1("MTR110","07","Lista quais ?       ","Cuales Lista ?      ","List which ?        ","mv_che","N",1,0,1,"C","","","","","mv_par14",;
 "Todos ","Todos ","All ","","Em Aberto ","En abierto ","Open ","Atendidos ","Atendidos ","Serviced ","","","","","","","","","","")
 PutSX1Help("P.MTR11014.",aHelpPor,aHelpEng,aHelpSpa)
+
+dbSelectArea("SX1")
+dbSetOrder(1)
+
+If dbSeek(PADR("MTR110",nTamSX1)+"07")
+	RecLock("SX1",.F.)
+	X1_DEF03   := "Todos"
+	X1_DEFSPA3 := "Todos"
+	X1_DEFENG3 := "All"
+	MsUnLock()
+EndIf
 
 Return
                                                           
@@ -3007,7 +3162,11 @@ Return
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 /*/
+//Function ChkPergUs(cUserId,cGrupo,cSeq)
+
+//** BRENO **//
 static Function ChkPergUs(cUserId,cGrupo,cSeq)
+//**********//
 
 Local aArea  := GetArea()
 Local cRet   := Nil
@@ -3027,6 +3186,80 @@ Endif
 
 RestArea(aArea)
 Return(cRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Funcao    ³R110FIniPC³ Autor ³ Edson Maricate        ³ Data ³20/05/2000³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descricao ³ Inicializa as funcoes Fiscais com o Pedido de Compras      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ R110FIniPC(ExpC1,ExpC2)                                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1 := Numero do Pedido                                  ³±±
+±±³          ³ ExpC2 := Item do Pedido                                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATR110,MATR120,Fluxo de Caixa                             ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function R110FIniPC(cPedido,cItem,cSequen,cFiltro)
+
+Local aArea		:= GetArea()
+Local aAreaSC7	:= SC7->(GetArea())
+Local cValid		:= ""
+Local nPosRef		:= 0
+Local nItem		:= 0
+Local cItemDe		:= IIf(cItem==Nil,'',cItem)
+Local cItemAte	:= IIf(cItem==Nil,Repl('Z',Len(SC7->C7_ITEM)),cItem)
+Local cRefCols	:= ''
+DEFAULT cSequen	:= ""
+DEFAULT cFiltro	:= ""
+
+dbSelectArea("SC7")
+dbSetOrder(1)
+If dbSeek(xFilial("SC7")+cPedido+cItemDe+Alltrim(cSequen))
+	MaFisEnd()
+	MaFisIni(SC7->C7_FORNECE,SC7->C7_LOJA,"F","N","R",{})
+	While !Eof() .AND. SC7->C7_FILIAL+SC7->C7_NUM == xFilial("SC7")+cPedido .AND. ;
+			SC7->C7_ITEM <= cItemAte .AND. (Empty(cSequen) .OR. cSequen == SC7->C7_SEQUEN)
+
+		// Nao processar os Impostos se o item possuir residuo eliminado  
+		If &cFiltro
+			dbSelectArea('SC7')
+			dbSkip()
+			Loop
+		EndIf
+            
+		// Inicia a Carga do item nas funcoes MATXFIS  
+		nItem++
+		MaFisIniLoad(nItem)
+		dbSelectArea("SX3")
+		dbSetOrder(1)
+		dbSeek('SC7')
+		While !EOF() .AND. (X3_ARQUIVO == 'SC7')
+			cValid	:= StrTran(UPPER(SX3->X3_VALID)," ","")
+			cValid	:= StrTran(cValid,"'",'"')
+			If "MAFISREF" $ cValid
+				nPosRef  := AT('MAFISREF("',cValid) + 10
+				cRefCols := Substr(cValid,nPosRef,AT('","MT120",',cValid)-nPosRef )
+				// Carrega os valores direto do SC7.           
+				MaFisLoad(cRefCols,&("SC7->"+ SX3->X3_CAMPO),nItem)
+			EndIf
+			dbSkip()
+		End
+		MaFisEndLoad(nItem,2)
+		dbSelectArea('SC7')
+		dbSkip()
+	End
+EndIf
+
+RestArea(aAreaSC7)
+RestArea(aArea)
+
+Return .T.
 
 //** BRENO **//
 static function Transportadora(cNum)
