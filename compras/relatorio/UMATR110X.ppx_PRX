@@ -1,0 +1,3280 @@
+#line 1 "D:\Protheus11\include\MATR110.CH"
+#line 2 "C:\Users\Administrador\git\ata\compras\relatorio\UMATR110X.PRX"
+#line 1 "D:\Protheus11\include\PROTHEUS.CH"
+#line 1 "D:\Protheus11\include\Dialog.ch"
+#line 28 "PROTHEUS.CH"
+#line 1 "D:\Protheus11\include\Font.ch"
+#line 29 "PROTHEUS.CH"
+#line 1 "D:\Protheus11\include\PTMenu.ch"
+#line 31 "PROTHEUS.CH"
+#line 1 "D:\Protheus11\include\Print.ch"
+#line 33 "PROTHEUS.CH"
+#line 1 "D:\Protheus11\include\Colors.ch"
+#line 35 "PROTHEUS.CH"
+#line 1 "D:\Protheus11\include\Folder.ch"
+#line 37 "PROTHEUS.CH"
+#line 1 "D:\Protheus11\include\msobject.ch"
+#line 38 "PROTHEUS.CH"
+#line 1 "D:\Protheus11\include\VKey.ch"
+#line 42 "PROTHEUS.CH"
+#line 1 "D:\Protheus11\include\WinApi.ch"
+#line 44 "PROTHEUS.CH"
+#line 1 "D:\Protheus11\include\FWCommand.ch"
+#line 47 "PROTHEUS.CH"
+#line 1 "D:\Protheus11\include\FWCSS.CH"
+#line 50 "PROTHEUS.CH"
+#line 18 "C:\Users\Administrador\git\ata\compras\relatorio\UMATR110X.PRX"
+
+Function U_Matr110(cAlias,nReg,nOpcx)
+
+Local oReport
+Local lTRepInUse := .T. 
+
+PRIVATE lAuto := (nReg<>Nil)
+
+
+
+
+
+
+
+If FunName() == Alltrim("MATR111") .Or.  (cPaisLoc <> "BRA" .And.  FunName() == Alltrim("MATA121"))
+	lTRepInUse := .T. 
+Else
+	lTRepInUse := TRepInUse()
+EndIf
+
+If FindFunction("TRepInUse") .And.  lTRepInUse
+
+
+
+	oReport:= ReportDef(nReg, nOpcx)
+	oReport:PrintDialog()
+Else
+	MATR110R3( cAlias, nReg, nOpcx )
+EndIf
+
+Return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function ReportDef(nReg,nOpcx)
+
+Local cTitle   := If( cPaisLoc $ "ANG|PTG", "Emissão Dos Pedidos De Compras Ou Autorizações De Entrega", "Emissao dos Pedidos de Compras ou Autorizacoes de Entrega" )
+Local oReport
+Local oSection1
+Local oSection2
+Local nTamCdProd:= TamSX3("C7_PRODUTO")[1]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AjustaSX1()
+Pergunte("MTR110", .F. )
+
+
+
+
+
+
+
+
+
+
+oReport:= TReport():New("MATR110",cTitle,"MTR110", {|oReport| ReportPrint(oReport,nReg,nOpcx)},If( cPaisLoc $ "ANG|PTG", "Emissão dos pedidos de compras ou autorizações de entrega", "Emissao dos pedidos de compras ou autorizacoes de entrega" )+" "+If( cPaisLoc $ "ANG|PTG", "Registados e que ainda não foram impressos", "cadastrados e que ainda nao foram impressos" ))
+oReport:SetPortrait()
+oReport:HideParamPage()
+oReport:HideHeader()
+oReport:HideFooter()
+oReport:SetTotalInLine( .F. )
+oReport:DisableOrientation()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+oSection1:= TRSection():New(oReport,If( cPaisLoc $ "ANG|PTG", "Pedido De Compras / Autorização De Entrega", "Pedido de Compras / Autorização de Entrega" ),{"SC7","SM0","SA2"},)
+oSection1:SetLineStyle()
+oSection1:SetReadOnly()
+oSection1:SetNoFilter("SA2")
+
+TRCell():New(oSection1,"M0_NOMECOM","SM0","Empresa:"      ,,49,,)
+TRCell():New(oSection1,"M0_ENDENT" ,"SM0",If( cPaisLoc $ "ANG|PTG", "Morada:", "Endereco:" )      ,,48,,)
+TRCell():New(oSection1,"M0_CEPENT" ,"SM0",If( cPaisLoc $ "ANG|PTG", "Cep:", "CEP:" )      ,,10,,{|| Trans(SM0->M0_CEPENT,PesqPict("SA2","A2_CEP")) })
+TRCell():New(oSection1,"M0_CIDENT" ,"SM0","Cidade:"      ,,20,,)
+TRCell():New(oSection1,"M0_ESTENT" ,"SM0",If( cPaisLoc $ "ANG|PTG", "Uf:", "UF:" )      ,,11,,)
+TRCell():New(oSection1,"M0_CGC"    ,"SM0",If( cPaisLoc $ "COL|ANG|PTG", "CNPJ/CPF:", "CNPJ/CPF" )      ,,18,,{|| Transform(SM0->M0_CGC,PesqPict("SA2","A2_CGC")) })
+If cPaisLoc == "BRA"
+	TRCell():New(oSection1,"M0IE"  ,"   ",If( cPaisLoc $ "ANG|PTG", "Ie:", "IE:" )      ,,18,,{|| InscrEst()})
+EndIf
+TRCell():New(oSection1,"M0_TEL"    ,"SM0",If( cPaisLoc $ "ANG|PTG", "Tel.:", "TEL:" )      ,,14,,)
+TRCell():New(oSection1,"M0_FAX"    ,"SM0",If( cPaisLoc $ "ANG|PTG", "Fax:", "FAX:" )      ,,34,,)
+TRCell():New(oSection1,"A2_NOME"   ,"SA2",   ,,40,,)
+TRCell():New(oSection1,"A2_COD"    ,"SA2",   ,,20,,)
+TRCell():New(oSection1,"A2_LOJA"   ,"SA2",   ,,04,,)
+TRCell():New(oSection1,"A2_END"    ,"SA2",   ,,40,,)
+TRCell():New(oSection1,"A2_BAIRRO" ,"SA2",   ,,20,,)
+TRCell():New(oSection1,"A2_CEP"    ,"SA2",   ,,08,,)
+TRCell():New(oSection1,"A2_MUN"    ,"SA2",   ,,15,,)
+TRCell():New(oSection1,"A2_EST"    ,"SA2",   ,,02,,)
+TRCell():New(oSection1,"A2_CGC"    ,"SA2",   ,,,,)
+TRCell():New(oSection1,"INSCR"     ,"   ",If( cPaisLoc$"ARG|POR|EUA",space(11) , If( cPaisLoc $ "ANG|PTG", "Ins. Dist..:", "Ins. Estad.:" ) ),,18,,{|| If( cPaisLoc$"ARG|POR|EUA",space(18), SA2->A2_INSCR ) })
+TRCell():New(oSection1,"FONE"      ,"   ",If( cPaisLoc $ "ANG|PTG", "Telefone:", "FONE:" )      ,,25,,{|| "("+Substr(SA2->A2_DDD,1,3)+") "+Substr(SA2->A2_TEL,1,15)})
+TRCell():New(oSection1,"FAX"       ,"   ",If( cPaisLoc $ "ANG|PTG", "Fax:", "FAX:" )      ,,25,,{|| "("+Substr(SA2->A2_DDD,1,3)+") "+SubStr(SA2->A2_FAX,1,15)})
+
+oSection1:Cell("A2_BAIRRO"):SetCellBreak()
+oSection1:Cell("A2_CGC"   ):SetCellBreak()
+oSection1:Cell("INSCR"    ):SetCellBreak()
+
+oSection2:= TRSection():New(oSection1,If( cPaisLoc $ "ANG|PTG", "Pedido de compras / autorização de entrega (artigos)", "Pedido de Compras / Autorização de Entrega (Produtos)" ),{"SC7","SB1"},)
+
+oSection2:SetCellBorder("ALL",,, .T. )
+oSection2:SetCellBorder("RIGHT")
+oSection2:SetCellBorder("LEFT")
+
+TRCell():New(oSection2,"C7_NUM"		,"SC7","PC / AE"   ,,15,,,,,,,, .F. )
+TRCell():New(oSection2,"C7_ITEM"    ,"SC7",,,,,,,,,,, .F. )
+TRCell():New(oSection2,"C7_PRODUTO" ,"SC7",,,,,,,,,,, .F. )
+TRCell():New(oSection2,"DESCPROD"   ,"   ",If( cPaisLoc $ "ANG|PTG", "Descrição", "Descricao" )   ,,30,, {|| cDescPro},,,,,, .F. )
+TRCell():New(oSection2,"C7_UM"      ,"SC7",If( cPaisLoc $ "ANG|PTG", "Um", "UM" )   ,,,,,,,,,, .F. )
+TRCell():New(oSection2,"C7_QUANT"   ,"SC7",,PesqPictQt("C7_QUANT",13),,,,,,,,, .F. )
+TRCell():New(oSection2,"C7_SEGUM"   ,"SC7","2a.UM",,,,,,,,,, .F. )
+TRCell():New(oSection2,"C7_QTSEGUM" ,"SC7",,PesqPictQt("C7_QUANT",13),,,,,,,,, .F. )
+TRCell():New(oSection2,"PRECO"      ,"   ",If( cPaisLoc $ "ANG|PTG", "Valor Unitário", "Valor Unitario" ),,16,,{|| nVlUnitSC7 },"RIGHT",,"RIGHT")
+TRCell():New(oSection2,"C7_IPI"     ,"SC7",,,,,,,,,,, .F. )
+TRCell():New(oSection2,"TOTAL"     ,"   ","Valor Total",,14,,{|| nValTotSC7 },"RIGHT",,"RIGHT",,, .F. )
+TRCell():New(oSection2,"C7_DATPRF"  ,"SC7",,,,,,,,,,, .F. )
+TRCell():New(oSection2,"C7_CC"      ,"SC7",If( cPaisLoc $ "ANG|PTG", "Cc ", "CC " ),PesqPict("SC7","C7_CC",20),,,,,,,,, .F. )
+TRCell():New(oSection2,"C7_NUMSC"   ,"SC7",If( cPaisLoc $ "ANG|PTG", "Nr.SC", "Nro.SC" ),,,,,,,,,, .F. )
+TRCell():New(oSection2,"OPCC"       ,"   ",If( cPaisLoc $ "ANG|PTG", "Número Da Op Ou Cc", "Numero da OP ou CC" )   ,,30.5,,{|| cOPCC },,,,,, .F. )
+
+oSection2:Cell("C7_PRODUTO"):SetLineBreak()
+oSection2:Cell("DESCPROD"):SetLineBreak()
+oSection2:Cell("C7_CC"):SetLineBreak()
+oSection2:Cell("OPCC"):SetLineBreak()
+
+If nTamCdProd > 15
+	oSection2:Cell("C7_IPI"):SetTitle("% IPI")
+EndIf
+
+Return(oReport)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function ReportPrint(oReport,nReg,nOpcX)
+
+Local oSection1   := oReport:Section(1)
+Local oSection2   := oReport:Section(1):Section(1)
+
+Local aRecnoSave  := {}
+Local aPedido     := {}
+Local aPedMail    := {}
+Local aValIVA     := {}
+
+Local cNumSC7     := Len(SC7->C7_NUM)
+Local cCondicao   := ""
+Local cFiltro     := ""
+Local cComprador  := ""
+LOcal cAlter	  := ""
+Local cAprov	  := ""
+Local cTipoSC7    := ""
+Local cCondBus    := ""
+Local cMensagem   := ""
+Local cVar        := ""
+Local cPictVUnit := PesqPict("SC7","C7_PRECO",16)
+Local cPictVTot  := PesqPict("SC7","C7_TOTAL",, mv_par12)
+Local lNewAlc	  := .F. 
+Local lLiber      := .F. 
+Local lRet			:= .T. 
+
+Local nRecnoSC7   := 0
+Local nTotalsX3   := 0
+Local nRecnoSM0   := 0
+Local nX          := 0
+Local nY          := 0
+Local nVias       := 0
+Local nTxMoeda    := 0
+Local nTpImp	  := IIF(ValType(oReport:nDevice)<>Nil,oReport:nDevice,0)
+Local nPageWidth  := IIF(nTpImp==1.Or.nTpImp==6,2314,2290)
+Local nPrinted    := 0
+Local nValIVA     := 0
+Local nTotIpi	  := 0
+Local nTotIcms	  := 0
+Local nTotDesp	  := 0
+Local nTotFrete	  := 0
+Local nTotalNF	  := 0
+Local nTotSeguro  := 0
+Local nLinPC	  := 0
+Local nLinObs     := 0
+Local nDescProd   := 0
+Local nTotal      := 0
+Local nTotMerc    := 0
+Local nPagina     := 0
+Local nOrder      := 1
+Local cUserId     := RetCodUsr()
+Local cCont       := Nil
+Local lImpri      := .F. 
+Local cCident	  := ""
+Local cCidcob	  := ""
+Local nLinPC2	  := 0
+Local nLinPC3	  := 0
+
+Local nTamCdProd:= TamSX3("C7_PRODUTO")[1]
+Local nTamQtd   := TamSX3("C7_QUANT")[1]
+Local nTamanCorr:=148
+Local nTotalCpos:= 0
+Local lArrumou	:= .F. 
+
+Local aTamItem	:= {"C7_ITEM"	,0,TamSX3("C7_ITEM")[1]		,TamSX3("C7_ITEM")[1]+5}
+Local aTamProd 	:= {"C7_PRODUTO",0,IIf(nTamCdProd<30,nTamCdProd+(30-nTamCdProd),30),50}
+Local aTamCdDesc:= {"DESCPROD"	,0,TamSX3("B1_DESC")[1]		,TamSX3("B1_DESC")[1]+30}
+Local aTamUm	:= {"C7_UM"		,0,TamSX3("C7_UM")[1]		,TamSX3("C7_UM")[1]+5}
+Local aTamQuant := {"C7_QUANT"	,0,IIf(nTamQtd<12,nTamQtd+(12-nTamQtd),12),12}
+Local aTamSeg	:= {"C7_SEGUM"	,0,TamSX3("C7_SEGUM")[1]	,TamSX3("C7_SEGUM")[1]+5}
+Local aTamqtseg	:= {"C7_QTSEGUM",0,TamSX3("C7_QTSEGUM")[1]	,TamSX3("C7_QTSEGUM")[1]}
+Local aTamprec 	:= {"PRECO"		,0,16						,30}
+Local aTamIpi   := {"C7_IPI"	,0,TamSX3("C7_IPI")[1]		,TamSX3("C7_IPI")[1]}
+Local aTamTot 	:= {"TOTAL"		,0,14						,25}
+Local aTamDaTp	:= {"C7_DATPRF"	,0,TamSX3("C7_DATPRF")[1]	,IIf(TamSX3("C7_DATPRF")[1]+5 < 11,11,TamSX3("C7_DATPRF")[1]+5)}
+Local aTamCC 	:= {"C7_CC"		,0,9						,15}
+Local aTamNum	:= {"C7_NUMSC"	,0,TamSX3("C7_NUMSC")[1]	,TamSX3("C7_NUMSC")[1]+10}
+
+Local aTamCamp 	:= {aTamItem,aTamProd,aTamCdDesc,aTamUm,aTamQuant,aTamSeg,aTamqtseg,aTamprec,aTamIpi,aTamTot,aTamDaTp,aTamCC,aTamNum}
+For nX:= 1 To Len(aTamCamp)
+	aTamCamp[nX][2] :=oSection2:Cell(aTamCamp[nX][1]):GetCellSize()
+Next
+
+Private cDescPro  := ""
+Private cOPCC     := ""
+Private	nVlUnitSC7:= 0
+Private nValTotSC7:= 0
+
+Private cObs01    := ""
+Private cObs02    := ""
+Private cObs03    := ""
+Private cObs04    := ""
+Private cObs05    := ""
+Private cObs06    := ""
+Private cObs07    := ""
+Private cObs08    := ""
+Private cObs09    := ""
+Private cObs10    := ""
+Private cObs11    := ""
+Private cObs12    := ""
+Private cObs13    := ""
+Private cObs14    := ""
+Private cObs15    := ""
+Private cObs16    := ""
+If Type("lPedido") <> "L"
+	lPedido := .F. 
+Endif
+
+If nTpImp==1 .Or.  nTpImp==6
+	oSection2:ACELL[2]:NSIZE:=20
+	oSection2:ACELL[3]:NSIZE:=20
+	oSection2:ACELL[14]:NSIZE:=25
+EndIf
+
+dbSelectArea("SC7")
+
+If lAuto
+	dbSelectArea("SC7")
+	dbGoto(nReg)
+	mv_par01 := SC7->C7_NUM
+	mv_par02 := SC7->C7_NUM
+	mv_par03 := SC7->C7_EMISSAO
+	mv_par04 := SC7->C7_EMISSAO
+	mv_par05 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","05"),If(cCont == Nil,2,cCont) })
+   	mv_par08 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","08"),If(cCont == Nil,C7_TIPO,cCont) })
+	mv_par09 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","09"),If(cCont == Nil,1,cCont) })
+  	mv_par10 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","10"),If(cCont == Nil,3,cCont) })
+	mv_par11 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","11"),If(cCont == Nil,3,cCont) })
+  	mv_par14 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","14"),If(cCont == Nil,1,cCont) })
+Else
+	MakeAdvplExpr(oReport:uParam)
+
+	cCondicao := 'C7_FILIAL=="'       + xFilial("SC7") + '".And.'
+	cCondicao += 'C7_NUM>="'          + mv_par01       + '".And.C7_NUM<="'          + mv_par02 + '".And.'
+	cCondicao += 'Dtos(C7_EMISSAO)>="'+ Dtos(mv_par03) +'".And.Dtos(C7_EMISSAO)<="' + Dtos(mv_par04) + '"'
+
+	oReport:Section(1):SetFilter(cCondicao,IndexKey())
+EndIf
+
+If lPedido
+	mv_par12 := MAX(SC7->C7_MOEDA,1)
+Endif
+
+If SC7->C7_TIPO == 1 .OR.  SC7->C7_TIPO == 3
+	If ( cPaisLoc$"ARG|POR|EUA" )
+		cCondBus := "1"+StrZero(Val(mv_par01),6)
+		nOrder	 := 10
+	Else
+		cCondBus := mv_par01
+		nOrder	 := 1
+	EndIf
+Else
+	cCondBus := "2"+StrZero(Val(mv_par01),6)
+	nOrder	 := 10
+EndIf
+
+If mv_par14 == 2
+	cFiltro := "SC7->C7_QUANT-SC7->C7_QUJE <= 0 .Or. !EMPTY(SC7->C7_RESIDUO)"
+Elseif mv_par14 == 3
+	cFiltro := "SC7->C7_QUANT > SC7->C7_QUJE"
+EndIf
+
+oSection2:Cell("PRECO"):SetPicture(cPictVUnit)
+oSection2:Cell("TOTAL"):SetPicture(cPictVTot)
+
+TRPosition():New(oSection2,"SB1",1,{ || xFilial("SB1") + SC7->C7_PRODUTO })
+TRPosition():New(oSection2,"SB5",1,{ || xFilial("SB5") + SC7->C7_PRODUTO })
+
+
+
+
+oReport:onPageBreak( { || nPagina++ , nPrinted := 0 , CabecPCxAE(oReport,oSection1,nVias,nPagina) })
+
+oReport:SetMeter(SC7->(LastRec()))
+dbSelectArea("SC7")
+dbSetOrder(nOrder)
+dbSeek(xFilial("SC7")+cCondBus, .T. )
+
+oSection2:Init()
+
+cNumSC7 := SC7->C7_NUM
+
+While !oReport:Cancel() .And.  !SC7->(Eof()) .And.  SC7->C7_FILIAL == xFilial("SC7") .And.  SC7->C7_NUM >= mv_par01 .And.  SC7->C7_NUM <= mv_par02
+
+
+
+
+
+
+
+
+	If (SC7->C7_CONAPRO == "B" .And.  mv_par10 == 1) .Or.  (SC7->C7_CONAPRO <> "B" .And.  mv_par10 == 2) .Or.  (SC7->C7_EMITIDO == "S" .And.  mv_par05 == 1) .Or.  ((SC7->C7_EMISSAO < mv_par03) .Or.  (SC7->C7_EMISSAO > mv_par04)) .Or.  ((SC7->C7_TIPO == 1 .OR.  SC7->C7_TIPO == 3) .And.  mv_par08 == 2) .Or.  (SC7->C7_TIPO == 2 .And.  (mv_par08 == 1 .OR.  mv_par08 == 3)) .Or.  !MtrAValOP(mv_par11, "SC7") .Or.  (SC7->C7_QUANT > SC7->C7_QUJE .And.  mv_par14 == 3) .Or.  ((SC7->C7_QUANT - SC7->C7_QUJE <= 0 .Or.  !Empty(SC7->C7_RESIDUO)) .And.  mv_par14 == 2 )
+
+		dbSelectArea("SC7")
+		dbSkip()
+		Loop
+	Endif
+
+	If oReport:Cancel()
+		Exit
+	EndIf
+
+	MaFisEnd()
+	R110FIniPC(SC7->C7_NUM,,,cFiltro)
+
+	cObs01    := " "
+	cObs02    := " "
+	cObs03    := " "
+	cObs04    := " "
+	cObs05    := " "
+	cObs06    := " "
+	cObs07    := " "
+	cObs08    := " "
+	cObs09    := " "
+	cObs10    := " "
+	cObs11    := " "
+	cObs12    := " "
+	cObs13    := " "
+	cObs14    := " "
+	cObs15    := " "
+	cObs16    := " "
+
+
+
+
+	For nVias := 1 to mv_par09
+
+
+
+
+		oReport:EndPage()
+
+		nPagina  := 0
+		nPrinted := 0
+		nTotal   := 0
+		nTotMerc := 0
+		nDescProd:= 0
+		nLinObs  := 0
+		nRecnoSC7:= SC7->(Recno())
+		cNumSC7  := SC7->C7_NUM
+		aPedido  := {SC7->C7_FILIAL,SC7->C7_NUM,SC7->C7_EMISSAO,SC7->C7_FORNECE,SC7->C7_LOJA,SC7->C7_TIPO}
+
+		While !oReport:Cancel() .And.  !SC7->(Eof()) .And.  SC7->C7_FILIAL == xFilial("SC7") .And.  SC7->C7_NUM == cNumSC7
+
+
+
+
+
+
+
+
+			If (SC7->C7_CONAPRO == "B" .And.  mv_par10 == 1) .Or.  (SC7->C7_CONAPRO <> "B" .And.  mv_par10 == 2) .Or.  (SC7->C7_EMITIDO == "S" .And.  mv_par05 == 1) .Or.  ((SC7->C7_EMISSAO < mv_par03) .Or.  (SC7->C7_EMISSAO > mv_par04)) .Or.  ((SC7->C7_TIPO == 1 .OR.  SC7->C7_TIPO == 3) .And.  mv_par08 == 2) .Or.  (SC7->C7_TIPO == 2 .And.  (mv_par08 == 1 .OR.  mv_par08 == 3)) .Or.  !MtrAValOP(mv_par11, "SC7") .Or.  (SC7->C7_QUANT > SC7->C7_QUJE .And.  mv_par14 == 3) .Or.  ((SC7->C7_QUANT - SC7->C7_QUJE <= 0 .Or.  !Empty(SC7->C7_RESIDUO)) .And.  mv_par14 == 2 )
+				dbSelectArea("SC7")
+				dbSkip()
+				Loop
+			Endif
+
+			If oReport:Cancel()
+				Exit
+			EndIf
+
+			oReport:IncMeter()
+
+			If oReport:Row() > oReport:LineHeight() * 100
+				oReport:Box( oReport:Row(),010,oReport:Row() + oReport:LineHeight() * 3, nPageWidth )
+				oReport:SkipLine()
+				oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Continua na próxima página .... ", "Continua na Proxima Pagina .... " ),, 050 )
+				oReport:EndPage()
+			EndIf
+
+
+
+
+			If Ascan(aRecnoSave,SC7->(Recno())) == 0
+				AADD(aRecnoSave,SC7->(Recno()))
+			Endif
+
+
+
+
+			cDescPro :=  ""
+			If Empty(mv_par06)
+				mv_par06 := "B1_DESC"
+			EndIf
+
+			If AllTrim(mv_par06) == "B1_DESC"
+				SB1->(dbSetOrder(1))
+				SB1->(dbSeek( xFilial("SB1") + SC7->C7_PRODUTO ))
+				cDescPro := SB1->B1_DESC
+			ElseIf AllTrim(mv_par06) == "B5_CEME"
+				SB5->(dbSetOrder(1))
+				If SB5->(dbSeek( xFilial("SB5") + SC7->C7_PRODUTO ))
+					cDescPro := SB5->B5_CEME
+				EndIf
+			ElseIf AllTrim(mv_par06) == "C7_DESCRI"
+				cDescPro := SC7->C7_DESCRI
+			EndIf
+
+			If Empty(cDescPro)
+				SB1->(dbSetOrder(1))
+				SB1->(dbSeek( xFilial("SB1") + SC7->C7_PRODUTO ))
+				cDescPro := SB1->B1_DESC
+			EndIf
+
+
+			cDescPro := cDescPro+Chr(13)+Chr(10)+AllTrim(SC7->C7_OBS)
+
+
+			SA5->(dbSetOrder(1))
+			If SA5->(dbSeek(xFilial("SA5")+SC7->C7_FORNECE+SC7->C7_LOJA+SC7->C7_PRODUTO)) .And.  !Empty(SA5->A5_CODPRF)
+				cDescPro := cDescPro + " ("+Alltrim(SA5->A5_CODPRF)+")"
+			EndIf
+
+			If SC7->C7_DESC1 <> 0 .Or.  SC7->C7_DESC2 <> 0 .Or.  SC7->C7_DESC3 <> 0
+				nDescProd+= CalcDesc(SC7->C7_TOTAL,SC7->C7_DESC1,SC7->C7_DESC2,SC7->C7_DESC3)
+			Else
+				nDescProd+=SC7->C7_VLDESC
+			Endif
+
+
+
+			If !Empty(SC7->C7_OBS) .And.  nLinObs < 17
+				nLinObs++
+				cVar:="cObs"+StrZero(nLinObs,2)
+				Eval(MemVarBlock(cVar),SC7->C7_OBS)
+			Endif
+
+			nTxMoeda   := IIF(SC7->C7_TXMOEDA > 0,SC7->C7_TXMOEDA,Nil)
+			nValTotSC7 := xMoeda(SC7->C7_TOTAL,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda)
+
+			nTotal     := nTotal + SC7->C7_TOTAL
+			nTotMerc   := MaFisRet(,"NF_TOTAL")
+
+			If oReport:nDevice <> 4 .Or.  (oReport:nDevice == 4 .And.  !oReport:lXlsTable .And.  oReport:lXlsHeader)
+				oSection2:Cell("C7_NUM"):Disable()
+			EndIf
+
+			If MV_PAR07 == 2 .And.  !Empty(SC7->C7_QTSEGUM) .And.  !Empty(SC7->C7_SEGUM)
+
+				oSection2:Cell("C7_SEGUM"  ):Enable()
+				oSection2:Cell("C7_QTSEGUM"):Enable()
+				oSection2:Cell("C7_UM"     ):Disable()
+				oSection2:Cell("C7_QUANT"  ):Disable()
+				nVlUnitSC7 := xMoeda((SC7->C7_TOTAL/SC7->C7_QTSEGUM),SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda)
+			ElseIf MV_PAR07 == 1 .And.  !Empty(SC7->C7_QUANT) .And.  !Empty(SC7->C7_UM)
+
+				oSection2:Cell("C7_SEGUM"  ):Disable()
+				oSection2:Cell("C7_QTSEGUM"):Disable()
+				oSection2:Cell("C7_UM"     ):Enable()
+				oSection2:Cell("C7_QUANT"  ):Enable()
+				nVlUnitSC7 := xMoeda(SC7->C7_PRECO,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda)
+			Else
+				nTamanCorr  :=143
+
+				oSection2:Cell("C7_SEGUM"  ):Enable()
+				oSection2:Cell("C7_QTSEGUM"):Enable()
+				oSection2:Cell("C7_UM"     ):Enable()
+				oSection2:Cell("C7_QUANT"  ):Enable()
+				nVlUnitSC7 := xMoeda(SC7->C7_PRECO,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda)
+			EndIf
+
+			If cPaisLoc <> "BRA" .Or.  mv_par08 == 2
+				oSection2:Cell("C7_IPI" ):Disable()
+			EndIf
+
+			If mv_par08 == 1 .OR.  mv_par08 == 3
+				oSection2:Cell("OPCC"):Disable()
+			Else
+				oSection2:Cell("C7_DATPRF"):SetSize(9)
+				oSection2:Cell("C7_CC"):Disable()
+				oSection2:Cell("C7_NUMSC"):Disable()
+				If !Empty(SC7->C7_OP)
+					cOPCC := If( cPaisLoc $ "ANG|PTG", "Op ", "OP " ) + " " + SC7->C7_OP
+				ElseIf !Empty(SC7->C7_CC)
+					cOPCC := If( cPaisLoc $ "ANG|PTG", "Cc ", "CC " ) + " " + SC7->C7_CC
+				EndIf
+			EndIf
+			nTamanCorr := IIF(oReport:nDevice == 2,nTamanCorr-2,nTamanCorr)
+
+			    If !lArrumou .And.  !oSection2:UseFilter()
+			    	lArrumou := .T. 
+				 	For nX:= 1 To Len(aTamCamp)
+				 		If oSection2:Cell(aTamCamp[nX][1]):Enabled()
+		   					nTotalCpos +=aTamCamp[nX][2]
+		   					nTotalsX3 +=aTamCamp[nX][3]
+		   				EndIf
+					Next
+					nX:=0
+
+
+					If nTotalsX3 > nTamanCorr
+						lRet := .F. 
+					EndIf
+
+					If lRet
+						While nTotalCpos <> nTamanCorr
+							IIf(nX >= Len(aTamCamp),nX:=1,nX++)
+							If oSection2:Cell(aTamCamp[nX][1]):Enabled()
+								If nTotalCpos > nTamanCorr
+									If aTamCamp[nX][2] >  aTamCamp[nX][3]
+										aTamCamp[nX][2] -= 1
+										nTotalCpos -= 1
+									EndIf
+								ElseIf aTamCamp[nX][2] <  aTamCamp[nX][4]
+									aTamCamp[nX][2] += 1
+									nTotalCpos +=1
+								Endif
+							Endif
+						EndDo
+					EndIf
+					For nX:= 1 To Len(aTamCamp)
+				 		If oSection2:Cell(aTamCamp[nX][1]):Enabled()
+		   					oSection2:Cell(aTamCamp[nX][1]):SetSize(aTamCamp[nX][2])
+		   				EndIf
+					Next
+				EndIf
+			If oReport:nDevice == 4 .And.  oReport:lXlsTable .And.  !oReport:lXlsHeader
+				oSection1:Init()
+				TRPosition():New(oSection1,"SA2",1,{ || xFilial("SA2") + SC7->C7_FORNECE + SC7->C7_LOJA })
+				oSection1:PrintLine()
+				oSection2:PrintLine()
+				oSection1:Finish()
+			Else
+				oSection2:PrintLine()
+			EndIf
+
+			nPrinted ++
+			lImpri  := .T. 
+			dbSelectArea("SC7")
+			dbSkip()
+
+		EndDo
+
+		SC7->(dbGoto(nRecnoSC7))
+
+		If oReport:Row() > oReport:LineHeight() * 68
+
+			oReport:Box( oReport:Row(),010,oReport:Row() + oReport:LineHeight() * 3, nPageWidth )
+			oReport:SkipLine()
+			oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Continua na próxima página .... ", "Continua na Proxima Pagina .... " ),, 050 )
+
+
+
+
+			oReport:EndPage()
+			oReport:PrintText(" ",1992 , 010 )
+
+			oReport:Box( 280,010,oReport:Row() + oReport:LineHeight() * ( 93 - nPrinted ) , nPageWidth )
+
+		Else
+			oReport:Box( oReport:Row(),oReport:Col(),oReport:Row() + oReport:LineHeight() * ( 93 - nPrinted ) , nPageWidth )
+		EndIf
+
+		oReport:Box( 1990 ,010,oReport:Row() + oReport:LineHeight() * ( 93 - nPrinted ) , nPageWidth )
+		oReport:Box( 2080 ,010,oReport:Row() + oReport:LineHeight() * ( 93 - nPrinted ) , nPageWidth )
+		oReport:Box( 2200 ,010,oReport:Row() + oReport:LineHeight() * ( 93 - nPrinted ) , nPageWidth )
+		oReport:Box( 2320 ,010,oReport:Row() + oReport:LineHeight() * ( 93 - nPrinted ) , nPageWidth )
+
+		oReport:Box( 2200 , 1080 , 2320 , 1400 )
+		oReport:Box( 2320 ,  010 , 2406 , 1220 )
+		oReport:Box( 2320 , 1220 , 2460 , 1750 )
+		oReport:Box( 2320 , 1750 , 2460 , nPageWidth )
+		oReport:Box( 2406 ,  010 , 2700 , 1220 )
+
+		cMensagem:= Formula(C7_MSG)
+		If !Empty(cMensagem)
+			oReport:SkipLine()
+			oReport:PrintText(PadR(cMensagem,129), , oSection2:Cell("DESCPROD"):ColPos() )
+		Endif
+
+
+
+
+
+
+		oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "D e s c o n t o s -->", "D E S C O N T O S -->" ) + " " + TransForm(SC7->C7_DESC1,"999.99" ) + " %    " + TransForm(SC7->C7_DESC2,"999.99" ) + " %    " + TransForm(SC7->C7_DESC3,"999.99" ) + " %    " + TransForm(xMoeda(nDescProd,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda) , PesqPict("SC7","C7_VLDESC",14, MV_PAR12) ), 2022 , 050 )
+
+		oReport:SkipLine()
+		oReport:SkipLine()
+		oReport:SkipLine()
+
+
+
+
+
+
+		SM0->(dbSetOrder(1))
+		nRecnoSM0 := SM0->(Recno())
+		SM0->(dbSeek(SUBS(cNumEmp,1,2)+SC7->C7_FILENT))
+
+		cCident := IIF(len(SM0->M0_CIDENT)>20,Substr(SM0->M0_CIDENT,1,15),SM0->M0_CIDENT)
+		cCidcob := IIF(len(SM0->M0_CIDCOB)>20,Substr(SM0->M0_CIDCOB,1,15),SM0->M0_CIDCOB)
+
+		If Empty(MV_PAR13)
+			oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Local de entrega  : ", "Local de Entrega  : " ) + SM0->M0_ENDENT+"  "+Rtrim(SM0->M0_CIDENT)+"  - "+SM0->M0_ESTENT+" - "+If( cPaisLoc $ "ANG|PTG", "Código postal :", "CEP :" )+" "+Trans(Alltrim(SM0->M0_CEPENT),PesqPict("SA2","A2_CEP")),, 050 )
+		Else
+			oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Local de entrega  : ", "Local de Entrega  : " ) + mv_par13,, 050 )
+		Endif
+		SM0->(dbGoto(nRecnoSM0))
+		oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Local de cobrança : ", "Local de Cobranca : " ) + SM0->M0_ENDCOB+"  "+Rtrim(SM0->M0_CIDCOB)+"  - "+SM0->M0_ESTCOB+" - "+If( cPaisLoc $ "ANG|PTG", "Código postal :", "CEP :" )+" "+Trans(Alltrim(SM0->M0_CEPCOB),PesqPict("SA2","A2_CEP")),, 050 )
+
+		oReport:SkipLine()
+		oReport:SkipLine()
+
+		SE4->(dbSetOrder(1))
+		SE4->(dbSeek(xFilial("SE4")+SC7->C7_COND))
+
+		nLinPC := oReport:Row()
+		oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Condição de pagt ", "Condicao de Pagto " )+SubStr(SE4->E4_COND,1,40),nLinPC,050 )
+		oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Data De Emissão", "Data de Emissao" ),nLinPC,1120 )
+		oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Total das mercadorias : ", "Total das Mercadorias : " ) +" "+ Transform(xMoeda(nTotal,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda) , tm(nTotal,14,MsDecimais(MV_PAR12)) ),nLinPC,1612 )
+		oReport:SkipLine()
+		nLinPC := oReport:Row()
+
+		If cPaisLoc<>"BRA"
+			aValIVA := MaFisRet(,"NF_VALIMP")
+			nValIVA :=0
+			If !Empty(aValIVA)
+				For nY:=1 to Len(aValIVA)
+					nValIVA+=aValIVA[nY]
+				next
+			EndIf
+			oReport:PrintText(SubStr(SE4->E4_DESCRI,1,34),nLinPC, 050 )
+			oReport:PrintText( dtoc(SC7->C7_EMISSAO),nLinPC,1120 )
+
+			oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Total dos impostos:    ", "Total dos Impostos:    " )+ "   " +			Transform(xMoeda(nValIVA,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda) , tm(nValIVA,14,MsDecimais(MV_PAR12)) ),nLinPC,1612 )
+		Else
+			oReport:PrintText( SubStr(SE4->E4_DESCRI,1,34),nLinPC, 050 )
+			oReport:PrintText( dtoc(SC7->C7_EMISSAO),nLinPC,1120 )
+
+			oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Total com impostos:    ", "Total com Impostos:    " )+ "  " +			Transform(xMoeda(nTotMerc,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda) , tm(nTotMerc,14,MsDecimais(MV_PAR12)) ),nLinPC,1612 )
+		Endif
+		oReport:SkipLine()
+
+		nTotIpi	  := MaFisRet(,"NF_VALIPI")
+		nTotIcms  := MaFisRet(,"NF_VALICM")
+		nTotDesp  := MaFisRet(,"NF_DESPESA")
+		nTotFrete := MaFisRet(,"NF_FRETE")
+		nTotSeguro:= MaFisRet(,"NF_SEGURO")
+		nTotalNF  := MaFisRet(,"NF_TOTAL")
+
+		oReport:SkipLine()
+		oReport:SkipLine()
+		nLinPC := oReport:Row()
+
+		SM4->(dbSetOrder(1))
+		If SM4->(dbSeek(xFilial("SM4")+SC7->C7_REAJUST))
+			oReport:PrintText(  "Reajuste :" + " " + SC7->C7_REAJUST + " " + SM4->M4_DESCR ,nLinPC, 050 )
+		EndIf
+
+		If cPaisLoc == "BRA"
+			oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Ipi      :", "IPI      :" ) + Transform(xMoeda(nTotIPI ,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda) , tm(nTotIpi ,14,MsDecimais(MV_PAR12))) ,nLinPC,1320 )
+			oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Icms     :", "ICMS     :" ) + Transform(xMoeda(nTotIcms,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda) , tm(nTotIcms,14,MsDecimais(MV_PAR12))) ,nLinPC,1815 )
+		EndIf
+		oReport:SkipLine()
+
+		nLinPC := oReport:Row()
+		oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Transportar    :", "Frete    :" ) + Transform(xMoeda(nTotFrete,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda) , tm(nTotFrete,14,MsDecimais(MV_PAR12))) ,nLinPC,1320 )
+		oReport:PrintText( "Despesas :" + Transform(xMoeda(nTotDesp ,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda) , tm(nTotDesp ,14,MsDecimais(MV_PAR12))) ,nLinPC,1815 )
+		oReport:SkipLine()
+
+
+
+
+		If Empty(cObs02)
+			If Len(cObs01) > 30
+				cObs := cObs01
+				cObs01 := Substr(cObs,1,30)
+				For nX := 2 To 16
+					cVar  := "cObs"+StrZero(nX,2)
+					&cVar := Substr(cObs,(30*(nX-1))+1,30)
+				next
+			EndIf
+		Else
+			cObs01:= Substr(cObs01,1,IIf(Len(cObs01)<30,Len(cObs01),30))
+			cObs02:= Substr(cObs02,1,IIf(Len(cObs02)<30,Len(cObs01),30))
+			cObs03:= Substr(cObs03,1,IIf(Len(cObs03)<30,Len(cObs01),30))
+			cObs04:= Substr(cObs04,1,IIf(Len(cObs04)<30,Len(cObs01),30))
+			cObs05:= Substr(cObs05,1,IIf(Len(cObs05)<30,Len(cObs01),30))
+			cObs06:= Substr(cObs06,1,IIf(Len(cObs06)<30,Len(cObs01),30))
+			cObs07:= Substr(cObs07,1,IIf(Len(cObs07)<30,Len(cObs01),30))
+			cObs08:= Substr(cObs08,1,IIf(Len(cObs08)<30,Len(cObs01),30))
+			cObs09:= Substr(cObs09,1,IIf(Len(cObs09)<30,Len(cObs01),30))
+			cObs10:= Substr(cObs10,1,IIf(Len(cObs10)<30,Len(cObs01),30))
+			cObs11:= Substr(cObs11,1,IIf(Len(cObs11)<30,Len(cObs01),30))
+			cObs12:= Substr(cObs12,1,IIf(Len(cObs12)<30,Len(cObs01),30))
+			cObs13:= Substr(cObs13,1,IIf(Len(cObs13)<30,Len(cObs01),30))
+			cObs14:= Substr(cObs14,1,IIf(Len(cObs14)<30,Len(cObs01),30))
+			cObs15:= Substr(cObs15,1,IIf(Len(cObs15)<30,Len(cObs01),30))
+			cObs16:= Substr(cObs16,1,IIf(Len(cObs16)<30,Len(cObs01),30))
+		EndIf
+
+		cComprador:= ""
+		cAlter	  := ""
+		cAprov	  := ""
+		lNewAlc	  := .F. 
+		lLiber 	  := .F. 
+
+		dbSelectArea("SC7")
+		If !Empty(SC7->C7_APROV)
+
+			cTipoSC7:= IIF((SC7->C7_TIPO == 1 .OR.  SC7->C7_TIPO == 3),"PC","AE")
+			lNewAlc := .T. 
+			cComprador := UsrFullName(SC7->C7_USER)
+			If SC7->C7_CONAPRO <> "B"
+				lLiber := .T. 
+			EndIf
+			dbSelectArea("SCR")
+			dbSetOrder(1)
+			dbSeek(xFilial("SCR")+cTipoSC7+SC7->C7_NUM)
+			While !Eof() .And.  SCR->CR_FILIAL+Alltrim(SCR->CR_NUM) == xFilial("SCR")+Alltrim(SC7->C7_NUM) .And.  SCR->CR_TIPO == cTipoSC7
+				cAprov += AllTrim(UsrFullName(SCR->CR_USER))+" ["
+				Do Case
+					Case SCR->CR_STATUS=="03"
+						cAprov += "Ok"
+					Case SCR->CR_STATUS=="04"
+						cAprov += "BLQ"
+					Case SCR->CR_STATUS=="05"
+						cAprov += "##"
+					OtherWise
+						cAprov += "??"
+				EndCase
+				cAprov += "] - "
+				dbSelectArea("SCR")
+				dbSkip()
+			Enddo
+			If !Empty(SC7->C7_GRUPCOM)
+				dbSelectArea("SAJ")
+				dbSetOrder(1)
+				dbSeek(xFilial("SAJ")+SC7->C7_GRUPCOM)
+				While !Eof() .And.  SAJ->AJ_FILIAL+SAJ->AJ_GRCOM == xFilial("SAJ")+SC7->C7_GRUPCOM
+					If SAJ->AJ_USER <> SC7->C7_USER
+						cAlter += AllTrim(UsrFullName(SAJ->AJ_USER))+"/"
+					EndIf
+					dbSelectArea("SAJ")
+					dbSkip()
+				EndDo
+			EndIf
+		EndIf
+
+		nLinPC := oReport:Row()
+		oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Observações ", "Observacoes " ) ,nLinPC, 050 )
+		oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Seguro   :", "SEGURO   :" ) + Transform(xMoeda(nTotSeguro,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda) , tm(nTotSeguro,14,MsDecimais(MV_PAR12))) ,nLinPC, 1815 )
+		oReport:SkipLine()
+
+		nLinPC2 := oReport:Row()
+		oReport:PrintText(cObs01,,050 )
+		oReport:PrintText(cObs02,,050 )
+
+		nLinPC := oReport:Row()
+		oReport:PrintText(cObs03,nLinPC,050 )
+
+		If !lNewAlc
+			oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Total geral :", "Total Geral :" ) + Transform(xMoeda(nTotalNF,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda) , tm(nTotalNF,14,MsDecimais(MV_PAR12))) ,nLinPC,1774 )
+		Else
+			If lLiber
+				oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Total geral :", "Total Geral :" ) + Transform(xMoeda(nTotalNF,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda) , tm(nTotalNF,14,MsDecimais(MV_PAR12))) ,nLinPC,1774 )
+			Else
+				oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Total geral :", "Total Geral :" ) + If((SC7->C7_TIPO == 1 .OR.  SC7->C7_TIPO == 3),If( cPaisLoc $ "ANG|PTG", "     p e d i d o   b l o q u e a d o ", "     P E D I D O   B L O Q U E A D O " ),If( cPaisLoc $ "ANG|PTG", "Autorização de entrega bloqueada   ", "AUTORIZACAO DE ENTREGA BLOQUEADA   " )) ,nLinPC,1390 )
+			EndIf
+		EndIf
+		oReport:SkipLine()
+
+		oReport:PrintText(cObs04,,050 )
+		oReport:PrintText(cObs05,,050 )
+		oReport:PrintText(cObs06,,050 )
+		nLinPC3 := oReport:Row()
+		oReport:PrintText(cObs07,,050 )
+		oReport:PrintText(cObs08,,050 )
+		oReport:PrintText(cObs09,nLinPC2,650 )
+		oReport:SkipLine()
+		oReport:PrintText(cObs10,,650 )
+		oReport:PrintText(cObs11,,650 )
+		oReport:PrintText(cObs12,,650 )
+		oReport:PrintText(cObs13,,650 )
+		oReport:PrintText(cObs14,,650 )
+		oReport:PrintText(cObs15,,650 )
+		oReport:PrintText(cObs16,,650 )
+
+		If !lNewAlc
+
+			oReport:Box( 2700 , 0010 , 3020 , 0400 )
+			oReport:Box( 2700 , 0400 , 3020 , 0800 )
+			oReport:Box( 2700 , 0800 , 3020 , 1220 )
+			oReport:Box( 2600 , 1220 , 3020 , 1770 )
+			oReport:Box( 2600 , 1770 , 3020 , nPageWidth )
+
+			oReport:SkipLine()
+			oReport:SkipLine()
+			oReport:SkipLine()
+
+			nLinPC := oReport:Row()
+			oReport:PrintText( If((SC7->C7_TIPO == 1 .OR.  SC7->C7_TIPO == 3),If( cPaisLoc $ "ANG|PTG", "Autorização Do Pedido", "Liberacao do Pedido" ),If( cPaisLoc $ "ANG|PTG", "Dev. autorização ", "Liber. Autorizacao " )),nLinPC,1310)
+			oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Obs. do frete: ", "Obs. do Frete: " ) + IF( SC7->C7_TPFRETE $ "F","FOB",IF(SC7->C7_TPFRETE $ "C","CIF",IF(SC7->C7_TPFRETE $ "T","Por Conta Terceiros"," " ) )) ,nLinPC,1820 )
+			oReport:SkipLine()
+
+			oReport:SkipLine()
+			oReport:SkipLine()
+
+			nLinPC := oReport:Row()
+			oReport:PrintText( "Comprador" ,nLinPC, 050 )
+			oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Gerência", "Gerencia" ) ,nLinPC, 430 )
+			oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Directoria", "Diretoria" ) ,nLinPC, 850 )
+			oReport:SkipLine()
+
+			oReport:SkipLine()
+			oReport:SkipLine()
+			oReport:SkipLine()
+
+			nLinPC := oReport:Row()
+			oReport:PrintText( Replic("_",23) ,nLinPC,  050 )
+			oReport:PrintText( Replic("_",23) ,nLinPC,  430 )
+			oReport:PrintText( Replic("_",23) ,nLinPC,  850 )
+			oReport:PrintText( Replic("_",31) ,nLinPC, 1310 )
+			oReport:SkipLine()
+
+			oReport:SkipLine()
+			oReport:SkipLine()
+			oReport:SkipLine()
+			oReport:SkipLine()
+			oReport:SkipLine()
+			If SC7->C7_TIPO == 1 .OR.  SC7->C7_TIPO == 3
+				oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Nota: Só Aceitaremos A Mercadoria Se Na Sua Factura Constar O Número Do Nosso Pedido De Compras.", "NOTA: So aceitaremos a mercadoria se na sua Nota Fiscal constar o numero do nosso Pedido de Compras." ),,050 )
+			Else
+				oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Nota: Só Aceitaremos A Mercadoria Se Na Sua Factura Constar O Número Da Autorização De Entrega.", "NOTA: So aceitaremos a mercadoria se na sua Nota Fiscal constar o numero da Autorizacao de Entrega." ),,050 )
+			EndIf
+
+		Else
+
+			oReport:Box( 2570 , 1220 , 2700 , 1820 )
+			oReport:Box( 2570 , 1820 , 2700 , nPageWidth )
+			oReport:Box( 2700 , 0010 , 3020 , nPageWidth )
+			oReport:Box( 2970 , 0010 , 3020 , 1340 )
+
+			nLinPC := nLinPC3
+
+			oReport:PrintText( If((SC7->C7_TIPO == 1 .OR.  SC7->C7_TIPO == 3), If( lLiber , If( cPaisLoc $ "ANG|PTG", "      P E D I D O   A P R O V A D O", "      P E D I D O   L I B E R A D O" ) , If( cPaisLoc $ "ANG|PTG", "     p e d i d o   b l o q u e a d o ", "     P E D I D O   B L O Q U E A D O " ) ) , If( lLiber , If( cPaisLoc $ "ANG|PTG", "Autorização de entrega devolvida    ", "AUTORIZACAO DE ENTREGA LIBERADA    " ) , If( cPaisLoc $ "ANG|PTG", "Autorização de entrega bloqueada   ", "AUTORIZACAO DE ENTREGA BLOQUEADA   " ) ) ),nLinPC,1290 )
+			oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Obs. do frete: ", "Obs. do Frete: " ) + Substr(RetTipoFrete(SC7->C7_TPFRETE),3),nLinPC,1830 )
+			oReport:SkipLine()
+
+			oReport:SkipLine()
+			oReport:SkipLine()
+			oReport:SkipLine()
+			oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Comprador responsável :", "Comprador Responsavel :" )+" "+Substr(cComprador,1,60),,050 )
+			oReport:SkipLine()
+			oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Compradores alternativos :", "Compradores Alternativos :" )+" "+If( Len(cAlter) > 0 , Substr(cAlter,001,130) , " " ),,050 )
+			oReport:PrintText(            If( Len(cAlter) > 0 , Substr(cAlter,131,130) , " " ),,440 )
+			oReport:SkipLine()
+			oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Quem autoriza :", "Aprovador(es) :" )+" "+If( Len(cAprov) > 0 , Substr(cAprov,001,140) , " " ),,050 )
+			oReport:PrintText(            If( Len(cAprov) > 0 , Substr(cAprov,141,140) , " " ),,310 )
+			oReport:SkipLine()
+
+			nLinPC := oReport:Row()
+			oReport:PrintText( If( cPaisLoc $ "ANG|PTG", "Legendas da aprovação : ", "Legendas da Aprovacao : " )+" "+If( cPaisLoc $ "ANG|PTG", "Blq:bloqueado", "BLQ:Bloqueado" ) ,nLinPC, 050 )
+			oReport:PrintText(       "|  "+If( cPaisLoc $ "ANG|PTG", "Ok:autorizado", "Ok:Liberado" ) ,nLinPC, 610 )
+			oReport:PrintText(       "|  "+If( cPaisLoc $ "ANG|PTG", "??:aguar.aprov", "??:Aguar.Lib" ) ,nLinPC, 830 )
+			oReport:PrintText(       "|  "+If( cPaisLoc $ "ANG|PTG", "##:nível Lib", "##:Nivel Lib" ) ,nLinPC,1070 )
+			oReport:SkipLine()
+
+			oReport:SkipLine()
+			If SC7->C7_TIPO == 1 .OR.  SC7->C7_TIPO == 3
+				oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Nota: Só Aceitaremos A Mercadoria Se Na Sua Factura Constar O Número Do Nosso Pedido De Compras.", "NOTA: So aceitaremos a mercadoria se na sua Nota Fiscal constar o numero do nosso Pedido de Compras." ),,050 )
+			Else
+				oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Nota: Só Aceitaremos A Mercadoria Se Na Sua Factura Constar O Número Da Autorização De Entrega.", "NOTA: So aceitaremos a mercadoria se na sua Nota Fiscal constar o numero da Autorizacao de Entrega." ),,050 )
+			EndIf
+		EndIf
+
+	next
+
+	MaFisEnd()
+
+
+
+
+
+
+
+	dbSelectArea("SC7")
+	If Len(aRecnoSave) > 0
+		For nX :=1 to Len(aRecnoSave)
+			dbGoto(aRecnoSave[nX])
+			If(SC7->C7_QTDREEM >= 99)
+				If nRet == 1
+					RecLock("SC7", .F. )
+					SC7->C7_EMITIDO := "S"
+					MsUnLock()
+				Elseif nRet == 2
+					RecLock("SC7", .F. )
+					SC7->C7_QTDREEM := 1
+					SC7->C7_EMITIDO := "S"
+					MsUnLock()
+				Elseif nRet == 3
+
+				Endif
+			Else
+				RecLock("SC7", .F. )
+				SC7->C7_QTDREEM := (SC7->C7_QTDREEM + 1)
+				SC7->C7_EMITIDO := "S"
+				MsUnLock()
+			Endif
+		next
+
+
+
+		dbGoto(aRecnoSave[Len(aRecnoSave)])
+	Endif
+
+	Aadd(aPedMail,aPedido)
+
+	aRecnoSave := {}
+
+	dbSelectArea("SC7")
+	dbSkip()
+
+EndDo
+
+oSection2:Finish()
+
+
+
+
+
+
+If ExistBlock("M110MAIL")
+	lEnvMail := (oReport:nDevice == 3)
+	If lEnvMail
+		Execblock("M110MAIL", .F. , .F. ,{aPedMail})
+	EndIf
+EndIf
+
+If lAuto .And.  !lImpri
+	Aviso("Atenção",If( cPaisLoc $ "ANG|PTG", "Verifique os parâmetros definidos para esse relatório no configurador para o utilizador corrente.", "Verifique os parâmetros definidos para esse relatório no configurador para o usuário corrente." ),{"OK"})
+Endif
+
+dbSelectArea("SC7")
+dbClearFilter()
+dbSetOrder(1)
+
+Return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function CabecPCxAE(oReport,oSection1,nVias,nPagina)
+
+Local cMoeda	:= IIf( mv_par12 < 10 , Str(mv_par12,1) , StADMINr(mv_par12,2) )
+Local nLinPC	:= 0
+Local nTpImp	  := IIF(ValType(oReport:nDevice)<>Nil,oReport:nDevice,0)
+Local nPageWidth  := IIF(nTpImp==1.Or.nTpImp==6,2314,2290)
+Local cCident	:= IIF(len(SM0->M0_CIDENT)>20,Substr(SM0->M0_CIDENT,1,15),SM0->M0_CIDENT)
+PRIVATE cBitmap := ""
+Public nRet:= 0
+TRPosition():New(oSection1,"SA2",1,{ || xFilial("SA2") + SC7->C7_FORNECE + SC7->C7_LOJA })
+
+cBitmap := "LGRL"+SM0->M0_CODIGO+SM0->M0_CODFIL+".BMP"
+If !File( cBitmap )
+	cBitmap := "LGRL"+SM0->M0_CODIGO+".BMP"
+EndIf
+
+SA2->(dbSetOrder(1))
+SA2->(dbSeek(xFilial("SA2") + SC7->C7_FORNECE + SC7->C7_LOJA))
+
+oSection1:Init()
+
+oReport:Box( 010 , 010 ,  260 , 1000 )
+oReport:Box( 010 , 1010,  260 , nPageWidth-2 )
+
+oReport:PrintText( If(nPagina > 1,(If( cPaisLoc $ "ANG|PTG", " - continuação", " - continuacao" ))," "),,oSection1:Cell("M0_NOMECOM"):ColPos())
+
+nLinPC := oReport:Row()
+oReport:PrintText( If( mv_par08 == 1 , ("P E D I D O  D E  C O M P R A S"), (If( cPaisLoc $ "ANG|PTG", "A U T O R I Z A ç ã O  D E  E N T R E G A", "A U T O R I Z A C A O  D E  E N T R E G A" )) ) + " - " + GetMV("MV_MOEDA"+cMoeda) ,nLinPC,1030 )
+oReport:PrintText( If( mv_par08 == 1 , SC7->C7_NUM, SC7->C7_NUMSC + "/" + SC7->C7_NUM ) + " /" + Ltrim(Str(nPagina,2)) ,nLinPC,1910 )
+oReport:SkipLine()
+
+
+nLinPC := oReport:Row()
+If(SC7->C7_QTDREEM >= 99)
+	nRet := Aviso("TOTVS", "O pedido de compras chegou ao seu limite de reemissões." +chr(13)+chr(10)+ "1- " + "Reimprimir 99ª emissão" +chr(13)+chr(10)+ "2- " + "Voltar a 1ª emissão" +chr(13)+chr(10)+ "3- " + "Cancelar",{"1", "2", "3"},2)
+	If(nRet == 1)
+		oReport:PrintText( Str(SC7->C7_QTDREEM,2) + If( cPaisLoc $ "ANG|PTG", "A.emissão ", "a.Emissao " ) + Str(nVias,2) + If( cPaisLoc $ "ANG|PTG", "A.via", "a.VIA" ) ,nLinPC,1910 )
+	Elseif(nRet == 2)
+		oReport:PrintText( "1" + If( cPaisLoc $ "ANG|PTG", "A.emissão ", "a.Emissao " ) + Str(nVias,2) + If( cPaisLoc $ "ANG|PTG", "A.via", "a.VIA" ) ,nLinPC,1910 )
+	Elseif(nRet == 3)
+		oReport:CancelPrint()
+	Endif
+Else
+	oReport:PrintText( If( SC7->C7_QTDREEM > 0, Str(SC7->C7_QTDREEM+1,2) , "1" ) + If( cPaisLoc $ "ANG|PTG", "A.emissão ", "a.Emissao " ) + Str(nVias,2) + If( cPaisLoc $ "ANG|PTG", "A.via", "a.VIA" ) ,nLinPC,1910 )
+Endif
+
+
+oReport:SkipLine()
+
+_cFileLogo	:= GetSrvProfString("Startpath","") + cBitmap
+oReport:SayBitmap(25,25,_cFileLogo,150,60)
+
+nLinPC := oReport:Row()
+oReport:PrintText("Empresa:" + SM0->M0_NOMECOM,nLinPC,15)
+oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Razao social:", "Razão Social:" ) + Substr(SA2->A2_NOME,1,50)+" "+If( cPaisLoc $ "ANG|PTG", "Código:", "Codigo:" )+SA2->A2_COD+" "+"Loja:"+SA2->A2_LOJA,nLinPC,1025)
+oReport:SkipLine()
+
+nLinPC := oReport:Row()
+oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Morada:", "Endereco:" ) + SM0->M0_ENDENT,nLinPC,15)
+oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Morada:", "Endereco:" ) + Substr(SA2->A2_END,1,49)+" "+If( cPaisLoc $ "ANG|PTG", "Localidade:", "Bairro:" )+ Substr(SA2->A2_BAIRRO,1,25),nLinPC,1025)
+oReport:SkipLine()
+
+nLinPC := oReport:Row()
+oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Cep:", "CEP:" ) + Trans(SM0->M0_CEPENT,PesqPict("SA2","A2_CEP"))+Space(2)+"Cidade:" + "  " + RTRIM(SM0->M0_CIDENT) + " " + If( cPaisLoc $ "ANG|PTG", "Uf:", "UF:" ) + SM0->M0_ESTENT ,nLinPC,15)
+oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Concelho:", "Municipio:" )+Left(SA2->A2_MUN, 30)+" "+"Estado:"+SA2->A2_EST+" "+If( cPaisLoc $ "ANG|PTG", "Cep:", "CEP:" )+SA2->A2_CEP+" "+If( cPaisLoc $ "COL|ANG|PTG", "CNPJ/CPF:", "CNPJ/CPF" )+":"+Transform(SA2->A2_CGC,Iif(SA2->A2_TIPO == "F",Substr(PICPES(SA2->A2_TIPO),1,17),Substr(PICPES(SA2->A2_TIPO),1,21))),nLinPC,1025)
+oReport:SkipLine()
+
+nLinPC := oReport:Row()
+oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Tel.:", "TEL:" ) + SM0->M0_TEL + Space(2) + If( cPaisLoc $ "ANG|PTG", "Fax:", "FAX:" ) + SM0->M0_FAX ,nLinPC,15)
+oReport:PrintText(If( cPaisLoc $ "ANG|PTG", "Telefone:", "FONE:" ) + "("+Substr(SA2->A2_DDD,1,3)+") "+Substr(SA2->A2_TEL,1,15) + " "+If( cPaisLoc $ "ANG|PTG", "Fax:", "FAX:" )+"("+Substr(SA2->A2_DDD,1,3)+") "+SubStr(SA2->A2_FAX,1,15)+" "+If( cPaisLoc$"ARG|POR|EUA",space(11) , If( cPaisLoc $ "ANG|PTG", "Ins. Dist..:", "Ins. Estad.:" ) )+If( cPaisLoc$"ARG|POR|EUA",space(18), SA2->A2_INSCR ),nLinPC,1025)
+oReport:SkipLine()
+
+nLinPC := oReport:Row()
+oReport:PrintText(If( cPaisLoc $ "COL|ANG|PTG", "CNPJ/CPF:", "CNPJ/CPF" ) + Transform(SM0->M0_CGC,PesqPict("SA2","A2_CGC")) ,nLinPC,15)
+If cPaisLoc == "BRA"
+	oReport:PrintText(Space(2) + If( cPaisLoc $ "ANG|PTG", "Ie:", "IE:" ) + InscrEst() ,nLinPC,415)
+Endif
+oReport:SkipLine()
+oReport:SkipLine()
+
+oSection1:Finish()
+
+Return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Function MATR110R3(cAlias,nReg,nOpcx)
+
+LOCAL wnrel		:= "MATR110"
+LOCAL cDesc1	:= If( cPaisLoc $ "ANG|PTG", "Emissão dos pedidos de compras ou autorizações de entrega", "Emissao dos pedidos de compras ou autorizacoes de entrega" )
+LOCAL cDesc2	:= If( cPaisLoc $ "ANG|PTG", "Registados e que ainda não foram impressos", "cadastrados e que ainda nao foram impressos" )
+LOCAL cDesc3	:= " "
+LOCAL cString	:= "SC7"
+Local lComp		:= .T. 
+Local cUserId   := RetCodUsr()
+Local cCont     := Nil
+
+PRIVATE lAuto		:= (nReg<>Nil)
+PRIVATE Tamanho		:= "G"
+PRIVATE titulo	 	:=If( cPaisLoc $ "ANG|PTG", "Emissão Dos Pedidos De Compras Ou Autorizações De Entrega", "Emissao dos Pedidos de Compras ou Autorizacoes de Entrega" )
+PRIVATE aReturn 	:= {If( cPaisLoc $ "ANG|PTG", "Código de barras", "Zebrado" ), 1,If( cPaisLoc $ "ANG|PTG", "Administração", "Administracao" ), 1, 2, 1, "",0 }
+PRIVATE nomeprog	:="MATR110"
+PRIVATE nLastKey	:= 0
+PRIVATE nBegin		:= 0
+PRIVATE nDifColCC   := 0
+PRIVATE aLinha		:= {}
+PRIVATE aSenhas		:= {}
+PRIVATE aUsuarios	:= {}
+PRIVATE M_PAG		:= 1
+If Type("lPedido") <> "L"
+	lPedido := .F. 
+Endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AjustaSX1()
+Pergunte("MTR110", .F. )
+
+
+
+
+
+
+
+dbSelectArea("SX3")
+dbSetOrder(2)
+If dbSeek("C7_CC")
+	If SX3->X3_TAMANHO == 9
+		nDifColCC := 11
+		Tamanho   := "M"
+	Else
+		lComp	  := .F. 
+	Endif
+Endif
+
+wnrel:=SetPrint(cString,wnrel,If(lAuto,Nil,"MTR110"),@Titulo,cDesc1,cDesc2,cDesc3, .F. ,,lComp,Tamanho,,!lAuto)
+
+If nLastKey <> 27
+
+	SetDefault(aReturn,cString)
+
+	If lAuto
+		mv_par08 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","08"),If(cCont == Nil,SC7->C7_TIPO,cCont) })
+	EndIf
+
+	If lPedido
+		mv_par12 := MAX(SC7->C7_MOEDA,1)
+	Endif
+
+	If mv_par08 == 1 .OR.  mv_par08 == 3
+		RptStatus({|lEnd| C110PC(@lEnd,wnRel,cString,nReg)},titulo)
+	Else
+		RptStatus({|lEnd| C110AE(@lEnd,wnRel,cString,nReg)},titulo)
+	EndIf
+
+	lPedido := .F. 
+
+Else
+	dbClearFilter()
+EndIf
+
+Return .T. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function C110PC(lEnd,WnRel,cString,nReg)
+Local nReem
+Local nOrder
+Local cCondBus
+Local nSavRec
+Local aPedido := {}
+Local aPedMail:= {}
+Local aSavRec := {}
+Local nLinObs := 0
+Local i       := 0
+Local ncw     := 0
+Local cFiltro := ""
+Local cUserId := RetCodUsr()
+Local cCont   := Nil
+Local lImpri  := .F. 
+
+Private cCGCPict, cCepPict
+
+
+
+cCepPict:=PesqPict("SA2","A2_CEP")
+cCGCPict:=PesqPict("SA2","A2_CGC")
+If nDifColCC < 11
+	limite   := 139
+Else
+	limite   := 129
+Endif
+
+li       := 80
+nDescProd:= 0
+nTotal   := 0
+nTotMerc := 0
+NumPed   := Space(6)
+
+If lAuto
+	dbSelectArea("SC7")
+	dbGoto(nReg)
+	SetRegua(1)
+	mv_par01 := C7_NUM
+	mv_par02 := C7_NUM
+	mv_par03 := C7_EMISSAO
+	mv_par04 := C7_EMISSAO
+	mv_par05 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","05"),If(cCont == Nil,2,cCont) })
+   	mv_par08 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","08"),If(cCont == Nil,C7_TIPO,cCont) })
+	mv_par09 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","09"),If(cCont == Nil,1,cCont) })
+  	mv_par10 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","10"),If(cCont == Nil,3,cCont) })
+	mv_par11 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","11"),If(cCont == Nil,3,cCont) })
+  	mv_par14 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","14"),If(cCont == Nil,1,cCont) })
+EndIf
+
+If ( cPaisLoc$"ARG|POR|EUA" )
+	cCondBus	:=	"1"+strzero(val(mv_par01),6)
+	nOrder	:=	10
+	nTipo		:= 1
+Else
+	cCondBus	:=mv_par01
+	nOrder	:=	1
+EndIf
+
+If mv_par14 == 2
+	cFiltro := "SC7->C7_QUANT-SC7->C7_QUJE <= 0 .Or. !EMPTY(SC7->C7_RESIDUO)"
+Elseif mv_par14 == 3
+	cFiltro := "SC7->C7_QUANT > SC7->C7_QUJE"
+EndIf
+
+dbSelectArea("SC7")
+dbSetOrder(nOrder)
+SetRegua(RecCount())
+dbSeek(xFilial("SC7")+cCondBus, .T. )
+
+
+
+
+PrintOut(0,0,AvalImp(Iif(nDifColCC<11,220,132)),,)
+
+
+While !Eof() .And.  C7_FILIAL = xFilial("SC7") .And.  C7_NUM >= mv_par01 .And.  C7_NUM <= mv_par02
+
+
+
+
+	nOrdem   := 1
+	nReem    := 0
+	cObs01   := " "
+	cObs02   := " "
+	cObs03   := " "
+	cObs04   := " "
+
+	If	C7_EMITIDO == "S" .And.  mv_par05 == 1
+		dbSkip()
+		Loop
+	Endif
+
+	If	(C7_CONAPRO == "B" .And.  mv_par10 == 1) .Or.  (C7_CONAPRO <> "B" .And.  mv_par10 == 2)
+		dbSkip()
+		Loop
+	Endif
+	If	(C7_EMISSAO < mv_par03) .Or.  (C7_EMISSAO > mv_par04)
+		dbSkip()
+		Loop
+	Endif
+	If	C7_TIPO == 2
+		dbSkip()
+		Loop
+	EndIf
+
+
+
+
+	If mv_par14 == 2
+		If SC7->C7_QUANT-SC7->C7_QUJE <= 0 .Or.  !EMPTY(SC7->C7_RESIDUO)
+			dbSelectArea("SC7")
+			dbSkip()
+			Loop
+		Endif
+	Endif
+
+
+
+
+	If mv_par14 == 3
+		If SC7->C7_QUANT > SC7->C7_QUJE
+			dbSelectArea("SC7")
+			dbSkip()
+			Loop
+		Endif
+	Endif
+
+
+
+
+	If !MtrAValOP(mv_par11, "SC7")
+		dbSkip()
+		Loop
+	EndIf
+
+	MaFisEnd()
+	R110FIniPC(SC7->C7_NUM,,,cFiltro)
+
+	For ncw := 1 To mv_par09
+
+		ImpCabec(ncw)
+
+		nTotal   := 0
+		nTotMerc	:= 0
+		nDescProd:= 0
+		nReem    := SC7->C7_QTDREEM + 1
+		nSavRec  := SC7->(Recno())
+		NumPed   := SC7->C7_NUM
+		nLinObs  := 0
+		aPedido  := {SC7->C7_FILIAL,SC7->C7_NUM,SC7->C7_EMISSAO,SC7->C7_FORNECE,SC7->C7_LOJA,SC7->C7_TIPO}
+
+		While !Eof() .And.  C7_FILIAL = xFilial("SC7") .And.  C7_NUM == NumPed
+
+
+
+
+			If mv_par14 == 2
+				If SC7->C7_QUANT-SC7->C7_QUJE <= 0 .Or.  !EMPTY(SC7->C7_RESIDUO)
+					dbSelectArea("SC7")
+					dbSkip()
+					Loop
+				Endif
+			Endif
+
+
+
+
+			If mv_par14 == 3
+				If SC7->C7_QUANT > SC7->C7_QUJE
+					dbSelectArea("SC7")
+					dbSkip()
+					Loop
+				Endif
+			Endif
+
+			If Ascan(aSavRec,Recno()) == 0
+				AADD(aSavRec,Recno())
+			Endif
+			If lEnd
+				PrintOut(_PROW()+1,001,If(cPaisLoc$"ANG|PTG","Cancelado Pelo Operador","CANCELADO PELO OPERADOR"),,)
+				dbGoBottom()
+				Exit
+			Endif
+
+			IncRegua()
+
+
+
+
+			If li > 56
+				nOrdem++
+				ImpRodape()
+				ImpCabec(ncw)
+			Endif
+
+			li++
+
+			PrintOut(li,001,"|",,)
+			PrintOut(li,002,C7_ITEM,PesqPict("SC7","c7_item"),)
+			PrintOut(li,006,"|",,)
+
+
+
+			ImpProd()
+
+			If SC7->C7_DESC1 <> 0 .or.  SC7->C7_DESC2 <> 0 .or.  SC7->C7_DESC3 <> 0
+				nDescProd+= CalcDesc(SC7->C7_TOTAL,SC7->C7_DESC1,SC7->C7_DESC2,SC7->C7_DESC3)
+			Else
+				nDescProd+=SC7->C7_VLDESC
+			Endif
+
+
+
+			If !EMPTY(SC7->C7_OBS) .And.  nLinObs < 5
+				nLinObs++
+				cVar:="cObs"+StrZero(nLinObs,2)
+				Eval(MemVarBlock(cVar),SC7->C7_OBS)
+			Endif
+			lImpri  := .T. 
+			dbSkip()
+		EndDo
+
+		dbGoto(nSavRec)
+
+		If li>38
+			nOrdem++
+			ImpRodape()
+			ImpCabec(ncw)
+		Endif
+
+		FinalPed(nDescProd)
+
+	Next
+
+	MaFisEnd()
+
+	If Len(aSavRec)>0
+		For i:=1 to Len(aSavRec)
+			dbGoto(aSavRec[i])
+			RecLock("SC7", .F. )
+			_FIELD->C7_QTDREEM := (C7_QTDREEM+1)
+			_FIELD->C7_EMITIDO := "S"
+			MsUnLock()
+		Next
+		dbGoto(aSavRec[Len(aSavRec)])
+	Endif
+
+	Aadd(aPedMail,aPedido)
+
+	aSavRec := {}
+
+	dbSkip()
+EndDo
+
+
+
+
+
+
+If ExistBlock("M110MAIL")
+	lEnvMail := HasEmail(,,,, .F. )
+	If lEnvMail
+		Execblock("M110MAIL", .F. , .F. ,{aPedMail})
+	EndIf
+EndIf
+
+If lAuto .And.  !lImpri
+	Aviso("Atenção",If( cPaisLoc $ "ANG|PTG", "Verifique os parâmetros definidos para esse relatório no configurador para o utilizador corrente.", "Verifique os parâmetros definidos para esse relatório no configurador para o usuário corrente." ),{"OK"})
+Endif
+
+dbSelectArea("SC7")
+dbClearFilter()
+dbSetOrder(1)
+
+dbSelectArea("SX3")
+dbSetOrder(1)
+
+
+
+
+If aReturn[5] == 1
+	Set( 24, "" )
+	dbCommitAll()
+	ourspool(wnrel)
+Endif
+
+MS_FLUSH()
+
+Return .T. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function C110AE(lEnd,WnRel,cString,nReg)
+Local nReem
+Local nSavRec,aSavRec := {}
+Local aPedido := {}
+Local aPedMail:= {}
+Local nLinObs := 0
+Local ncw     := 0
+Local i       := 0
+Local cFiltro := ""
+Local cUserId := RetCodUsr()
+Local lImpri  := .F. 
+
+Private cCGCPict, cCepPict
+
+
+
+cCepPict:=PesqPict("SA2","A2_CEP")
+cCGCPict:=PesqPict("SA2","A2_CGC")
+
+If nDifColCC < 11
+	limite   := 139
+Else
+	limite   := 129
+Endif
+
+li       := 80
+nDescProd:= 0
+nTotal   := 0
+nTotMerc := 0
+NumPed   := Space(6)
+
+If !lAuto
+	dbSelectArea("SC7")
+	dbSetOrder(10)
+	dbSeek(xFilial("SC7")+"2"+mv_par01, .T. )
+Else
+	dbSelectArea("SC7")
+	dbGoto(nReg)
+	mv_par01 := C7_NUM
+	mv_par02 := C7_NUM
+	mv_par03 := C7_EMISSAO
+	mv_par04 := C7_EMISSAO
+	mv_par05 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","05"),If(cCont == Nil,2,cCont) })
+	mv_par08 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","08"),If(cCont == Nil,C7_TIPO,cCont) })
+	mv_par09 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","09"),If(cCont == Nil,1,cCont) })
+	mv_par10 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","10"),If(cCont == Nil,3,cCont) })
+	mv_par11 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","11"),If(cCont == Nil,3,cCont) })
+  	mv_par14 := Eval({|| cCont:=ChkPergUs(cUserId,"MTR110","14"),If(cCont == Nil,1,cCont) })
+
+	dbSelectArea("SC7")
+	dbSetOrder(10)
+	dbSeek(xFilial("SC7")+"2"+mv_par01, .T. )
+EndIf
+
+If mv_par14 == 2
+	cFiltro := "SC7->C7_QUANT-SC7->C7_QUJE <= 0 .Or. !EMPTY(SC7->C7_RESIDUO)"
+Elseif mv_par14 == 3
+	cFiltro := "SC7->C7_QUANT > SC7->C7_QUJE"
+EndIf
+
+SetRegua(Reccount())
+
+
+
+PrintOut(0,0,AvalImp(Iif(nDifColCC<11,220,132)),,)
+While !Eof() .And. C7_FILIAL = xFilial("SC7") .And.  C7_NUM >= mv_par01 .And.  C7_NUM <= mv_par02
+
+
+
+	nOrdem   := 1
+	nReem    := 0
+	cObs01   := " "
+	cObs02   := " "
+	cObs03   := " "
+	cObs04   := " "
+
+	If	C7_EMITIDO == "S" .And.  mv_par05 == 1
+		dbSelectArea("SC7")
+		dbSkip()
+		Loop
+	Endif
+
+	If	(C7_CONAPRO == "B" .And.  mv_par10 == 1) .Or.  (C7_CONAPRO <> "B" .And.  mv_par10 == 2)
+		dbSelectArea("SC7")
+		dbSkip()
+		Loop
+	Endif
+	If	(SC7->C7_EMISSAO < mv_par03) .Or.  (SC7->C7_EMISSAO > mv_par04)
+		dbSelectArea("SC7")
+		dbSkip()
+		Loop
+	Endif
+	If	SC7->C7_TIPO <> 2
+		dbSelectArea("SC7")
+		dbSkip()
+		Loop
+	EndIf
+
+
+
+
+	If mv_par14 == 2
+		If SC7->C7_QUANT-SC7->C7_QUJE <= 0 .Or.  !EMPTY(SC7->C7_RESIDUO)
+			dbSelectArea("SC7")
+			dbSkip()
+			Loop
+		Endif
+	Endif
+
+
+
+
+	If mv_par14 == 3
+		If SC7->C7_QUANT > SC7->C7_QUJE
+			dbSelectArea("SC7")
+			dbSkip()
+			Loop
+		Endif
+	Endif
+
+
+
+
+	If !MtrAValOP(mv_par11, "SC7")
+		dbSelectArea("SC7")
+		dbSkip()
+		Loop
+	EndIf
+
+	MaFisEnd()
+	R110FIniPC(SC7->C7_NUM,,,cFiltro)
+
+	For ncw := 1 To mv_par09
+
+		ImpCabec(ncw)
+
+		nTotal   := 0
+		nTotMerc := 0
+
+		nDescProd:= 0
+		nReem    := SC7->C7_QTDREEM + 1
+		nSavRec  := SC7->(Recno())
+		NumPed   := SC7->C7_NUM
+		nLinObs := 0
+		aPedido  := {SC7->C7_FILIAL,SC7->C7_NUM,SC7->C7_EMISSAO,SC7->C7_FORNECE,SC7->C7_LOJA,SC7->C7_TIPO}
+
+		While !Eof() .And.  C7_FILIAL = xFilial("SC7") .And.  C7_NUM == NumPed
+
+
+
+
+			If mv_par14 == 2
+				If SC7->C7_QUANT-SC7->C7_QUJE <= 0 .Or.  !EMPTY(SC7->C7_RESIDUO)
+					dbSelectArea("SC7")
+					dbSkip()
+					Loop
+				Endif
+			Endif
+
+
+
+
+			If mv_par14 == 3
+				If SC7->C7_QUANT > SC7->C7_QUJE
+					dbSelectArea("SC7")
+					dbSkip()
+					Loop
+				Endif
+			Endif
+
+			If Ascan(aSavRec,Recno()) == 0
+				AADD(aSavRec,Recno())
+			Endif
+
+			If lEnd
+				PrintOut(_PROW()+1,001,If(cPaisLoc$"ANG|PTG","Cancelado Pelo Operador","CANCELADO PELO OPERADOR"),,)
+				dbGoBottom()
+				Exit
+			Endif
+
+			IncRegua()
+
+
+
+
+			If li > 56
+				nOrdem++
+				ImpRodape()
+				ImpCabec(ncw)
+			Endif
+			li++
+			PrintOut(li,001,"|",,)
+			PrintOut(li,002,SC7->C7_ITEM,PesqPict("SC7","C7_ITEM"),)
+			PrintOut(li,006,"|",,)
+
+
+
+			ImpProd()
+
+			If SC7->C7_DESC1 <> 0 .or.  SC7->C7_DESC2 <> 0 .or.  SC7->C7_DESC3 <> 0
+				nDescProd+= CalcDesc(SC7->C7_TOTAL,SC7->C7_DESC1,SC7->C7_DESC2,SC7->C7_DESC3)
+			Else
+				nDescProd+=SC7->C7_VLDESC
+			Endif
+
+
+
+			If !EMPTY(SC7->C7_OBS) .And.  nLinObs < 5
+				nLinObs++
+				cVar:="cObs"+StrZero(nLinObs,2)
+				Eval(MemVarBlock(cVar),SC7->C7_OBS)
+			Endif
+			lImpri  := .T. 
+			dbSelectArea("SC7")
+			dbSkip()
+		EndDo
+
+		dbGoto(nSavRec)
+		If li>38
+			nOrdem++
+			ImpRodape()
+			ImpCabec(ncw)
+		Endif
+
+		FinalAE(nDescProd)
+	Next
+
+	MaFisEnd()
+
+	If Len(aSavRec)>0
+		dbGoto(aSavRec[Len(aSavRec)])
+		For i:=1 to Len(aSavRec)
+			dbGoto(aSavRec[i])
+			RecLock("SC7", .F. )
+			_FIELD->C7_EMITIDO := "S"
+			_FIELD->C7_QTDREEM := (C7_QTDREEM+1)
+			MsUnLock()
+		Next
+	Endif
+
+	Aadd(aPedMail,aPedido)
+
+	aSavRec := {}
+
+	dbSelectArea("SC7")
+	dbSkip()
+End
+
+
+
+
+
+
+If ExistBlock("M110MAIL")
+	lEnvMail := HasEmail(,,,, .F. )
+	If lEnvMail
+		Execblock("M110MAIL", .F. , .F. ,{aPedMail})
+	EndIf
+EndIf
+
+If lAuto .And.  !lImpri
+	Aviso("Atenção",If( cPaisLoc $ "ANG|PTG", "Verifique os parâmetros definidos para esse relatório no configurador para o utilizador corrente.", "Verifique os parâmetros definidos para esse relatório no configurador para o usuário corrente." ),{"OK"})
+Endif
+
+dbSelectArea("SC7")
+dbClearFilter()
+dbSetOrder(1)
+
+dbSelectArea("SX3")
+dbSetOrder(1)
+
+
+
+
+If aReturn[5] == 1
+	Set( 24, "" )
+	dbCommitAll()
+	ourspool(wnrel)
+Endif
+
+MS_FLUSH()
+
+Return .T. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function ImpProd()
+LOCAL nBegin   := 0, cDescri := "", nLinha:=0
+Local nTamDesc := 26
+Local aColuna  := Array(8)
+Local nTamProd := 15
+
+If Empty(mv_par06)
+	mv_par06 := "B1_DESC"
+EndIf
+
+
+
+
+If AllTrim(mv_par06) == "B1_DESC"
+	dbSelectArea("SB1")
+	dbSetOrder(1)
+	dbSeek( xFilial("SB1")+SC7->C7_PRODUTO )
+	cDescri := Alltrim(SB1->B1_DESC)
+	dbSelectArea("SC7")
+EndIf
+
+
+
+If AllTrim(mv_par06) == "B5_CEME"
+	dbSelectArea("SB5")
+	dbSetOrder(1)
+	If dbSeek( xFilial("SB5")+SC7->C7_PRODUTO )
+		cDescri := Alltrim(B5_CEME)
+	EndIf
+	dbSelectArea("SC7")
+EndIf
+
+dbSelectArea("SC7")
+If AllTrim(mv_par06) == "C7_DESCRI"
+	cDescri := Alltrim(SC7->C7_DESCRI)
+EndIf
+
+If Empty(cDescri)
+	dbSelectArea("SB1")
+	dbSetOrder(1)
+	MsSeek( xFilial("SB1")+SC7->C7_PRODUTO )
+	cDescri := Alltrim(SB1->B1_DESC)
+	dbSelectArea("SC7")
+EndIf
+
+
+cDescri := cDescri+Chr(13)+Chr(10)+AllTrim(SC7->C7_OBS)
+
+
+dbSelectArea("SA5")
+dbSetOrder(1)
+If dbSeek(xFilial("SA5")+SC7->C7_FORNECE+SC7->C7_LOJA+SC7->C7_PRODUTO) .And.  !Empty(SA5->A5_CODPRF)
+	cDescri := cDescri + " ("+Alltrim(A5_CODPRF)+")"
+EndIf
+dbSelectArea("SC7")
+aColuna[1] :=  49
+aColuna[2] :=  52
+aColuna[3] :=  65
+aColuna[4] :=  80
+aColuna[5] :=  86
+aColuna[6] := 103
+aColuna[7] := 114
+acoluna[8] := 142 - nDifColCC
+
+If Len(cDescri) > Len(SC7->C7_PRODUTO)
+	nLinha:= MLCount(cDescri,nTamDesc)
+Else
+	nLinha:= MLCount(SC7->C7_PRODUTO,nTamProd)
+EndIf
+
+PrintOut(li,007,MemoLine(SC7->C7_PRODUTO,nTamProd,1),,)
+PrintOut(li,022,"|",,)
+PrintOut(li,023,MemoLine(cDescri,nTamDesc,1),,)
+
+ImpCampos()
+For nBegin := 2 To nLinha
+	li++
+	PrintOut(li,001,"|",,)
+	PrintOut(li,006,"|",,)
+	PrintOut(li,007,MemoLine(SC7->C7_PRODUTO,nTamProd,nBegin),,)
+	PrintOut(li,022,"|",,)
+	PrintOut(li,023,Memoline(cDescri,nTamDesc,nBegin),,)
+	PrintOut(li,aColuna[1],"|",,)
+	PrintOut(li,acoluna[2],"|",,)
+	PrintOut(li,acoluna[3],"|",,)
+	PrintOut(li,aColuna[4],"|",,)
+
+	If mv_par08 == 1 .OR.  mv_par08 == 3
+		If cPaisLoc == "BRA"
+			PrintOut(li,aColuna[5],"|",,)
+		Else
+			PrintOut(li,aColuna[5]," ",,)
+		EndIf
+		PrintOut(li,aColuna[6],"|",,)
+		PrintOut(li,114,"|",,)
+		PrintOut(li,135-nDIfColCC,"|",,)
+		PrintOut(li,aColuna[8],"|",,)
+	Else
+		PrintOut(li,097,"|",,)
+		PrintOut(li,108,"|",,)
+		PrintOut(li,142-nDifColCC,"|",,)
+	EndIf
+next
+
+Return NIL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function ImpCampos()
+
+LOCAL aColuna[6]
+Local nTxMoeda := IIF(SC7->C7_TXMOEDA > 0,SC7->C7_TXMOEDA,Nil)
+dbSelectArea("SC7")
+
+aColuna[1] :=  49
+aColuna[2] :=  52
+aColuna[3] :=  65
+aColuna[4] :=  80
+aColuna[5] :=  86
+aColuna[6] := 103
+
+PrintOut(li,aColuna[1],"|",,)
+If MV_PAR07 == 2 .And.  !Empty(SC7->C7_SEGUM)
+	PrintOut(li,_PCOL(),SC7->C7_SEGUM,PesqPict("SC7","C7_UM"),)
+Else
+	PrintOut(li,_PCOL(),SC7->C7_UM,PesqPict("SC7","C7_UM"),)
+EndIf
+PrintOut(li,aColuna[2],"|",,)
+If MV_PAR07 == 2 .And.  !Empty(SC7->C7_QTSEGUM)
+	PrintOut(li,_PCOL(),SC7->C7_QTSEGUM,PesqPictQt("C7_QUANT",13),)
+Else
+	PrintOut(li,_PCOL(),SC7->C7_QUANT,PesqPictQt("C7_QUANT",13),)
+EndIf
+PrintOut(li,aColuna[3],"|",,)
+If MV_PAR07 == 2 .And.  !Empty(SC7->C7_QTSEGUM)
+	PrintOut(li,_PCOL(),xMoeda((SC7->C7_TOTAL/SC7->C7_QTSEGUM),SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),PesqPict("SC7","C7_PRECO",14),)
+Else
+	PrintOut(li,_PCOL(),xMoeda(SC7->C7_PRECO,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),PesqPict("SC7","C7_PRECO",14),)
+EndIf
+PrintOut(li,aColuna[4],"|",,)
+
+If mv_par08 == 1 .OR.  mv_par08 == 3
+	If cPaisLoc == "BRA"
+		PrintOut(li,_PCOL(),SC7->C7_IPI,PesqPictQt("C7_IPI",5),)
+		PrintOut(li,aColuna[5],"|",,)
+	Else
+		PrintOut(li,_PCOL(),"  ",,)
+		PrintOut(li,aColuna[5]-2," ",,)
+		PrintOut(li,_PCOL()," ",,)
+	EndIf
+	PrintOut(li,_PCOL(),xMoeda(SC7->C7_TOTAL,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),PesqPict("SC7","C7_TOTAL",16,MV_PAR12),)
+	PrintOut(li,aColuna[6],"|",,)
+	PrintOut(li,_PCOL(),SC7->C7_DATPRF,PesqPict("SC7","C7_DATPRF"),)
+	PrintOut(li,114,"|",,)
+	PrintOut(li,_PCOL(),SC7->C7_CC,PesqPict("SC7","C7_CC",20),)
+	PrintOut(li,135-nDifColCC,"|",,)
+	PrintOut(li,_PCOL(),SC7->C7_NUMSC,,)
+	PrintOut(li,142-nDifColCC,"|",,)
+Else
+	PrintOut(li,_PCOL(),xMoeda(SC7->C7_TOTAL,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),PesqPict("SC7","C7_TOTAL",16,MV_PAR12),)
+	PrintOut(li,097,"|",,)
+	PrintOut(li,_PCOL(),SC7->C7_DATPRF,PesqPict("SC7","C7_DATPRF"),)
+	PrintOut(li,108,"|",,)
+
+	If !Empty(SC7->C7_OP)
+		PrintOut(li,_PCOL(),If(cPaisLoc$"ANG|PTG","Op ","OP "),,)
+		PrintOut(li,_PCOL(),SC7->C7_OP,,)
+
+	ElseIf !Empty(SC7->C7_CC)
+		PrintOut(li,_PCOL(),If(cPaisLoc$"ANG|PTG","Cc ","CC "),,)
+		PrintOut(li,_PCOL(),SC7->C7_CC,PesqPict("SC7","C7_CC",20),)
+	EndIf
+	PrintOut(li,142-nDifColCC,"|",,)
+EndIf
+
+nTotal  :=nTotal+SC7->C7_TOTAL
+nTotMerc:=MaFisRet(,"NF_TOTAL")
+Return .T. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function FinalPed(nDescProd)
+
+Local nk		:= 1,nG
+Local nX		:= 0
+Local nQuebra	:= 0
+Local nTotDesc	:= nDescProd
+Local lNewAlc	:= .F. 
+Local lLiber 	:= .F. 
+Local lImpLeg	:= .T. 
+Local lImpLeg2	:= .F. 
+Local cComprador:=""
+LOcal cAlter	:=""
+Local cAprov	:=""
+Local nTotIpi	:= MaFisRet(,"NF_VALIPI")
+Local nTotIcms	:= MaFisRet(,"NF_VALICM")
+Local nTotDesp	:= MaFisRet(,"NF_DESPESA")
+Local nTotFrete	:= MaFisRet(,"NF_FRETE")
+Local nTotalNF	:= MaFisRet(,"NF_TOTAL")
+Local nTotSeguro:= MaFisRet(,"NF_SEGURO")
+Local aValIVA   := MaFisRet(,"NF_VALIMP")
+Local nValIVA   :=0
+Local aColuna   := Array(8), nTotLinhas
+Local nTxMoeda  := IIF(SC7->C7_TXMOEDA > 0,SC7->C7_TXMOEDA,Nil)
+
+If cPaisLoc <> "BRA" .And.  !Empty(aValIVA)
+	For nG:=1 to Len(aValIVA)
+		nValIVA+=aValIVA[nG]
+	Next
+Endif
+
+cMensagem:= Formula(C7_MSG)
+
+If !Empty(cMensagem)
+	li++
+	PrintOut(li,001,"|",,)
+	PrintOut(li,002,Padc(cMensagem,129),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+Endif
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+
+aColuna[1] :=  49
+aColuna[2] :=  52
+aColuna[3] :=  65
+aColuna[4] :=  80
+aColuna[5] :=  86
+aColuna[6] := 103
+acoluna[7] := 114
+aColuna[8] := 142 - nDifColCC
+nTotLinhas :=  39
+
+While li<nTotLinhas
+	PrintOut(li,001,"|",,)
+	PrintOut(li,006,"|",,)
+	PrintOut(li,022,"|",,)
+	PrintOut(li,022+nk,"*",,)
+	nk := IIf( nk == 42 , 1 , nk + 1 )
+	PrintOut(li,aColuna[1],"|",,)
+	PrintOut(li,aColuna[2],"|",,)
+	PrintOut(li,aColuna[3],"|",,)
+	PrintOut(li,aColuna[4],"|",,)
+	If cPaisLoc == "BRA"
+		PrintOut(li,aColuna[5],"|",,)
+	EndIf
+	PrintOut(li,aColuna[6],"|",,)
+	PrintOut(li,114,"|",,)
+	PrintOut(li,135-nDifColCC,"|",,)
+	PrintOut(li,aColuna[8],"|",,)
+	li++
+EndDo
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,015,If(cPaisLoc$"ANG|PTG","D e s c o n t o s -->","D E S C O N T O S -->"),,)
+PrintOut(li,037,C7_DESC1,"999.99",)
+PrintOut(li,046,C7_DESC2,"999.99",)
+PrintOut(li,055,C7_DESC3,"999.99",)
+
+PrintOut(li,068,xMoeda(nTotDesc,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),PesqPict("SC7","C7_VLDESC",14,MV_PAR12),)
+
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+
+
+
+cAlias := Alias()
+dbSelectArea("SM0")
+dbSetOrder(1)
+nRegistro := Recno()
+dbSeek(SUBS(cNumEmp,1,2)+SC7->C7_FILENT)
+
+
+
+
+If Empty(MV_PAR13)
+	PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Local de entrega  : ","Local de Entrega  : ")+AllTrim(SM0->M0_ENDENT),,)
+	PrintOut(li,057,"-",,)
+	PrintOut(li,061,AllTrim(SM0->M0_CIDENT),,)
+	PrintOut(li,083,"-",,)
+	PrintOut(li,085,Alltrim(SM0->M0_ESTENT),,)
+	PrintOut(li,088,"-",,)
+	PrintOut(li,090,If(cPaisLoc$"ANG|PTG","Código postal :","CEP :"),,)
+	PrintOut(li,096,Trans(Alltrim(SM0->M0_CEPENT),cCepPict),,)
+Else
+	PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Local de entrega  : ","Local de Entrega  : ")+MV_PAR13,,)
+Endif
+
+PrintOut(li,142-nDifColCC,"|",,)
+dbGoto(nRegistro)
+dbSelectArea( cAlias )
+
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Local de cobrança : ","Local de Cobranca : ")+Alltrim(SM0->M0_ENDCOB),,)
+PrintOut(li,057,"-",,)
+PrintOut(li,061,Alltrim(SM0->M0_CIDCOB),,)
+PrintOut(li,083,"-",,)
+PrintOut(li,085,Alltrim(SM0->M0_ESTCOB),,)
+PrintOut(li,088,"-",,)
+PrintOut(li,090,If(cPaisLoc$"ANG|PTG","Código postal :","CEP :"),,)
+PrintOut(li,096,Trans(Alltrim(SM0->M0_CEPCOB),cCepPict),,)
+PrintOut(li,142-nDifColCC," |",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC," |",,)
+
+dbSelectArea("SE4")
+dbSetOrder(1)
+dbSeek(xFilial("SE4")+SC7->C7_COND)
+dbSelectArea("SC7")
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Condição de pagt ","Condicao de Pagto ")+SubStr(SE4->E4_COND,1,40),,)
+PrintOut(li,061,If(cPaisLoc$"ANG|PTG","|data De Emissão|","|Data de Emissao|"),,)
+PrintOut(li,079,If(cPaisLoc$"ANG|PTG","Total das mercadorias : ","Total das Mercadorias : "),,)
+PrintOut(li,108,xMoeda(nTotal,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotal,14,MsDecimais(MV_PAR12)),)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,SubStr(SE4->E4_DESCRI,1,34),,)
+PrintOut(li,061,"|",,)
+PrintOut(li,066,SC7->C7_EMISSAO,,)
+PrintOut(li,077,"|",,)
+If cPaisLoc<>"BRA"
+	PrintOut(li,079,OemtoAnsi(If(cPaisLoc$"ANG|PTG","Total dos impostos:    ","Total dos Impostos:    ")),,)
+	PrintOut(li,108,xMoeda(nValIVA,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nValIVA,14,MsDecimais(MV_PAR12)),)
+Else
+	PrintOut(li,079,If(cPaisLoc$"ANG|PTG","Total com impostos:    ","Total com Impostos:    "),,)
+	PrintOut(li,108,xMoeda(nTotMerc,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotMerc,14,MsDecimais(MV_PAR12)),)
+Endif
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",53),,)
+PrintOut(li,055,Replicate("-",86-nDifColCC),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+dbSelectArea("SM4")
+dbSetOrder(1)
+dbSeek(xFilial("SM4")+SC7->C7_REAJUST)
+dbSelectArea("SC7")
+
+PrintOut(li,001,"|",,)
+PrintOut(li,003,"Reajuste :",,)
+PrintOut(li,014,SC7->C7_REAJUST,PesqPict("SC7","c7_reajust",,MV_PAR12),)
+PrintOut(li,018,SM4->M4_DESCR,,)
+
+If cPaisLoc == "BRA"
+	PrintOut(li,054,If(cPaisLoc$"ANG|PTG","| iva   :","| IPI   :"),,)
+	PrintOut(li,064,xMoeda(nTotIPI,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotIpi,14,MsDecimais(MV_PAR12)),)
+	PrintOut(li,088,"| ICMS   : ",,)
+	PrintOut(li,100,xMoeda(nTotIcms,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotIcms,14,MsDecimais(MV_PAR12)),)
+	PrintOut(li,142-nDifColCC,"|",,)
+Else
+	PrintOut(li,054,"|",,)
+	PrintOut(li,142-nDifColCC,"|",,)
+EndIf
+
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",52),,)
+PrintOut(li,054,(If(cPaisLoc$"ANG|PTG","| frete :","| Frete :")),,)
+PrintOut(li,064,xMoeda(nTotFrete,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotFrete,14,MsDecimais(MV_PAR12)),)
+PrintOut(li,088,(If(cPaisLoc$"ANG|PTG","| despesas :","| Despesas :")),,)
+PrintOut(li,100,xMoeda(nTotDesp,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotDesp,14,MsDecimais(MV_PAR12)),)
+
+PrintOut(li,142-nDifColCC,"|",,)
+
+
+
+If Empty(cObs02)
+	If Len(cObs01) > 50
+		cObs := cObs01
+		cObs01 := Substr(cObs,1,50)
+		For nX := 2 To 4
+			cVar  := "cObs"+StrZero(nX,2)
+			&cVar := Substr(cObs,(50*(nX-1))+1,50)
+		Next
+	EndIf
+Else
+	cObs01:= Substr(cObs01,1,IIf(Len(cObs01)<50,Len(cObs01),50))
+	cObs02:= Substr(cObs02,1,IIf(Len(cObs02)<50,Len(cObs01),50))
+	cObs03:= Substr(cObs03,1,IIf(Len(cObs03)<50,Len(cObs01),50))
+	cObs04:= Substr(cObs04,1,IIf(Len(cObs04)<50,Len(cObs01),50))
+EndIf
+
+dbSelectArea("SC7")
+If !Empty(C7_APROV)
+	lNewAlc := .T. 
+	cComprador := UsrFullName(SC7->C7_USER)
+	If C7_CONAPRO <> "B"
+		lLiber := .T. 
+	EndIf
+	dbSelectArea("SCR")
+	dbSetOrder(1)
+	dbSeek(xFilial("SCR")+"PC"+SC7->C7_NUM)
+	While !Eof() .And.  SCR->CR_FILIAL+Alltrim(SCR->CR_NUM)==xFilial("SCR")+Alltrim(SC7->C7_NUM) .And.  SCR->CR_TIPO == "PC"
+		cAprov += AllTrim(UsrFullName(SCR->CR_USER))+" ["
+        Do Case
+        	Case SCR->CR_STATUS=="03"
+        		cAprov += "Ok"
+        	Case SCR->CR_STATUS=="04"
+        		cAprov += "BLQ"
+			Case SCR->CR_STATUS=="05"
+				cAprov += "##"
+			OtherWise
+				cAprov += "??"
+		EndCase
+		cAprov += "] - "
+		dbSelectArea("SCR")
+		dbSkip()
+	Enddo
+	If !Empty(SC7->C7_GRUPCOM)
+		dbSelectArea("SAJ")
+		dbSetOrder(1)
+		dbSeek(xFilial("SAJ")+SC7->C7_GRUPCOM)
+		While !Eof() .And.  SAJ->AJ_FILIAL+SAJ->AJ_GRCOM == xFilial("SAJ")+SC7->C7_GRUPCOM
+			If SAJ->AJ_USER <> SC7->C7_USER
+				cAlter += AllTrim(UsrFullName(SAJ->AJ_USER))+"/"
+			EndIf
+			dbSelectArea("SAJ")
+			dbSkip()
+		EndDo
+	EndIf
+EndIf
+
+li++
+PrintOut(li,001,If(cPaisLoc$"ANG|PTG","| Observações","| Observacoes"),,)
+PrintOut(li,054,If(cPaisLoc$"ANG|PTG","| grupo :","| Grupo :"),,)
+PrintOut(li,088,If(cPaisLoc$"ANG|PTG","| seguro :","| SEGURO :"),,)
+PrintOut(li,100,xMoeda(nTotSeguro,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotSeguro,14,MsDecimais(MV_PAR12)),)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,cObs01,,)
+PrintOut(li,054,"|"+Replicate("-",86-nDifColCC),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,cObs02,,)
+PrintOut(li,054,If(cPaisLoc$"ANG|PTG","| total crial : ","| Total Geral : "),,)
+
+If !lNewAlc
+	PrintOut(li,094,xMoeda(nTotalNF,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotalNF,14,MsDecimais(MV_PAR12)),)
+Else
+	If lLiber
+		PrintOut(li,094,xMoeda(nTotalNF,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotalNF,14,MsDecimais(MV_PAR12)),)
+	Else
+		PrintOut(li,080,(If(cPaisLoc$"ANG|PTG","     p e d i d o   b l o q u e a d o ","     P E D I D O   B L O Q U E A D O ")),,)
+	EndIf
+EndIf
+
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,cObs03,,)
+PrintOut(li,054,"|"+Replicate("-",86-nDifColCC),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+
+If !lNewAlc
+	PrintOut(li,001,"|",,)
+	PrintOut(li,003,cObs04,,)
+	PrintOut(li,054,"|",,)
+	PrintOut(li,061,If(cPaisLoc$"ANG|PTG","|           Autorização Do Pedido","|           Liberacao do Pedido"),,)
+	PrintOut(li,102,If(cPaisLoc$"ANG|PTG","| obs. do frete: ","| Obs. do Frete: "),,)
+	PrintOut(li,119,IF(SC7->C7_TPFRETE$"F","FOB",IF(SC7->C7_TPFRETE$"C","CIF"," ")),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+	PrintOut(li,001,"|"+Replicate("-",59),,)
+	PrintOut(li,061,"|",,)
+	PrintOut(li,102,"|",,)
+	PrintOut(li,142-nDifColCC,"|",,)
+
+	li++
+	cLiberador := ""
+	nPosicao := 0
+	PrintOut(li,001,"|",,)
+	PrintOut(li,007,"Comprador",,)
+	PrintOut(li,021,"|",,)
+	PrintOut(li,028,If(cPaisLoc$"ANG|PTG","Gerência","Gerencia"),,)
+	PrintOut(li,041,"|",,)
+	PrintOut(li,046,If(cPaisLoc$"ANG|PTG","Directoria","Diretoria"),,)
+	PrintOut(li,061,"|     ------------------------------",,)
+	PrintOut(li,102,"|",,)
+
+
+	PrintOut(li,104,"Transportadora:",,)
+
+
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+	PrintOut(li,001,"|",,)
+	PrintOut(li,021,"|",,)
+	PrintOut(li,041,"|",,)
+	PrintOut(li,061,"|     "+R110Center(cLiberador),,)
+	PrintOut(li,102,"|",,)
+
+
+	PrintOut(li,104,Transportadora(SC7->C7_NUM),,)
+
+
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+	PrintOut(li,001,"|",,)
+	PrintOut(li,002,Replicate("-",limite),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+	PrintOut(li,001,If(cPaisLoc$"ANG|PTG","|   Factura: Só Aceitaremos A Mercadoria Se Na Sua Factura Constar O Número Do Nosso Pedido De Compras.","|   NOTA: So aceitaremos a mercadoria se na sua Nota Fiscal constar o numero do nosso Pedido de Compras."),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+	PrintOut(li,001,"|",,)
+	PrintOut(li,002,Replicate("-",limite),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+Else
+	PrintOut(li,001,"|",,)
+	PrintOut(li,003,cObs04,,)
+	PrintOut(li,054,"|",,)
+	PrintOut(li,059,IF(lLiber,If(cPaisLoc$"ANG|PTG","      P E D I D O   A P R O V A D O","      P E D I D O   L I B E R A D O"),If(cPaisLoc$"ANG|PTG","     p e d i d o   b l o q u e a d o ","     P E D I D O   B L O Q U E A D O ")),,)
+	PrintOut(li,102,If(cPaisLoc$"ANG|PTG","| obs. do frete: ","| Obs. do Frete: "),,)
+	PrintOut(li,119,Substr(RetTipoFrete(SC7->C7_TPFRETE),3,10),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+	PrintOut(li,001,"|"+Replicate("-",99),,)
+	PrintOut(li,102,"|",,)
+	PrintOut(li,104,Substr(RetTipoFrete(SC7->C7_TPFRETE),13),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+	PrintOut(li,001,"|",,)
+	PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Comprador responsável :","Comprador Responsavel :"),,)
+	PrintOut(li,027,Substr(cComprador,1,60),,)
+	PrintOut(li,088,"|",,)
+	PrintOut(li,089,If(cPaisLoc$"ANG|PTG","Blq:bloqueado","BLQ:Bloqueado"),,)
+	PrintOut(li,102,"|",,)
+
+
+	PrintOut(li,104,"Transportadora:",,)
+
+
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+	nAuxLin := Len(cAlter)
+	PrintOut(li,001,"|",,)
+	PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Compradores alternativos :","Compradores Alternativos :"),,)
+	While nAuxLin > 0 .Or.  lImpLeg
+		PrintOut(li,029,Substr(cAlter,Len(cAlter)-nAuxLin+1,60),,)
+		PrintOut(li,088,"|",,)
+		If lImpLeg
+			PrintOut(li,089,If(cPaisLoc$"ANG|PTG","Ok:autorizado","Ok:Liberado"),,)
+			lImpLeg := .F. 
+		EndIf
+		PrintOut(li,102,"|",,)
+
+
+		PrintOut(li,104,Transportadora(SC7->C7_NUM),,)
+
+
+		PrintOut(li,142-nDifColCC,"|",,)
+		nAuxLin -= 60
+		li++
+	EndDo
+	nAuxLin := Len(cAprov)
+	lImpLeg := .T. 
+	While nAuxLin > 0 .Or.  lImpLeg
+		PrintOut(li,001,"|",,)
+		If lImpLeg
+			PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Quem autoriza :","Aprovador(es) :"),,)
+		EndIf
+		PrintOut(li,018,Substr(cAprov,Len(cAprov)-nAuxLin+1,70),,)
+		PrintOut(li,088,"|",,)
+		If lImpLeg2
+			PrintOut(li,089,If(cPaisLoc$"ANG|PTG","##:nível Lib","##:Nivel Lib"),,)
+			lImpLeg2 := .F. 
+		EndIf
+		If lImpLeg
+			PrintOut(li,089,If(cPaisLoc$"ANG|PTG","??:aguar.aprov","??:Aguar.Lib"),,)
+			lImpLeg  := .F. 
+			lImpLeg2 := .T. 
+		EndIf
+		PrintOut(li,102,"|",,)
+		PrintOut(li,142-nDifColCC,"|",,)
+		nAuxLin -=70
+		li++
+	EndDo
+	If lImpLeg2
+		lImpLeg2 := .F. 
+		PrintOut(li,001,"|",,)
+		PrintOut(li,088,"|",,)
+		PrintOut(li,089,If(cPaisLoc$"ANG|PTG","##:nível Lib","##:Nivel Lib"),,)
+		PrintOut(li,102,"|",,)
+		PrintOut(li,142-nDifColCC,"|",,)
+		li++
+	EndIf
+	If nAuxLin == 0
+		li++
+	EndIf
+	PrintOut(li,001,"|",,)
+	PrintOut(li,002,Replicate("-",limite),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+	PrintOut(li,001,If(cPaisLoc$"ANG|PTG","|   Factura: Só Aceitaremos A Mercadoria Se Na Sua Factura Constar O Número Do Nosso Pedido De Compras.","|   NOTA: So aceitaremos a mercadoria se na sua Nota Fiscal constar o numero do nosso Pedido de Compras."),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+	PrintOut(li,001,"|",,)
+	PrintOut(li,002,Replicate("-",limite),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+EndIf
+
+Return .T. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function FinalAE(nDescProd)
+Local nk := 1
+Local nX := 0
+Local nTotDesc:= nDescProd
+Local nTotNF	:= MaFisRet(,"NF_TOTAL")
+Local nTxMoeda := IIF(SC7->C7_TXMOEDA > 0,SC7->C7_TXMOEDA,Nil)
+Local cComprador:=""
+LOcal cAlter	:=""
+Local cAprov	:=""
+Local lImpLeg	:= .T. 
+Local lImpLeg2	:= .F. 
+
+cMensagem:= Formula(C7_MSG)
+
+If !Empty(cMensagem)
+	li++
+	PrintOut(li,001,"|",,)
+	PrintOut(li,002,Padc(cMensagem,129),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+Endif
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+While li<39
+	PrintOut(li,001,"|",,)
+	PrintOut(li,006,"|",,)
+	PrintOut(li,022,"|",,)
+	PrintOut(li,022+nk,"*",,)
+	nk := IIf( nk == 32 , 1 , nk + 1 )
+	PrintOut(li,049,"|",,)
+	PrintOut(li,052,"|",,)
+	PrintOut(li,065,"|",,)
+	PrintOut(li,080,"|",,)
+	PrintOut(li,097,"|",,)
+	PrintOut(li,108,"|",,)
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+EndDo
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+
+
+
+
+cAlias := Alias()
+dbSelectArea("SM0")
+dbSetOrder(1)
+nRegistro := Recno()
+dbSeek(SUBS(cNumEmp,1,2)+SC7->C7_FILENT)
+
+
+
+If Empty(MV_PAR13)
+	PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Local de entrega  : ","Local de Entrega  : ")+SM0->M0_ENDENT,,)
+	PrintOut(li,057,"-",,)
+	PrintOut(li,061,SM0->M0_CIDENT,,)
+	PrintOut(li,083,"-",,)
+	PrintOut(li,085,SM0->M0_ESTENT,,)
+	PrintOut(li,088,"-",,)
+	PrintOut(li,090,If(cPaisLoc$"ANG|PTG","Código postal :","CEP :"),,)
+	PrintOut(li,096,Trans(Alltrim(SM0->M0_CEPENT),cCepPict),,)
+Else
+	PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Local de entrega  : ","Local de Entrega  : ")+MV_PAR13,,)
+Endif
+
+PrintOut(li,142-nDifColCC," |",,)
+dbGoto(nRegistro)
+dbSelectArea(cAlias)
+
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Local de cobrança : ","Local de Cobranca : ")+SM0->M0_ENDCOB,,)
+PrintOut(li,057,"-",,)
+PrintOut(li,061,SM0->M0_CIDCOB,,)
+PrintOut(li,083,"-",,)
+PrintOut(li,085,SM0->M0_ESTCOB,,)
+PrintOut(li,088,"-",,)
+PrintOut(li,090,If(cPaisLoc$"ANG|PTG","Código postal :","CEP :"),,)
+PrintOut(li,096,Trans(Alltrim(SM0->M0_CEPCOB),cCepPict),,)
+PrintOut(li,142-nDifColCC," |",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC,"|",,)
+
+dbSelectArea("SE4")
+dbSetOrder(1)
+dbSeek(xFilial("SE4")+SC7->C7_COND)
+dbSelectArea("SC7")
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Condição de pagt ","Condicao de Pagto ")+SubStr(SE4->E4_COND,1,15),,)
+PrintOut(li,038,If(cPaisLoc$"ANG|PTG","|data De Emissão|","|Data de Emissao|"),,)
+PrintOut(li,056,If(cPaisLoc$"ANG|PTG","Total das mercadorias : ","Total das Mercadorias : "),,)
+PrintOut(li,094,xMoeda(nTotal,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotal,14,MsDecimais(MV_PAR12)),)
+
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,SubStr(SE4->E4_DESCRI,1,34),,)
+PrintOut(li,038,"|",,)
+PrintOut(li,043,SC7->C7_EMISSAO,,)
+PrintOut(li,054,"|",,)
+PrintOut(li,056,If(cPaisLoc$"ANG|PTG","Total com impostos:    ","Total com Impostos:    "),,)
+PrintOut(li,094,xMoeda(nTotMerc,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotMerc,14,MsDecimais(MV_PAR12)),)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",52),,)
+PrintOut(li,054,"|",,)
+PrintOut(li,055,Replicate("-",86-nDifColCC),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+dbSelectArea("SM4")
+dbSeek(xFilial("SM4")+SC7->C7_REAJUST)
+dbSelectArea("SC7")
+PrintOut(li,001,"|",,)
+PrintOut(li,003,"Reajuste :",,)
+PrintOut(li,014,SC7->C7_REAJUST,PesqPict("SC7","c7_reajust",,MV_PAR12),)
+PrintOut(li,018,SM4->M4_DESCR,,)
+PrintOut(li,054,If(cPaisLoc$"ANG|PTG","| total crial : ","| Total Geral : "),,)
+
+PrintOut(li,094,xMoeda(nTotNF,SC7->C7_MOEDA,MV_PAR12,SC7->C7_DATPRF,MsDecimais(SC7->C7_MOEDA),nTxMoeda),tm(nTotNF,14,MsDecimais(MV_PAR12)),)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC,"|",,)
+
+
+
+If Empty(cObs02)
+	If Len(cObs01) > 50
+		cObs 	:= cObs01
+		cObs01:= Substr(cObs,1,50)
+		For nX := 2 To 4
+			cVar  := "cObs"+StrZero(nX,2)
+			&cVar := Substr(cObs,(50*(nX-1))+1,50)
+		Next
+	EndIf
+Else
+	cObs01:= Substr(cObs01,1,IIf(Len(cObs01)<50,Len(cObs01),50))
+	cObs02:= Substr(cObs02,1,IIf(Len(cObs02)<50,Len(cObs01),50))
+	cObs03:= Substr(cObs03,1,IIf(Len(cObs03)<50,Len(cObs01),50))
+	cObs04:= Substr(cObs04,1,IIf(Len(cObs04)<50,Len(cObs01),50))
+EndIf
+
+li++
+PrintOut(li,001,If(cPaisLoc$"ANG|PTG","| Observações","| Observacoes"),,)
+PrintOut(li,054,If(cPaisLoc$"ANG|PTG","| comprador    ","| Comprador    "),,)
+PrintOut(li,070,If(cPaisLoc$"ANG|PTG","| gerência     ","| Gerencia     "),,)
+PrintOut(li,085,If(cPaisLoc$"ANG|PTG","| directoria    ","| Diretoria    "),,)
+PrintOut(li,142-nDifColCC,"|",,)
+
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,cObs01,,)
+PrintOut(li,054,"|",,)
+PrintOut(li,070,"|",,)
+PrintOut(li,085,"|",,)
+PrintOut(li,142-nDifColCC,"|",,)
+
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,cObs02,,)
+PrintOut(li,054,"|",,)
+PrintOut(li,070,"|",,)
+PrintOut(li,085,"|",,)
+PrintOut(li,142-nDifColCC,"|",,)
+
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,cObs03,,)
+PrintOut(li,054,"|",,)
+PrintOut(li,070,"|",,)
+PrintOut(li,085,"|",,)
+PrintOut(li,142-nDifColCC,"|",,)
+
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,003,cObs04,,)
+PrintOut(li,054,"|",,)
+PrintOut(li,070,"|",,)
+PrintOut(li,085,"|",,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+
+
+
+
+dbSelectArea("SC7")
+lNewAlc := .F. 
+If !Empty(C7_APROV)
+	lNewAlc := .T. 
+	cComprador := UsrFullName(SC7->C7_USER)
+	If C7_CONAPRO <> "B"
+		lLiber := .T. 
+	EndIf
+	dbSelectArea("SCR")
+	dbSetOrder(1)
+	dbSeek(xFilial("SCR")+"AE"+SC7->C7_NUM)
+	While !Eof() .And.  SCR->CR_FILIAL+Alltrim(SCR->CR_NUM)==xFilial("SCR")+Alltrim(SC7->C7_NUM) .And.  SCR->CR_TIPO == "AE"
+		cAprov += AllTrim(UsrFullName(SCR->CR_USER))+" ["
+        Do Case
+        	Case SCR->CR_STATUS=="03"
+        		cAprov += "Ok"
+        	Case SCR->CR_STATUS=="04"
+        		cAprov += "BLQ"
+			Case SCR->CR_STATUS=="05"
+				cAprov += "##"
+			OtherWise
+				cAprov += "??"
+		EndCase
+		cAprov += "] - "
+		dbSelectArea("SCR")
+		dbSkip()
+	Enddo
+	If !Empty(SC7->C7_GRUPCOM)
+		dbSelectArea("SAJ")
+		dbSetOrder(1)
+		dbSeek(xFilial("SAJ")+SC7->C7_GRUPCOM)
+		While !Eof() .And.  SAJ->AJ_FILIAL+SAJ->AJ_GRCOM == xFilial("SAJ")+SC7->C7_GRUPCOM
+			If SAJ->AJ_USER <> SC7->C7_USER
+				cAlter += AllTrim(UsrFullName(SAJ->AJ_USER))+"/"
+			EndIf
+			dbSelectArea("SAJ")
+			dbSkip()
+		EndDo
+	EndIf
+EndIf
+
+
+
+
+If lNewAlc
+	PrintOut(li,001,"|",,)
+	PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Comprador responsável :","Comprador Responsavel :"),,)
+	PrintOut(li,027,Substr(cComprador,1,60),,)
+	PrintOut(li,088,"|",,)
+	PrintOut(li,089,If(cPaisLoc$"ANG|PTG","Blq:bloqueado","BLQ:Bloqueado"),,)
+	PrintOut(li,102,"|",,)
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+	nAuxLin := Len(cAlter)
+	PrintOut(li,001,"|",,)
+	PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Compradores alternativos :","Compradores Alternativos :"),,)
+	While nAuxLin > 0 .Or.  lImpLeg
+		PrintOut(li,029,Substr(cAlter,Len(cAlter)-nAuxLin+1,60),,)
+		PrintOut(li,088,"|",,)
+		If lImpLeg
+			PrintOut(li,089,If(cPaisLoc$"ANG|PTG","Ok:autorizado","Ok:Liberado"),,)
+			lImpLeg := .F. 
+		EndIf
+		PrintOut(li,102,"|",,)
+		PrintOut(li,142-nDifColCC,"|",,)
+		nAuxLin -= 60
+		li++
+	EndDo
+
+	nAuxLin := Len(cAprov)
+	lImpLeg := .T. 
+
+	While nAuxLin > 0 .Or.  lImpLeg
+		PrintOut(li,001,"|",,)
+		If lImpLeg
+			PrintOut(li,003,If(cPaisLoc$"ANG|PTG","Quem autoriza :","Aprovador(es) :"),,)
+		EndIf
+		PrintOut(li,018,Substr(cAprov,Len(cAprov)-nAuxLin+1,70),,)
+		PrintOut(li,088,"|",,)
+
+		If lImpLeg2
+			PrintOut(li,089,If(cPaisLoc$"ANG|PTG","##:nível Lib","##:Nivel Lib"),,)
+			lImpLeg2 := .F. 
+		EndIf
+		If lImpLeg
+			PrintOut(li,089,If(cPaisLoc$"ANG|PTG","??:aguar.aprov","??:Aguar.Lib"),,)
+			lImpLeg  := .F. 
+			lImpLeg2 := .T. 
+		EndIf
+
+		PrintOut(li,102,"|",,)
+		PrintOut(li,142-nDifColCC,"|",,)
+
+		nAuxLin -=70
+		li++
+	EndDo
+
+	If lImpLeg2
+		lImpLeg2 := .F. 
+		PrintOut(li,001,"|",,)
+		PrintOut(li,088,"|",,)
+		PrintOut(li,089,If(cPaisLoc$"ANG|PTG","##:nível Lib","##:Nivel Lib"),,)
+		PrintOut(li,102,"|",,)
+		PrintOut(li,142-nDifColCC,"|",,)
+		li++
+	EndIf
+
+	If nAuxLin == 0
+		li++
+	EndIf
+
+	PrintOut(li,001,"|",,)
+	PrintOut(li,002,Replicate("-",limite),,)
+	PrintOut(li,142-nDifColCC,"|",,)
+	li++
+
+EndIf
+
+PrintOut(li,001,If(cPaisLoc$"ANG|PTG","|   Factura: Só Aceitaremos A Mercadoria Se Na Sua Factura Constar O Número Da Autorização De Entrega.","|   NOTA: So aceitaremos a mercadoria se na sua Nota Fiscal constar o numero da Autorizacao de Entrega."),,)
+PrintOut(li,142-nDifColCC,"|",,)
+
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC,"|",,)
+
+Return .T. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function ImpRodape()
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,070,"Continua ...",,)
+PrintOut(li,142-nDifColCC,"|",,)
+li++
+PrintOut(li,001,"|",,)
+PrintOut(li,002,Replicate("-",limite),,)
+PrintOut(li,142-nDifColCC,"|",,)
+li:=0
+Return .T. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function ImpCabec(ncw)
+Local nOrden, cCGC
+LOCAL cMoeda
+
+cMoeda := Iif(mv_par12<10,Str(mv_par12,1),Str(mv_par12,2))
+
+PrintOut(01,001,"|",,)
+PrintOut(01,002,Replicate("-",limite),,)
+PrintOut(01,142-nDifColCC,"|",,)
+PrintOut(02,001,"|",,)
+PrintOut(02,029,IIf(nOrdem>1,(If(cPaisLoc$"ANG|PTG"," - continuação"," - continuacao"))," "),,)
+
+If mv_par08 == 1 .OR.  mv_par08 == 3
+	PrintOut(02,045,("| P E D I D O  D E  C O M P R A S")+" - "+GetMV("MV_MOEDA"+cMoeda),,)
+Else
+	PrintOut(02,045,(If(cPaisLoc$"ANG|PTG","| a u t.   d e   e n t r e g a   ","| A U T.   D E   E N T R E G A   "))+" - "+GetMV("MV_MOEDA"+cMoeda),,)
+EndIf
+
+If ( Mv_PAR08==2 )
+	PrintOut(02,090,"|",,)
+	PrintOut(02,093,SC7->C7_NUMSC+"/"+SC7->C7_NUM,,)
+Else
+	PrintOut(02,096,"|",,)
+	PrintOut(02,101,SC7->C7_NUM,PesqPict("SC7","c7_num"),)
+EndIf
+
+PrintOut(02,107,"/"+Str(nOrdem,1),,)
+PrintOut(02,112,IIf(SC7->C7_QTDREEM>0,Str(SC7->C7_QTDREEM+1,2)+If(cPaisLoc$"ANG|PTG","A.emissão ","a.Emissao ")+Str(ncw,2)+If(cPaisLoc$"ANG|PTG","A.via","a.VIA")," "),,)
+PrintOut(02,142-nDifColCC,"|",,)
+PrintOut(03,001,"|",,)
+PrintOut(03,003,Substr(SM0->M0_NOMECOM,1,42),,)
+PrintOut(03,045,"|"+Replicate("-",95-nDifColCC),,)
+PrintOut(03,142-nDifColCC,"|",,)
+PrintOut(04,001,"|",,)
+PrintOut(04,003,Substr(SM0->M0_ENDENT,1,42),,)
+dbSelectArea("SA2")
+dbSetOrder(1)
+dbSeek(xFilial("SA2")+SC7->C7_FORNECE+SC7->C7_LOJA)
+PrintOut(04,045,"|",,)
+If ( cPaisLoc$"ARG|POR|EUA" )
+	PrintOut(04,047,Substr(SA2->A2_NOME,1,35)+"-"+SA2->A2_COD+"-"+SA2->A2_LOJA,,)
+Else
+	PrintOut(04,047,Substr(SA2->A2_NOME,1,35)+"-"+SA2->A2_COD+"-"+SA2->A2_LOJA+(If(cPaisLoc$"ANG|PTG"," i.e.: "," I.E.: "))+" "+SA2->A2_INSCR,,)
+EndIf
+PrintOut(04,142-nDifColCC,"|",,)
+PrintOut(05,001,"|",,)
+PrintOut(05,003,(If(cPaisLoc$"ANG|PTG","Código postal :","CEP :"))+Trans(SM0->M0_CEPENT,cCepPict)+" - "+Trim(SM0->M0_CIDENT)+" - "+SM0->M0_ESTENT,,)
+PrintOut(05,045,"|",,)
+PrintOut(05,047,SubStr(SA2->A2_END,1,42),PesqPict("SA2","A2_END"),)
+PrintOut(05,089,"-  "+SubStr(Trim(SA2->A2_BAIRRO),1,(53-nDifColCC)),"@!",)
+PrintOut(05,142-nDifColCC,"|",,)
+PrintOut(06,001,"|",,)
+PrintOut(06,003,If(cPaisLoc$"ANG|PTG","Tel: ","TEL: ")+SM0->M0_TEL,,)
+PrintOut(06,023,If(cPaisLoc$"ANG|PTG","Fax: ","FAX: ")+SM0->M0_FAX,,)
+PrintOut(06,045,"|",,)
+PrintOut(06,047,Trim(SA2->A2_MUN),"@!",)
+PrintOut(06,069,SA2->A2_EST,PesqPict("SA2","A2_EST"),)
+PrintOut(06,074,If(cPaisLoc$"ANG|PTG","Código postal :","CEP :"),,)
+PrintOut(06,081,SA2->A2_CEP,PesqPict("SA2","A2_CEP"),)
+
+dbSelectArea("SX3")
+nOrden = IndexOrd()
+dbSetOrder(2)
+dbSeek("A2_CGC")
+cCGC := Alltrim(X3TITULO())
+PrintOut(06,093,cCGC+":",,)
+dbSetOrder(nOrden)
+
+dbSelectArea("SA2")
+PrintOut(06,103,SA2->A2_CGC,If(SA2->A2_TIPO=="J",PesqPict("SA2","A2_CGC"),Transform(SA2->A2_CGC,"@R 999.999.999-99")),)
+PrintOut(06,142-nDifColCC,"|",,)
+PrintOut(07,001,"|",,)
+PrintOut(07,002,(cCGC)+" "+Transform(SM0->M0_CGC,cCgcPict),,)
+If cPaisLoc == "BRA"
+	PrintOut(07,029,(If(cPaisLoc$"ANG|PTG","Ie:","IE:"))+InscrEst(),,)
+EndIf
+PrintOut(07,045,"|",,)
+PrintOut(07,047,SC7->C7_CONTATO,PesqPict("SC7","C7_CONTATO"),)
+PrintOut(07,069,If(cPaisLoc$"ANG|PTG","Telefone: ","FONE: "),,)
+PrintOut(07,075,"("+Substr(SA2->A2_DDD,1,3)+") "+Substr(SA2->A2_TEL,1,15),,)
+PrintOut(07,100,(If(cPaisLoc$"ANG|PTG","Fax: ","FAX: ")),,)
+PrintOut(07,106,"("+Substr(SA2->A2_DDD,1,3)+") "+SubStr(SA2->A2_FAX,1,15),,)
+PrintOut(07,142-nDifColCC,"|",,)
+PrintOut(08,001,"|",,)
+PrintOut(08,002,Replicate("-",limite),,)
+PrintOut(08,142-nDifColCC,"|",,)
+
+If mv_par08 == 1 .OR.  mv_par08 == 3
+	PrintOut(09,001,"|",,)
+	PrintOut(09,002,"Item|",,)
+	PrintOut(09,009,If(cPaisLoc$"ANG|PTG","Código      ","Codigo      "),,)
+	PrintOut(09,022,If(cPaisLoc$"ANG|PTG","|descrição Do Material","|Descricao do Material"),,)
+	PrintOut(09,049,If(cPaisLoc$"ANG|PTG","|um|  Quant.","|UM|  Quant."),,)
+	If cPaisLoc <> "BRA"
+		PrintOut(09,065,IIF(nDifColcc==0,If(cPaisLoc$"ANG|PTG","|valor unitário|      valor total     | entrega  |  c.c.              | s.c. |","|Valor Unitario|      Valor Total     | Entrega  |  C.C.              | S.C. |"),If(cPaisLoc$"ANG|PTG","|valor unitário|      valor total     | entrega  |  c.c.   | s.c. |","|Valor Unitario|      Valor Total     | Entrega  |  C.C.   | S.C. |")),,)
+	Else
+		PrintOut(09,065,IIF(nDifColcc==0,If(cPaisLoc$"ANG|PTG","|valor unitário|iva  |  valor total   | entrega  |  c.c.              | s.c. |","|Valor Unitario|IPI  |  Valor Total   | Entrega  |  C.C.              | S.C. |"),If(cPaisLoc$"ANG|PTG","|valor unitário|iva  |  valor total   | entrega  |  c.c.   | s.c. |","|Valor Unitario|IPI  |  Valor Total   | Entrega  |  C.C.   | S.C. |")),,)
+	EndIf
+	PrintOut(10,001,"|",,)
+	PrintOut(10,002,Replicate("-",limite),,)
+	PrintOut(10,142-nDifColCC,"|",,)
+Else
+	PrintOut(09,001,"|",,)
+	PrintOut(09,002,"Item|",,)
+	PrintOut(09,009,If(cPaisLoc$"ANG|PTG","Código      ","Codigo      "),,)
+	PrintOut(09,022,If(cPaisLoc$"ANG|PTG","|descrição Do Material","|Descricao do Material"),,)
+	PrintOut(09,049,If(cPaisLoc$"ANG|PTG","|um|  Quant.","|UM|  Quant."),,)
+	PrintOut(09,065,If(cPaisLoc$"ANG|PTG","|valor unitário|  valor total   | entrega  | número da op  ou  cc ","|Valor Unitario|  Valor Total   | Entrega  | Numero da OP  ou  CC "),,)
+	PrintOut(09,142-nDifColCC,"|",,)
+	PrintOut(10,001,"|",,)
+	PrintOut(10,002,Replicate("-",limite),,)
+	PrintOut(10,142-nDifColCC,"|",,)
+EndIf
+dbSelectArea("SC7")
+li := 10
+Return .T. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function R110Center(cLiberador)
+Return( Space((30-Len(AllTrim(cLiberador)))/2)+AllTrim(cLiberador) )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function AjustaSX1()
+
+Local aHelpPor	:= {}
+Local aHelpEng	:= {}
+Local aHelpSpa	:= {}
+Local nTamSX1   := Len(SX1->X1_GRUPO)
+
+Aadd( aHelpPor, "Filtra os itens do PC a serem impressos " )
+Aadd( aHelpPor, "Todos,somente os abertos ou Atendidos.  " )
+
+Aadd( aHelpEng, "                                        " )
+Aadd( aHelpEng, "                                        " )
+
+Aadd( aHelpSpa, "                                        " )
+Aadd( aHelpSpa, "                                        " )
+
+
+PutSx1("MTR110","07","Lista quais ?       ","Cuales Lista ?      ","List which ?        ","mv_che","N",1,0,1,"C","","","","","mv_par14", "Todos ","Todos ","All ","","Em Aberto ","En abierto ","Open ","Atendidos ","Atendidos ","Serviced ","","","","","","","","","","")
+PutSX1Help("P.MTR11014.",aHelpPor,aHelpEng,aHelpSpa)
+
+dbSelectArea("SX1")
+dbSetOrder(1)
+
+If dbSeek(PADR("MTR110",nTamSX1)+"07")
+	RecLock("SX1", .F. )
+	X1_DEF03   := "Todos"
+	X1_DEFSPA3 := "Todos"
+	X1_DEFENG3 := "All"
+	MsUnLock()
+EndIf
+
+Return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Function ChkPergUs(cUserId,cGrupo,cSeq)
+
+Local aArea  := GetArea()
+Local cRet   := Nil
+Local cParam := "MV_PAR"+cSeq
+
+dbSelectArea("SXK")
+dbSetOrder(2)
+If dbSeek("U"+cUserId+cGrupo+cSeq)
+	If ValType(&cParam) == "C"
+		cRet := AllTrim(SXK->XK_CONTEUD)
+	ElseIf 	ValType(&cParam) == "N"
+		cRet := Val(AllTrim(SXK->XK_CONTEUD))
+	ElseIf 	ValType(&cParam) == "D"
+		cRet := CTOD((AllTrim(SXK->XK_CONTEUD)))
+	Endif
+Endif
+
+RestArea(aArea)
+Return(cRet)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function R110FIniPC(cPedido,cItem,cSequen,cFiltro)
+
+Local aArea		:= GetArea()
+Local aAreaSC7	:= SC7->(GetArea())
+Local cValid		:= ""
+Local nPosRef		:= 0
+Local nItem		:= 0
+Local cItemDe		:= IIf(cItem==Nil,"",cItem)
+Local cItemAte	:= IIf(cItem==Nil,Repl("Z",Len(SC7->C7_ITEM)),cItem)
+Local cRefCols	:= ""
+cSequen := If( cSequen == nil, "", cSequen ) ;
+cFiltro := If( cFiltro == nil, "", cFiltro ) ;
+
+dbSelectArea("SC7")
+dbSetOrder(1)
+If dbSeek(xFilial("SC7")+cPedido+cItemDe+Alltrim(cSequen))
+	MaFisEnd()
+	MaFisIni(SC7->C7_FORNECE,SC7->C7_LOJA,"F","N","R",{})
+
+	While !Eof() .AND.  SC7->C7_FILIAL+SC7->C7_NUM == xFilial("SC7")+cPedido .AND.  SC7->C7_ITEM <= cItemAte .AND.  (Empty(cSequen) .OR.  cSequen == SC7->C7_SEQUEN)
+
+
+		If &cFiltro
+			dbSelectArea("SC7")
+			dbSkip()
+			Loop
+		EndIf
+
+
+		nItem++
+		MaFisIniLoad(nItem)
+		dbSelectArea("SX3")
+		dbSetOrder(1)
+		dbSeek("SC7")
+		While !EOF() .AND.  (X3_ARQUIVO == "SC7")
+			cValid	:= StrTran(UPPER(SX3->X3_VALID)," ","")
+			cValid	:= StrTran(cValid,"'",'"')
+			If "MAFISREF" $ cValid
+				nPosRef  := AT('MAFISREF("',cValid) + 10
+				cRefCols := Substr(cValid,nPosRef,AT('","MT120",',cValid)-nPosRef )
+
+				MaFisLoad(cRefCols,&("SC7->"+ SX3->X3_CAMPO),nItem)
+			EndIf
+			dbSkip()
+		End
+		MaFisEndLoad(nItem,2)
+		dbSelectArea("SC7")
+		dbSkip()
+	End
+EndIf
+
+RestArea(aAreaSC7)
+RestArea(aArea)
+
+Return .T. 
+
+
+static function Transportadora(cNum)
+	cAlias := Alias()
+
+	DbSelectArea("SZ1")
+
+	if DbSeek(xFilial("SZ1")+cNum, .F. )
+		cNumTransp := SZ1->Z1_TRANSP
+
+		DbSelectArea("SA4")
+		DbSeek(xFilial("SA4")+cNumTransp, .F. )
+
+		cNomTransp := AllTrim(SA4->A4_NREDUZ)
+	else
+		cNomTransp := "E.T. MARTINS"
+	endif
+
+	DbSelectArea(cAlias)
+return (cNomTransp)

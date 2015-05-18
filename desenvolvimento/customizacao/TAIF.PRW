@@ -111,7 +111,7 @@ static function Importar(nOpcao,aTabelas,nCbo1,cGt1,cGt2,lCanc)
 	
 	if !Empty(aTabelas[1])
 		for i := 1 to Len(aTabelas)
-			cAlias := aTabelas[i]+"0"+AllTrim(Str(nCbo1))+"0"
+			cAlias := aTabelas[i]+"0"+IIf(aTabelas[i] == "SB1","1",AllTrim(Str(nCbo1)))+"0"
 			lDocSeq := IIf(aTabelas[i] $ "SD1/SD2/SD3",.T.,lDocSeq)
 			
 			DbSelectArea("SZT")
