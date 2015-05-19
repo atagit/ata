@@ -79,10 +79,12 @@ user function ORCA01(cOpcao)
 	aHeader := {}
 	
 	DbSelectArea("SX3")
+	DbSetOrder(1)
+	DbGoTop()
 	DbSeek("SZ4")
 	
 	while !Eof() .and. X3_ARQUIVO == "SZ4"
-		if AllTrim(X3_CAMPO) == "Z4_FILIAL" .or. AllTrim(X3_CAMPO) == "Z4_NUM" .or. AllTrim(X3_CAMPO) == "Z4_CLIENTE" .or. AllTrim(X3_CAMPO) == "Z4_LOJA"// .or. AllTrim(X3_CAMPO) == "Z4_VLACERT" .or. AllTrim(X3_CAMPO) == "Z4_VLACREA"
+		if AllTrim(X3_CAMPO) $ "Z4_FILIAL/Z4_NUM/Z4_CLIENTE/Z4_LOJA"// .or. AllTrim(X3_CAMPO) == "Z4_VLACERT" .or. AllTrim(X3_CAMPO) == "Z4_VLACREA"
 			DbSkip()
 			
 			loop
